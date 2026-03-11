@@ -9,7 +9,7 @@ const DIETARY_FILTERS = [
     { id: 'isDairyFree', label: '🥛 Dairy-Free' },
 ];
 
-export const Discovery: React.FC = () => {
+const Discovery: React.FC = () => {
     const [recipes, setRecipes] = useState([]);
     const [filteredRecipes, setFilteredRecipes] = useState([]);
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
@@ -99,3 +99,5 @@ export const Discovery: React.FC = () => {
         </div>
     );
 };
+
+export default Discovery;

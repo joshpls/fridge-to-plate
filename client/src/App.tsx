@@ -1,45 +1,33 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Discovery } from './views/Discovery';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Navigation } from './components/Navigation';
+import Discovery from './views/Discovery';
+import RecipeDetail from './views/RecipeDetail';
+import ShoppingList from './views/ShoppingList';
 import Favorites from './views/Favorites';
 import PantryManager from './components/PantryManager';
-import { RecipeDetail } from './views/RecipeDetail';
+// import { Pantry } from './views/Pantry';
 
-const App = () => {
+function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white border-b border-gray-200 p-4 shadow-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link to="/" className="text-xl font-black text-orange-600 tracking-tighter">
-              FRIDGE2PLATE
-            </Link>
-            <div className="flex gap-6">
-              <Link to="/pantry" className="text-gray-600 font-semibold hover:text-orange-500 transition-colors">
-                🛒 My Pantry
-              </Link>
-              <Link to="/discovery" className="text-gray-600 font-semibold hover:text-orange-500 transition-colors">
-                🔍 Find Recipes
-              </Link>
-              <Link to="/favorites" className="text-gray-600 font-semibold hover:text-red-500 transition-colors">
-                ❤️ Favorites
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <Navigation />
 
-        <main className="max-w-7xl mx-auto">
+        <main className="container mx-auto py-8">
           <Routes>
-            {/* Set Pantry as the default landing page */}
-            <Route path="/" element={<PantryManager />} />
-            <Route path="/pantry" element={<PantryManager />} />
             <Route path="/discovery" element={<Discovery />} />
-            <Route path="/favorites" element={<Favorites />} />
             <Route path="/recipe/:slug" element={<RecipeDetail />} />
+            <Route path="/shopping-list" element={<ShoppingList />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/pantry" element={<PantryManager />} />
+            
+            {/* Redirect root to discovery */}
+            <Route path="/" element={<Navigate to="/discovery" replace />} />
           </Routes>
         </main>
       </div>
     </Router>
   );
-};
+}
 
 export default App;

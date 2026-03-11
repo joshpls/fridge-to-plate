@@ -9,21 +9,23 @@ generator client {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  pantry        PantryItem[]
-  favorites     Favorite[]
-  comments      Comment[]
-  createdRecipes Recipe[]      @relation("UserRecipes")
+  id             String       @id @default(uuid())
+  email          String       @unique
+  password       String
+  pantry         PantryItem[]
+  favorites      Favorite[]
+  comments       Comment[]
+  createdRecipes Recipe[]     @relation("UserRecipes")
 }
 
 model Ingredient {
-  id               String            @id @default(uuid())
-  name             String            @unique
-  isStaple         Boolean           @default(false)
-  pantryItems      PantryItem[]
+  id                String             @id @default(uuid())
+  name              String             @unique
+  isStaple          Boolean            @default(false)
+  pantryItems       PantryItem[]
   recipeIngredients RecipeIngredient[]
+
+  shoppingItems ShoppingItem[]
 }
 
 model PantryItem {
@@ -32,34 +34,36 @@ model PantryItem {
   ingredientId String
   user         User       @relation(fields: [userId], references: [id])
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
 
   @@unique([userId, ingredientId])
 }
 
 model Recipe {
-  id            String             @id @default(uuid())
-  name          String             
-  slug          String             @unique
-  instructions  String             @db.Text
-  imageUrl      String?
-  authorId      String
-  author        User               @relation("UserRecipes", fields: [authorId], references: [id])
+  id           String  @id @default(uuid())
+  name         String
+  slug         String  @unique
+  instructions String  @db.Text
+  imageUrl     String?
+  authorId     String
+  author       User    @relation("UserRecipes", fields: [authorId], references: [id])
 
-  isVegan       Boolean            @default(false)
-  isGlutenFree  Boolean            @default(false)
-  isDairyFree   Boolean            @default(false)
+  isVegan      Boolean @default(false)
+  isGlutenFree Boolean @default(false)
+  isDairyFree  Boolean @default(false)
 
-  ingredients   RecipeIngredient[]
-  favorites     Favorite[]
-  comments      Comment[]
-  createdAt     DateTime           @default(now())
+  ingredients RecipeIngredient[]
+  favorites   Favorite[]
+  comments    Comment[]
+  createdAt   DateTime           @default(now())
 }
 
 model RecipeIngredient {
   id           String     @id @default(uuid())
   recipeId     String
   ingredientId String
-  amount       String     
+  amount       String
   recipe       Recipe     @relation(fields: [recipeId], references: [id])
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
 }
@@ -69,6 +73,7 @@ model Favorite {
   recipeId String
   user     User   @relation(fields: [userId], references: [id])
   recipe   Recipe @relation(fields: [recipeId], references: [id])
+
   @@id([userId, recipeId])
 }
 
@@ -80,4 +85,16 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model ShoppingItem {
+  id           String   @id @default(uuid())
+  userId       String
+  ingredientId String
+  amount       String?
+  bought       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
 }
