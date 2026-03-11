@@ -1,0 +1,83 @@
+// server/prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  // url is now handled via prisma.config.ts in Prisma 7
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  pantry        PantryItem[]
+  favorites     Favorite[]
+  comments      Comment[]
+  createdRecipes Recipe[]      @relation("UserRecipes")
+}
+
+model Ingredient {
+  id               String            @id @default(uuid())
+  name             String            @unique
+  isStaple         Boolean           @default(false)
+  pantryItems      PantryItem[]
+  recipeIngredients RecipeIngredient[]
+}
+
+model PantryItem {
+  id           String     @id @default(uuid())
+  userId       String
+  ingredientId String
+  user         User       @relation(fields: [userId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([userId, ingredientId])
+}
+
+model Recipe {
+  id            String             @id @default(uuid())
+  name          String             
+  slug          String             @unique
+  instructions  String             @db.Text
+  imageUrl      String?
+  authorId      String
+  author        User               @relation("UserRecipes", fields: [authorId], references: [id])
+
+  isVegan       Boolean            @default(false)
+  isGlutenFree  Boolean            @default(false)
+  isDairyFree   Boolean            @default(false)
+
+  ingredients   RecipeIngredient[]
+  favorites     Favorite[]
+  comments      Comment[]
+  createdAt     DateTime           @default(now())
+}
+
+model RecipeIngredient {
+  id           String     @id @default(uuid())
+  recipeId     String
+  ingredientId String
+  amount       String     
+  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+}
+
+model Favorite {
+  userId   String
+  recipeId String
+  user     User   @relation(fields: [userId], references: [id])
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  @@id([userId, recipeId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  recipeId  String
+  user      User     @relation(fields: [userId], references: [id])
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  createdAt DateTime @default(now())
+}
