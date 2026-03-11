@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Plus, X, Refrigerator } from 'lucide-react';
+import { refreshPantryCount } from '../utils/events'; // Importing your new utility
 
 interface Ingredient {
     id: string;
@@ -8,7 +9,7 @@ interface Ingredient {
     isStaple: boolean;
 }
 
-const PantryManager = () => {
+const Pantry = () => {
     const [allIngredients, setAllIngredients] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [myPantry, setMyPantry] = useState<Ingredient[]>([]);
@@ -16,34 +17,32 @@ const PantryManager = () => {
 
     // 1. Fetch Data
     useEffect(() => {
-    const controller = new AbortController();
+        const controller = new AbortController();
 
-    const loadInitialData = async () => {
-        try {
-            setLoading(true);
-            
-            // We can run these in parallel to speed up the "Kitchen" opening
-            const [ingredientsRes, pantryRes] = await Promise.all([
-                axios.get('/api/ingredients', { signal: controller.signal }),
-                axios.get('/api/pantry', { signal: controller.signal })
-            ]);
+        const loadInitialData = async () => {
+            try {
+                setLoading(true);
+                
+                const [ingredientsRes, pantryRes] = await Promise.all([
+                    axios.get('/api/ingredients', { signal: controller.signal }),
+                    axios.get('/api/pantry', { signal: controller.signal })
+                ]);
 
-            // Drill into our standardized responseHandler structure (.data.data)
-            setAllIngredients(ingredientsRes.data.data || []);
-            setMyPantry(pantryRes.data.data || []);
-            
-        } catch (err: any) {
-            if (axios.isCancel(err)) return;
-            console.error("Initialization failed:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+                setAllIngredients(ingredientsRes.data.data || []);
+                setMyPantry(pantryRes.data.data || []);
+                
+            } catch (err: any) {
+                if (axios.isCancel(err)) return;
+                console.error("Initialization failed:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    loadInitialData();
+        loadInitialData();
 
-    return () => controller.abort();
-}, []);
+        return () => controller.abort();
+    }, []);
 
     // 2. Filter results based on search input
     const filteredResults = allIngredients.filter(ing =>
@@ -53,7 +52,7 @@ const PantryManager = () => {
 
     const addToPantry = (ing: Ingredient) => {
         setMyPantry([...myPantry, ing]);
-        setSearchTerm(''); // Clear search after adding
+        setSearchTerm(''); 
     };
 
     const removeFromPantry = (id: string) => {
@@ -64,6 +63,10 @@ const PantryManager = () => {
         try {
             const ingredientIds = myPantry.map(ing => ing.id);
             await axios.post('http://localhost:5000/api/pantry', { ingredientIds });
+            
+            // Trigger the global event to update the Navigation badge count
+            refreshPantryCount();
+            
             alert("Pantry synced successfully!");
         } catch (err) {
             console.error("Failed to sync pantry:", err);
@@ -99,7 +102,6 @@ const PantryManager = () => {
                                 onClick={() => addToPantry(ing)}
                                 className="cursor-pointer select-none relative py-3 px-4 hover:bg-emerald-50 flex justify-between items-center transition-colors group"
                             >
-                                {/* Force black/gray text even if system is in dark mode */}
                                 <span className="text-gray-900 font-medium group-hover:text-emerald-900">
                                     {ing.name}
                                 </span>
@@ -137,7 +139,7 @@ const PantryManager = () => {
                 </div>
             </section>
 
-            {/* Action Button */}
+            {/* Action Buttons */}
             {myPantry.length > 0 && (
                 <div className="flex gap-4">
                     <button
@@ -155,4 +157,4 @@ const PantryManager = () => {
     );
 };
 
-export default PantryManager;
+export default Pantry;

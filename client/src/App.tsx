@@ -4,7 +4,7 @@ import Discovery from './views/Discovery';
 import RecipeDetail from './views/RecipeDetail';
 import ShoppingList from './views/ShoppingList';
 import Favorites from './views/Favorites';
-import PantryManager from './components/PantryManager';
+import Pantry from './views/Pantry';
 // import { Pantry } from './views/Pantry';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
             <Route path="/recipe/:slug" element={<RecipeDetail />} />
             <Route path="/shopping-list" element={<ShoppingList />} />
             <Route path="/favorites" element={<Favorites />} />
-            <Route path="/pantry" element={<PantryManager />} />
+            <Route path="/pantry" element={<Pantry />} />
             
             {/* Redirect root to discovery */}
             <Route path="/" element={<Navigate to="/discovery" replace />} />

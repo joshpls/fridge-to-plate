@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { refreshPantryCount } from '../utils/events';
 
 const ShoppingList = () => {
     const [items, setItems] = useState<any[]>([]);
@@ -22,13 +22,16 @@ const ShoppingList = () => {
 
     const toggleItem = async (itemId: string, currentStatus: boolean) => {
         try {
-            await fetch(`http://localhost:5000/api/shopping-list/${itemId}`, {
+            const res = await fetch(`http://localhost:5000/api/shopping-list/${itemId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bought: !currentStatus })
             });
-            // Refresh list or optimistic update
-            setItems(prev => prev.filter(item => item.id !== itemId));
+
+            if (res.ok) {
+                setItems(prev => prev.filter(item => item.id !== itemId));
+                refreshPantryCount();
+            }
         } catch (err) {
             console.error("Update failed:", err);
         }
@@ -47,10 +50,6 @@ const ShoppingList = () => {
         }
     };
 
-    const triggerRefresh = () => {
-        window.dispatchEvent(new Event('pantryUpdated'));
-    };
-
     const buyAll = async () => {
         try {
             const res = await fetch(`http://localhost:5000/api/shopping-list/buy-all/${userId}`, {
@@ -58,7 +57,7 @@ const ShoppingList = () => {
             });
             if (res.ok) {
                 setItems([]);
-                triggerRefresh(); // Update the header count!
+                refreshPantryCount();
             }
         } catch (err) {
             console.error("Buy all failed", err);
@@ -78,7 +77,7 @@ const ShoppingList = () => {
                     {items.length > 0 && (
                         <button
                             onClick={handleClearList}
-                            className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+                            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-lg uppercase hover:bg-orange-600 transition-all shadow-xl active:scale-95"
                         >
                             Clear All
                         </button>
