@@ -26,7 +26,7 @@ async function main() {
       },
     });
 
-    const ingredientNames = ['Eggs', 'Milk', 'Butter', 'Pasta', 'Tomato Sauce', 'Garlic'];
+    const ingredientNames = ['Eggs', 'Milk', 'Butter', 'Pasta', 'Tomato Sauce', 'Garlic', 'Vegan Butter', 'Brown Sugar', 'Granulated Sugar', 'Pumpkin Puree', 'Vanilla Extract', 'All-Purpose Flour', 'Cream of Tartar', 'Baking Soda', 'Salt', 'Cinnamon', 'Pumpkin Pie Spice'];
     
     console.log('🌿 Syncing Ingredients...');
     const ingredients = await Promise.all(
@@ -48,6 +48,11 @@ async function main() {
         name: 'Pasta Marinara',
         instructions: 'Boil pasta, add sauce and garlic.',
         items: ['Pasta', 'Tomato Sauce', 'Garlic']
+      },
+      {
+        name: 'Vegan Pumpkin Snickerdoodles',
+        instructions: "In the bowl of a stand mixer with the paddle attachment or other large bowl with a handheld mixer, beat the vegan butter and sugars together until creamy, about 2 minutes.\nAdd the pumpkin puree and vanilla and mix until combined, scraping the sides and bottom of the bowl as needed.\nStop the mixer and add the flour. Sprinkle the cream of tartar, baking soda, salt, cinnamon and pumpkin pie spice on top of the flour. Turn the mixer on low speed and mix until just combined. Scrape the bottom and sides to make sure everything is well combined.\nCover the bowl and chill the cookie dough in the refrigerator for 1 hour. If you skip this step, the cookies won't be very chewy. So chill if you can!\nPreheat the oven to 350 degrees F and line two cookie sheets with parchment paper.\nTake about 1 1/2 tablespoons of dough and roll into a ball. Repeat, and roll all the balls in the cinnamon sugar topping. Place on baking sheets at least 2 inches apart and bake for 11-13 minutes. The cookies will be very soft, but firm up as they cool so be careful not to over bake. Let them cool for 10 minutes on the pan, then transfer to a cooling rack. Enjoy!",
+        items: ['Vegan Butter', 'Brown Sugar', 'Granulated Sugar', 'Pumpkin Puree', 'Vanilla Extract', 'All-Purpose Flour', 'Cream of Tartar', 'Baking Soda', 'Salt', 'Cinnamon', 'Pumpkin Pie Spice']
       }
     ];
 

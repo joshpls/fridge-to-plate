@@ -1,20 +1,5 @@
 import { prisma } from '../config/db.js';
-
-const mapRecipeToDto = (recipe: any, pantryIds: Set<string>) => {
-  const matched = recipe.ingredients.filter((ri: any) => pantryIds.has(ri.ingredientId));
-  const matchPercentage = Math.round((matched.length / recipe.ingredients.length) * 100);
-
-  return {
-    id: recipe.id,
-    name: recipe.name,
-    slug: recipe.slug,
-    matchPercentage,
-    missingCount: recipe.ingredients.length - matched.length,
-    isFavorite: recipe.favorites?.length > 0,
-    isVegan: recipe.isVegan,
-    isGlutenFree: recipe.isGlutenFree,
-  };
-};
+import { mapRecipeToDto } from '../utils/helperFunctions.js';
 
 export const getMatches = async (userId: string) => {
   const [recipes, pantryEntries] = await Promise.all([
@@ -29,6 +14,16 @@ export const getMatches = async (userId: string) => {
 
   const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
   return recipes.map(recipe => mapRecipeToDto(recipe, pantryIds));
+};
+
+export const getRecipeBySlug = async (slug: string, userId: string) => {
+  return await prisma.recipe.findUnique({
+    where: { slug },
+    include: {
+      ingredients: { include: { ingredient: true } },
+      favorites: { where: { userId } }
+    }
+  });
 };
 
 export const getFavoriteRecipes = async (userId: string) => {

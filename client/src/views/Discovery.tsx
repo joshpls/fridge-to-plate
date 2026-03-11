@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { RecipeCard } from '../components/recipes/RecipeCard';
+import { RecipeModal } from '../components/recipes/RecipeModal';
 
 // Define our filter shape for easy expansion later
 const DIETARY_FILTERS = [
@@ -11,6 +12,7 @@ const DIETARY_FILTERS = [
 export const Discovery: React.FC = () => {
     const [recipes, setRecipes] = useState([]);
     const [filteredRecipes, setFilteredRecipes] = useState([]);
+    const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -79,20 +81,20 @@ export const Discovery: React.FC = () => {
                 </div>
             </header>
 
-            {filteredRecipes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredRecipes.map((recipe: any) => (
-                        <RecipeCard
-                            key={recipe.slug}
-                            recipe={recipe}
-                            initialFavorite={recipe.isFavorite} // Pass the status from the DB
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                    <p className="text-gray-500">No recipes match all selected filters. Try broadening your search!</p>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredRecipes.map((recipe: any) => (
+                    <div key={recipe.slug} onClick={() => setSelectedRecipe(recipe)} className="cursor-pointer">
+                        <RecipeCard recipe={recipe} initialFavorite={recipe.isFavorite} />
+                    </div>
+                ))}
+            </div>
+
+            {/* The Modal Trigger */}
+            {selectedRecipe && (
+                <RecipeModal
+                    recipe={selectedRecipe}
+                    onClose={() => setSelectedRecipe(null)}
+                />
             )}
         </div>
     );

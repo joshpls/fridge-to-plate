@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Discovery } from './views/Discovery';
 import Favorites from './views/Favorites';
 import PantryManager from './components/PantryManager';
+import { RecipeDetail } from './views/RecipeDetail';
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
             <Route path="/pantry" element={<PantryManager />} />
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/recipe/:slug" element={<RecipeDetail />} />
           </Routes>
         </main>
       </div>
