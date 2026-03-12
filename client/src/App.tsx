@@ -5,11 +5,12 @@ import RecipeDetail from './views/RecipeDetail';
 import ShoppingList from './views/ShoppingList';
 import Favorites from './views/Favorites';
 import Pantry from './views/Pantry';
-// import { Pantry } from './views/Pantry';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <Router>
+      <Toaster />
       <div className="min-h-screen bg-gray-50">
         <Navigation />
 

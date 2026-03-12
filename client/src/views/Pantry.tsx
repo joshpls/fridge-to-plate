@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Search, Plus, X, Refrigerator } from 'lucide-react';
 import { refreshPantryCount } from '../utils/events'; // Importing your new utility
@@ -10,6 +11,7 @@ interface Ingredient {
 }
 
 const Pantry = () => {
+    const navigate = useNavigate();
     const [allIngredients, setAllIngredients] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [myPantry, setMyPantry] = useState<Ingredient[]>([]);
@@ -22,7 +24,7 @@ const Pantry = () => {
         const loadInitialData = async () => {
             try {
                 setLoading(true);
-                
+
                 const [ingredientsRes, pantryRes] = await Promise.all([
                     axios.get('/api/ingredients', { signal: controller.signal }),
                     axios.get('/api/pantry', { signal: controller.signal })
@@ -30,7 +32,7 @@ const Pantry = () => {
 
                 setAllIngredients(ingredientsRes.data.data || []);
                 setMyPantry(pantryRes.data.data || []);
-                
+
             } catch (err: any) {
                 if (axios.isCancel(err)) return;
                 console.error("Initialization failed:", err);
@@ -52,7 +54,7 @@ const Pantry = () => {
 
     const addToPantry = (ing: Ingredient) => {
         setMyPantry([...myPantry, ing]);
-        setSearchTerm(''); 
+        setSearchTerm('');
     };
 
     const removeFromPantry = (id: string) => {
@@ -63,14 +65,19 @@ const Pantry = () => {
         try {
             const ingredientIds = myPantry.map(ing => ing.id);
             await axios.post('http://localhost:5000/api/pantry', { ingredientIds });
-            
+
             // Trigger the global event to update the Navigation badge count
             refreshPantryCount();
-            
+
             alert("Pantry synced successfully!");
         } catch (err) {
             console.error("Failed to sync pantry:", err);
         }
+    };
+
+    const handleFindRecipes = () => {
+        // Navigate to discovery and pass a state flag
+        navigate('/discovery', { state: { filterByPantry: true } });
     };
 
     return (
@@ -148,7 +155,10 @@ const Pantry = () => {
                     >
                         Save Pantry
                     </button>
-                    <button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform active:scale-95">
+                    <button
+                        onClick={handleFindRecipes}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform active:scale-95"
+                    >
                         Find Recipes
                     </button>
                 </div>

@@ -38,3 +38,19 @@ export const savePantry = async (req: Request, res: Response) => {
     return sendError(res, "Failed to save pantry items", 500, error);
   }
 };
+
+export const bulkAddToPantry = async (req: Request, res: Response) => {
+  const { userId, ingredientIds } = req.body;
+
+  if (!Array.isArray(ingredientIds)) {
+    return sendError(res, "ingredientIds must be an array", 400);
+  }
+
+  try {
+    // Use the new service method to append items
+    await pantryService.appendToPantry(userId || TEMP_USER_ID, ingredientIds);
+    return sendSuccess(res, null, "Items added to pantry successfully");
+  } catch (error) {
+    return sendError(res, "Failed to bulk add pantry items", 500, error);
+  }
+};

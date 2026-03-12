@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
+import { useLocation } from 'react-router-dom';
 
 // Define our filter shape for easy expansion later
 const DIETARY_FILTERS = [
@@ -10,6 +11,7 @@ const DIETARY_FILTERS = [
 ];
 
 const Discovery: React.FC = () => {
+    const location = useLocation();
     const [recipes, setRecipes] = useState([]);
     const [filteredRecipes, setFilteredRecipes] = useState([]);
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
@@ -35,7 +37,7 @@ const Discovery: React.FC = () => {
             }
         };
         fetchMatches();
-    }, []);
+    }, [location.state]);
 
     // Filter logic: This runs whenever activeFilters or the master recipes list changes
     useEffect(() => {

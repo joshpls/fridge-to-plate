@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -42,26 +43,16 @@ const RecipeDetail = () => {
     }, [slug]);
 
     const addToGroceryList = async () => {
-        const userId = '00000000-0000-0000-0000-000000000000';
-
-        // We only send the items that were identified as missing
         const itemsToAdd = missingIngredients.map((item: any) => ({
             ingredientId: item.ingredientId,
+            name: item.ingredient.name, // Added this
             amount: scaleAmount(item.amount),
         }));
 
         try {
-            const response = await fetch(`http://localhost:5000/api/shopping-list`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, items: itemsToAdd })
-            });
-
-            if (response.ok) {
-                alert(`Added ${itemsToAdd.length} items to your list!`);
-            }
+            await addIngredientsToShoppingList(itemsToAdd);
         } catch (err) {
-            console.error("Shopping list error:", err);
+            console.error("Detail view shopping error:", err);
         }
     };
 

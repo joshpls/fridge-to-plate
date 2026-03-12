@@ -1,25 +1,41 @@
 // src/components/Navigation.tsx
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { storageService } from '../services/storageService';
 
 export const Navigation = () => {
     const location = useLocation();
     const [pantryCount, setPantryCount] = useState(0);
+    const [shoppingCount, setShoppingCount] = useState(0); // Added shopping counter
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    // Fetch pantry count to show "Stock Level"
+    const fetchAllCounts = async () => {
+        try {
+            // 1. Pantry still comes from DB
+            const pantryRes = await fetch(`http://localhost:5000/api/pantry?userId=${userId}`);
+            const pResult = await pantryRes.json();
+            if (pResult.status === 'success') setPantryCount(pResult.data.length);
+
+            // 2. Shopping List comes from LocalStorage
+            const localItems = storageService.getShoppingList();
+            setShoppingCount(localItems.length);
+
+        } catch (err) {
+            console.error("Failed to refresh counts", err);
+        }
+    };
+
     useEffect(() => {
-        const getCount = async () => {
-            const res = await fetch(`http://localhost:5000/api/pantry?userId=${userId}`);
-            const result = await res.json();
-            if (result.status === 'success') setPantryCount(result.data.length);
+        fetchAllCounts();
+
+        // Listen for both event types
+        window.addEventListener('pantryUpdated', fetchAllCounts);
+        window.addEventListener('shoppingListUpdated', fetchAllCounts);
+
+        return () => {
+            window.removeEventListener('pantryUpdated', fetchAllCounts);
+            window.removeEventListener('shoppingListUpdated', fetchAllCounts);
         };
-
-        getCount();
-
-        // Listen for the custom event
-        window.addEventListener('pantryUpdated', getCount);
-        return () => window.removeEventListener('pantryUpdated', getCount);
     }, [location.pathname]);
 
     const isActive = (path: string) => location.pathname === path;
@@ -52,10 +68,16 @@ export const Navigation = () => {
 
                 <Link
                     to="/shopping-list"
-                    className="flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-md shadow-orange-100 active:scale-95"
+                    className="relative flex items-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-md shadow-orange-100 active:scale-95"
                 >
                     <span className="text-lg">🛒</span>
                     <span className="text-sm">Shopping List</span>
+                    {/* Shopping List Counter Badge */}
+                    {shoppingCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-gray-900 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full border border-white">
+                            {shoppingCount}
+                        </span>
+                    )}
                 </Link>
             </div>
         </nav>

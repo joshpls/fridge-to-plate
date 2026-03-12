@@ -25,3 +25,13 @@ export const updateUserPantry = async (userId: string, ingredientIds: string[]) 
     })
   ]);
 };
+
+export const appendToPantry = async (userId: string, ingredientIds: string[]) => {
+  return await prisma.pantryItem.createMany({
+    data: ingredientIds.map(id => ({
+      ingredientId: id,
+      userId: userId,
+    })),
+    skipDuplicates: true, // Crucial: prevents errors if an item is already in the pantry
+  });
+};
