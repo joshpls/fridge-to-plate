@@ -66,7 +66,6 @@ const Pantry = () => {
             const ingredientIds = myPantry.map(ing => ing.id);
             await axios.post('http://localhost:5000/api/pantry', { ingredientIds });
 
-            // Trigger the global event to update the Navigation badge count
             refreshPantryCount();
 
             alert("Pantry synced successfully!");

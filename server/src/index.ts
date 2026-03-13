@@ -5,7 +5,6 @@ import { pool } from './config/db.js';
 import pantryRoutes from './routes/pantryRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import recipeRoutes from './routes/recipeRoutes.js';
-import shoppingRoutes from './routes/shoppingRoutes.js';
 
 const app = express();
 const PORT = 5000;
@@ -16,7 +15,6 @@ app.use(express.json());
 // Routes
 app.use('/api', pantryRoutes);
 app.use('/api/recipes', recipeRoutes);
-app.use('/api/shopping-list', shoppingRoutes);
 app.use(errorHandler);
 
 // Startup Verification

@@ -10,7 +10,6 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
     const navigate = useNavigate();
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        // Only close if the user clicked the backdrop itself, not the content inside
         if (e.target === e.currentTarget) {
             onClose();
         }

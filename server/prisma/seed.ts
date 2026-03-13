@@ -6,35 +6,54 @@ const prisma = new PrismaClient({ adapter });
 const TEMP_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 // Simple helper to create URL-friendly slugs
-const slugify = (text: string) => 
+const slugify = (text: string) =>
   text.toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 async function main() {
   await prisma.$transaction(async (tx) => {
+// 1. Setup Categories
+    const categoryNames = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snacks'];
+    for (const name of categoryNames) {
+      await tx.category.upsert({ where: { name }, update: {}, create: { name } });
+    }
+    const catMap = (await tx.category.findMany()).reduce((acc, c) => ({ ...acc, [c.name]: c.id }), {} as any);
+
+    // 2. Setup Tags
+    const tagsData = [
+      { name: 'Vegan', code: 'V' },
+      { name: 'Gluten-Free', code: 'GF' },
+      { name: 'Dairy-Free', code: 'DF' },
+      { name: 'Soy-Free', code: 'SF' }
+    ];
+    for (const t of tagsData) {
+      await tx.tag.upsert({ where: { code: t.code }, update: { name: t.name }, create: t });
+    }
+    const tagMap = (await tx.tag.findMany()).reduce((acc, t) => ({ ...acc, [t.name]: t.id }), {} as any);
+
     console.log('🚀 Upserting Dev User...');
     await tx.user.upsert({
       where: { id: TEMP_USER_ID },
       update: {},
-      create: { 
-        id: TEMP_USER_ID, 
+      create: {
+        id: TEMP_USER_ID,
         email: "dev@example.com",
         password: "secure_dev_password" // Added mandatory password [cite: 1]
       },
     });
 
     const ingredientNames = ['Eggs', 'Milk', 'Butter', 'Pasta', 'Tomato Sauce', 'Garlic', 'Vegan Butter', 'Brown Sugar', 'Granulated Sugar', 'Pumpkin Puree', 'Vanilla Extract', 'All-Purpose Flour', 'Cream of Tartar', 'Baking Soda', 'Salt', 'Cinnamon', 'Pumpkin Pie Spice'];
-    
+
     console.log('🌿 Syncing Ingredients...');
     const ingredients = await Promise.all(
-      ingredientNames.map(name => 
+      ingredientNames.map(name =>
         tx.ingredient.upsert({ where: { name }, update: {}, create: { name } })
       )
     );
-    
+
     const ingMap = Object.fromEntries(ingredients.map(i => [i.name, i.id]));
 
     console.log('👨‍🍳 Creating Recipes with Slugs...');
@@ -58,22 +77,25 @@ async function main() {
 
     for (const r of recipes) {
       const slug = slugify(r.name);
-      
+
       await tx.recipe.upsert({
-        where: { slug: slug }, // Use slug for unique identification
+        where: { slug: slug },
         update: {
-          name: r.name,
-          instructions: r.instructions,
+          categoryId: catMap['Dinner'], // Updates existing rows with a category
         },
         create: {
           name: r.name,
           slug: slug,
           instructions: r.instructions,
-          authorId: TEMP_USER_ID, // Added mandatory author link [cite: 5]
+          authorId: TEMP_USER_ID,
+          categoryId: catMap['Dinner'],
+          tags: {
+            connect: [{ id: tagMap['Vegan'] }]
+          },
           ingredients: {
-            create: r.items.map(itemName => ({ 
+            create: r.items.map(itemName => ({
               ingredientId: ingMap[itemName],
-              amount: "1 unit" // Added mandatory amount [cite: 7]
+              amount: "1 unit"
             }))
           }
         }
@@ -90,4 +112,3 @@ main()
     process.exit(1);
   })
   .finally(async () => await prisma.$disconnect());
-  

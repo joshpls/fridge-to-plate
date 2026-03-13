@@ -43,11 +43,15 @@ const RecipeDetail = () => {
     }, [slug]);
 
     const addToGroceryList = async () => {
-        const itemsToAdd = missingIngredients.map((item: any) => ({
+        console.log("missingIngredients: ", missingIngredients);
+        const itemsToAdd = missingIngredients.map((item: any) => (
+            {
             ingredientId: item.ingredientId,
             name: item.ingredient.name, // Added this
             amount: scaleAmount(item.amount),
         }));
+
+        console.log("items: ", itemsToAdd);
 
         try {
             await addIngredientsToShoppingList(itemsToAdd);

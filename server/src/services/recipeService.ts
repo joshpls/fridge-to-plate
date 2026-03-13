@@ -1,19 +1,61 @@
 import { prisma } from '../config/db.js';
 import { mapRecipeToDto } from '../utils/helperFunctions.js';
 
-export const getMatches = async (userId: string) => {
-  const [recipes, pantryEntries] = await Promise.all([
+export const getMatches = async (
+  userId: string, 
+  filters?: { categoryId?: string, search?: string, tags?: string },
+  pagination?: { page: number, limit: number }
+) => {
+  const tagIds = filters?.tags ? filters.tags.split(',') : [];
+  
+  // Pagination Math
+  const page = pagination?.page || 1;
+  const limit = pagination?.limit || 12;
+  const skip = (page - 1) * limit;
+
+  // Build the Where Clause once so it can be used for both findMany and count
+  const whereClause: any = {
+    AND: [
+      filters?.categoryId && filters.categoryId !== 'all' ? { categoryId: filters.categoryId } : {},
+      filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
+      tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
+    ]
+  };
+
+  // Run queries in parallel for maximum performance
+  const [recipes, totalCount, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
+      where: whereClause,
+      skip, // Skip previous pages
+      take: limit, // Only take X amount
+      orderBy: { name: 'asc' }, // MUST have an orderBy to guarantee consistent pagination
       include: {
         ingredients: { include: { ingredient: true } },
-        favorites: { where: { userId } }
+        favorites: { where: { userId } },
+        category: true,
+        tags: true
       }
     }),
+    prisma.recipe.count({ where: whereClause }), // Get total recipes matching these filters
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
 
   const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
-  return recipes.map(recipe => mapRecipeToDto(recipe, pantryIds));
+  
+  const mappedRecipes = recipes.map(recipe => ({
+    ...mapRecipeToDto(recipe, pantryIds),
+    category: recipe.category?.name,
+    tags: recipe.tags
+  }));
+
+  // Return an object containing the recipes AND the pagination metadata
+  return {
+    recipes: mappedRecipes,
+    total: totalCount,
+    page,
+    totalPages: Math.ceil(totalCount / limit),
+    hasMore: skip + recipes.length < totalCount
+  };
 };
 
 export const getRecipeBySlug = async (slug: string, userId: string) => {

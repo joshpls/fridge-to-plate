@@ -4,13 +4,17 @@ import { addIngredientsToShoppingList } from '../../utils/shoppingUtils';
 
 interface RecipeCardProps {
     recipe: {
-        id: string; // Added to help with backend requests
+        id: string;
         name: string;
         slug: string;
+        instructions: string;
+        authorid: string;
+        category: string;
+        tags: { id: string; name: string; code: string }[];
         matchPercentage: number;
         missingCount: number;
         imageUrl?: string;
-        // Added missingIngredients from your DTO
+        ingredients: string[];
         missingIngredients: { id: string; name: string; amount?: string }[];
     };
     initialFavorite: boolean;
@@ -18,11 +22,7 @@ interface RecipeCardProps {
 
 export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
-    const TEMP_USER_ID = '00000000-0000-0000-0000-000000000000';
-
-    React.useEffect(() => {
-        setIsFavorite(initialFavorite);
-    }, [initialFavorite]);
+    const userId = '00000000-0000-0000-0000-000000000000';
 
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -30,7 +30,7 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
             const response = await fetch(`http://localhost:5000/api/recipes/${recipe.slug}/favorite`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: TEMP_USER_ID })
+                body: JSON.stringify({ userId })
             });
             if (response.ok) setIsFavorite(!isFavorite);
         } catch (err) {
@@ -38,82 +38,89 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
         }
     };
 
-    // New function to handle bulk adding missing items
     const handleAddMissingToCart = async (e: React.MouseEvent) => {
         e.stopPropagation();
-
-        const itemsToAdd = recipe.missingIngredients.map(ing => ({
+        const items = recipe.missingIngredients.map(ing => ({
             ingredientId: ing.id,
-            amount: ing.amount || "",
-            name: ing.name // Passing name to helper if you want to customize the toast
+            name: ing.name,
+            amount: ing.amount || "As needed"
         }));
-
-        await addIngredientsToShoppingList(itemsToAdd);
-    };
-
-    const getStatusColor = (percent: number) => {
-        if (percent === 100) return 'text-green-500';
-        if (percent >= 50) return 'text-yellow-500';
-        return 'text-gray-400';
+        await addIngredientsToShoppingList(items);
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100 flex flex-col h-full">
-            <div className="h-48 bg-gray-200 relative">
+        <div className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 flex flex-col h-full">
+            {/* Image Section */}
+            <div className="relative h-48 overflow-hidden">
+                <img
+                    src={recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80'}
+                    alt={recipe.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute top-3 left-3 flex gap-1 flex-wrap">
+                    {recipe.tags?.map(tag => (
+                        <span key={tag.id} title={tag.name} className="bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter">
+                            {tag.code}
+                        </span>
+                    ))}
+                </div>
                 <button
                     onClick={toggleFavorite}
-                    className={`absolute top-2 left-2 p-2 rounded-full shadow-sm transition-colors z-10 ${isFavorite ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'
-                        }`}
+                    className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${
+                        isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'
+                    }`}
                 >
                     {isFavorite ? '❤️' : '🤍'}
                 </button>
-                {recipe.imageUrl ? (
-                    <img src={recipe.imageUrl} alt={recipe.name} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400">🍳 No Image</div>
-                )}
-                <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-bold shadow">
-                    <span className={getStatusColor(recipe.matchPercentage)}>
-                        {recipe.matchPercentage}% Match
-                    </span>
+                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Match</p>
+                    <p className="text-sm font-black text-orange-600 leading-none">{recipe.matchPercentage}%</p>
                 </div>
             </div>
 
-            <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-bold text-lg truncate">{recipe.name}</h3>
+            {/* Content Section */}
+            <div className="p-5 flex flex-col flex-1">
+                <div className="mb-3">
+                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
+                        {recipe.category || "General"}
+                    </span>
+                    <h3 className="text-xl font-bold text-gray-900 line-clamp-1 mt-0.5 group-hover:text-orange-600 transition-colors">
+                        {recipe.name}
+                    </h3>
+                </div>
 
-                <div className="mt-2 flex-grow">
-                    <p className="text-sm text-gray-500">
-                        {recipe.missingCount === 0
-                            ? "✨ You have everything!"
-                            : `Missing ${recipe.missingCount} ingredients`}
-                    </p>
-
-                    {/* Display a small preview of missing ingredients */}
-                    {recipe.missingCount > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                            {recipe.missingIngredients.slice(0, 2).map(ing => (
-                                <span key={ing.id} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">
+                {/* Ingredients Preview */}
+                <div className="mb-4 flex-1">
+                    {recipe.missingCount > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                            {recipe.missingIngredients.slice(0, 2).map((ing, idx) => (
+                                <span key={idx} className="text-[10px] bg-gray-50 text-gray-500 border border-gray-100 px-2 py-0.5 rounded-md font-medium">
                                     {ing.name}
                                 </span>
                             ))}
                             {recipe.missingCount > 2 && (
-                                <span className="text-[10px] text-gray-400">+{recipe.missingCount - 2} more</span>
+                                <span className="text-[10px] text-gray-300 font-bold">+{recipe.missingCount - 2} more</span>
                             )}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-green-600">
+                            <span className="text-xs">✨</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Fully Stocked</span>
                         </div>
                     )}
                 </div>
 
-                <div className="mt-4 space-y-2">
+                {/* Actions */}
+                <div className="space-y-2 mt-auto">
                     {recipe.missingCount > 0 && (
                         <button
                             onClick={handleAddMissingToCart}
-                            className="w-full text-xs font-bold text-orange-600 border border-orange-200 py-2 rounded-lg hover:bg-orange-50 transition-colors"
+                            className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"
                         >
-                            🛒 Add Missing to List
+                            🛒 Add Missing
                         </button>
                     )}
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 rounded-lg transition-colors">
+                    <button className="w-full bg-gray-900 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-gray-100">
                         View Recipe
                     </button>
                 </div>

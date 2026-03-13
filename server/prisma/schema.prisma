@@ -24,8 +24,6 @@ model Ingredient {
   isStaple          Boolean            @default(false)
   pantryItems       PantryItem[]
   recipeIngredients RecipeIngredient[]
-
-  shoppingItems ShoppingItem[]
 }
 
 model PantryItem {
@@ -41,22 +39,38 @@ model PantryItem {
 }
 
 model Recipe {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
-  slug         String  @unique
-  instructions String  @db.Text
+  slug         String   @unique
+  instructions String   @db.Text
   imageUrl     String?
   authorId     String
-  author       User    @relation("UserRecipes", fields: [authorId], references: [id])
+  author       User     @relation("UserRecipes", fields: [authorId], references: [id])
 
-  isVegan      Boolean @default(false)
-  isGlutenFree Boolean @default(false)
-  isDairyFree  Boolean @default(false)
+  // Category Link
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id])
 
-  ingredients RecipeIngredient[]
-  favorites   Favorite[]
-  comments    Comment[]
-  createdAt   DateTime           @default(now())
+  // Many-to-Many Tags
+  tags         Tag[]    @relation("RecipeTags")
+
+  ingredients  RecipeIngredient[]
+  favorites    Favorite[]
+  comments     Comment[]
+  createdAt    DateTime           @default(now())
+}
+
+model Category {
+  id      String   @id @default(uuid())
+  name    String   @unique // e.g., "Breakfast", "Main Course"
+  recipes Recipe[]
+}
+
+model Tag {
+  id      String   @id @default(uuid())
+  name    String   @unique // e.g., "Vegan"
+  code    String   @unique // e.g., "V"
+  recipes Recipe[] @relation("RecipeTags")
 }
 
 model RecipeIngredient {
@@ -85,16 +99,4 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
   createdAt DateTime @default(now())
-}
-
-model ShoppingItem {
-  id           String   @id @default(uuid())
-  userId       String
-  ingredientId String
-  amount       String?
-  bought       Boolean  @default(false)
-  createdAt    DateTime @default(now())
-
-  // Relations
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
 }

@@ -8,11 +8,46 @@ const TEMP_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
-    const matches = await recipeService.getMatches(TEMP_USER_ID);
-    return sendSuccess(res, matches, "Recipe matches found");
+    // 1. Extract filters and pagination from the URL query
+    const { categoryId, search, tags, page, limit } = req.query;
+    
+    const filters = {
+      categoryId: categoryId as string,
+      search: search as string,
+      tags: tags as string,
+    };
+    
+    const pagination = {
+      page: parseInt(page as string) || 1,
+      limit: parseInt(limit as string) || 12, // Default to 12 recipes per page
+    };
+
+    // 2. Pass to service
+    const matchData = await recipeService.getMatches(TEMP_USER_ID, filters, pagination);
+    
+    return sendSuccess(res, matchData, "Recipe matches found");
   } catch (error) {
     return sendError(res, "Failed to match recipes", 500, error);
   }
+};
+
+export const getCategories = async (req: Request, res: Response) => {
+    try {
+        const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
+        return sendSuccess(res, categories, "Categories retrieved successfully");
+    } catch (error) {
+        return sendError(res, "Could not fetch categories", 500, error);
+    }
+};
+
+// ADD THIS: Endpoint to get tags for your frontend filters
+export const getTags = async (req: Request, res: Response) => {
+    try {
+        const tags = await prisma.tag.findMany({ orderBy: { name: 'asc' } });
+        return sendSuccess(res, tags, "Tags retrieved successfully");
+    } catch (error) {
+        return sendError(res, "Could not fetch tags", 500, error);
+    }
 };
 
 export const getRecipeDetail = async (req: Request, res: Response) => {
