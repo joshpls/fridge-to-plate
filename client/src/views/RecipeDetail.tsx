@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
+import { storageService } from '../services/storageService';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -42,22 +43,15 @@ const RecipeDetail = () => {
         fetchDetail();
     }, [slug]);
 
-    const addToGroceryList = async () => {
-        console.log("missingIngredients: ", missingIngredients);
+    const addToShoppingList = async () => {
         const itemsToAdd = missingIngredients.map((item: any) => (
             {
-            ingredientId: item.ingredientId,
-            name: item.ingredient.name, // Added this
-            amount: scaleAmount(item.amount),
-        }));
+                ingredientId: item.ingredientId,
+                name: item.ingredient.name,
+                amount: scaleAmount(item.amount) || "As needed",
+            }));
 
-        console.log("items: ", itemsToAdd);
-
-        try {
-            await addIngredientsToShoppingList(itemsToAdd);
-        } catch (err) {
-            console.error("Detail view shopping error:", err);
-        }
+        await addIngredientsToShoppingList(itemsToAdd);
     };
 
     const scaleAmount = (amount: string) => {
@@ -144,7 +138,7 @@ const RecipeDetail = () => {
                     </div>
                     {/* Placeholder for your Grocery List button */}
                     <button className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-red-700 transition-shadow shadow-lg shadow-red-200"
-                        onClick={addToGroceryList}
+                        onClick={addToShoppingList}
                     >
                         Add to List
                     </button>

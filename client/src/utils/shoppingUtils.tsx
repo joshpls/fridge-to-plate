@@ -8,8 +8,7 @@ export const addIngredientsToShoppingList = async (
     if (items.length === 0) return { success: false, count: 0 };
 
     try {
-        // Add to Local Storage instead of DB
-        storageService.addItems(items);
+        storageService.shopping.addItems(items);
 
         toast.success((t) => (
             <div className="flex items-center gap-3 text-sm font-medium">
@@ -17,7 +16,7 @@ export const addIngredientsToShoppingList = async (
                 <button
                     onClick={() => {
                         // Undo: Remove the items we just added
-                        items.forEach(item => storageService.removeItem(item.ingredientId));
+                        items.forEach(item => storageService.shopping.removeItem(item.ingredientId));
                         toast.dismiss(t.id);
                         toast.error("Add undone", { duration: 2000 });
                     }}

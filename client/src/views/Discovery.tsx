@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
+import { storageService } from '../services/storageService';
 
 const Discovery: React.FC = () => {
     // 1. Data States
@@ -29,15 +30,13 @@ const Discovery: React.FC = () => {
 
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    // -- METADATA CACHING --
     useEffect(() => {
         const fetchMetadata = async () => {
-            // Check session storage first
-            const cached = sessionStorage.getItem('discovery_meta');
+            // Use the centralized service
+            const cached = storageService.cache.getDiscoveryMeta();
             if (cached) {
-                const { cats, tags } = JSON.parse(cached);
-                setCategories(cats);
-                setAvailableTags(tags);
+                setCategories(cached.cats);
+                setAvailableTags(cached.tags);
                 return;
             }
 
@@ -48,12 +47,14 @@ const Discovery: React.FC = () => {
                 ]);
                 const cats = await catRes.json();
                 const tags = await tagRes.json();
-                
+
                 if (cats.status === 'success' && tags.status === 'success') {
-                    setCategories(cats.data);
-                    setAvailableTags(tags.data);
-                    // Cache for future visits
-                    sessionStorage.setItem('discovery_meta', JSON.stringify({ cats: cats.data, tags: tags.data }));
+                    const meta = { cats: cats.data, tags: tags.data };
+                    setCategories(meta.cats);
+                    setAvailableTags(meta.tags);
+
+                    // Cache it via the service
+                    storageService.cache.setDiscoveryMeta(meta);
                 }
             } catch (error) {
                 console.error("Failed to load metadata:", error);

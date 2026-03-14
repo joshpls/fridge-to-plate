@@ -17,7 +17,7 @@ export const Navigation = () => {
             if (pResult.status === 'success') setPantryCount(pResult.data.length);
 
             // 2. Shopping List comes from LocalStorage
-            const localItems = storageService.getShoppingList();
+            const localItems = storageService.shopping.get();
             setShoppingCount(localItems.length);
 
         } catch (err) {

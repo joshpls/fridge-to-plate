@@ -8,9 +8,9 @@ const ShoppingList = () => {
     const [loading, setLoading] = useState(true);
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    // 1. Load from Local Storage instead of API
+    // Load from Local Storage instead of API
     const loadLocalList = () => {
-        setItems(storageService.getShoppingList());
+        setItems(storageService.shopping.get());
         setLoading(false);
     };
 
@@ -22,22 +22,20 @@ const ShoppingList = () => {
     }, []);
 
     const toggleItem = (ingredientId: string) => {
-        storageService.removeItem(ingredientId);
+        storageService.shopping.removeItem(ingredientId);
         toast.success("Item removed from list");
     };
 
     const handleClearList = () => {
-        if (!window.confirm("Empty your entire shopping list?")) return;
-        storageService.clearList();
+        storageService.shopping.clear();
+        toast.success("List Cleared");
     };
 
     const buyAll = async () => {
-        const list = storageService.getShoppingList();
+        const list = storageService.shopping.get();
         const ingredientIds = list.map(item => item.ingredientId);
 
         try {
-            // Change the endpoint to a specific "bulk-add" route if your 
-            // standard POST /api/pantry is designed to overwrite.
             const res = await fetch(`http://localhost:5000/api/pantry/bulk-add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -45,7 +43,7 @@ const ShoppingList = () => {
             });
 
             if (res.ok) {
-                storageService.clearList();
+                storageService.shopping.clear();
                 window.dispatchEvent(new Event('pantryUpdated'));
                 toast.success("Pantry updated! 🛒");
             }
