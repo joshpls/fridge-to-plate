@@ -12,6 +12,7 @@ model User {
   id             String       @id @default(uuid())
   email          String       @unique
   password       String
+  role           String       @default("USER")
   pantry         PantryItem[]
   favorites      Favorite[]
   comments       Comment[]
@@ -39,31 +40,52 @@ model PantryItem {
 }
 
 model Recipe {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) 
   name         String
   slug         String   @unique
-  instructions String   @db.Text
-  imageUrl     String?
+  summary      String?  @db.Text              // NEW: Short description
+  instructions String   @db.Text 
+  imageUrl     String? 
+  
+  prepTime     Int?     
+  cookTime     Int?
+  totalTime    Int?     
+  servings     Int      @default(1)
+
+  notes        String?  @db.Text              // Optional chef notes
+  nutrition    Json?    // e.g., { "calories": 500, "protein": "25g", "fat": "15g" }
+
   authorId     String
   author       User     @relation("UserRecipes", fields: [authorId], references: [id])
 
-  // Category Link
-  categoryId   String?
-  category     Category? @relation(fields: [categoryId], references: [id])
+  categoryId     String?
+  category       Category?     @relation(fields: [categoryId], references: [id]) 
+  
+  subcategoryId  String?
+  subcategory    Subcategory?  @relation(fields: [subcategoryId], references: [id])
 
-  // Many-to-Many Tags
-  tags         Tag[]    @relation("RecipeTags")
-
-  ingredients  RecipeIngredient[]
-  favorites    Favorite[]
-  comments     Comment[]
-  createdAt    DateTime           @default(now())
+  tags         Tag[]    @relation("RecipeTags") 
+  ingredients  RecipeIngredient[] 
+  favorites    Favorite[] 
+  comments     Comment[] 
+  createdAt    DateTime           @default(now()) 
 }
 
 model Category {
-  id      String   @id @default(uuid())
-  name    String   @unique // e.g., "Breakfast", "Main Course"
-  recipes Recipe[]
+  id            String        @id @default(uuid())
+  name          String        @unique
+  subcategories Subcategory[] // NEW: One-to-Many relationship
+  recipes       Recipe[]
+}
+
+model Subcategory {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  recipes    Recipe[]
 }
 
 model Tag {
@@ -73,13 +95,23 @@ model Tag {
   recipes Recipe[] @relation("RecipeTags")
 }
 
+model Unit {
+  id                String             @id @default(uuid())
+  name              String             @unique // e.g., "Cup", "Teaspoon", "Gram", "Whole"
+  abbreviation      String?            // e.g., "c", "tsp", "g"
+  recipeIngredients RecipeIngredient[]
+}
+
 model RecipeIngredient {
   id           String     @id @default(uuid())
   recipeId     String
   ingredientId String
-  amount       String
-  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  unitId       String     // NEW: Link to Unit
+  amount       Float      // NEW: Changed from String to Float (e.g., 1.5 instead of "1 1/2")
+  
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  unit         Unit       @relation(fields: [unitId], references: [id])
 }
 
 model Favorite {

@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
+import { Toaster } from 'react-hot-toast';
 import Discovery from './views/Discovery';
 import RecipeDetail from './views/RecipeDetail';
 import ShoppingList from './views/ShoppingList';
 import Favorites from './views/Favorites';
 import Pantry from './views/Pantry';
-import { Toaster } from 'react-hot-toast';
+import AddRecipe from './views/AddRecipe';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/shopping-list" element={<ShoppingList />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/pantry" element={<Pantry />} />
+            <Route path="/recipe/add" element={<AddRecipe />} />
             
             {/* Redirect root to discovery */}
             <Route path="/" element={<Navigate to="/discovery" replace />} />

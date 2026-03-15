@@ -5,15 +5,18 @@ export interface ShoppingListItem {
     bought: boolean;
 }
 
-export interface DiscoveryMetadata {
-    cats: any[];
+export interface TaxonomyData {
+    categories: any[];
+    subcategories: any[];
     tags: any[];
+    units: any[];
+    ingredients: any[]; // Cached ingredients so the form dropdown is instant
 }
 
 // Keys for our storage domains
 const KEYS = {
     SHOPPING: 'f2p_shopping_list',
-    DISCOVERY_META: 'f2p_discovery_metadata',
+    TAXONOMY: 'f2p_taxonomy_cache',
 };
 
 export const storageService = {
@@ -75,8 +78,8 @@ export const storageService = {
             sessionStorage.setItem(key, JSON.stringify(value));
         },
 
-        getDiscoveryMeta: () => storageService.cache.get<DiscoveryMetadata>(KEYS.DISCOVERY_META),
-        setDiscoveryMeta: (data: DiscoveryMetadata) => storageService.cache.set(KEYS.DISCOVERY_META, data),
+        getTaxonomy: () => storageService.cache.get<TaxonomyData>(KEYS.TAXONOMY),
+        setTaxonomy: (data: TaxonomyData) => storageService.cache.set(KEYS.TAXONOMY, data),
 
         clearAll: () => sessionStorage.clear()
     }

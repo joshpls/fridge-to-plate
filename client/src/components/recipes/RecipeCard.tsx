@@ -1,28 +1,18 @@
 // src/components/recipes/RecipeCard.tsx
 import React from 'react';
-import { addIngredientsToShoppingList } from '../../utils/shoppingUtils';
+import { addIngredientsToShoppingList } from '../../utils/shoppingUtils'; // Or use storageService directly
 
 interface RecipeCardProps {
-    recipe: {
-        id: string;
-        name: string;
-        slug: string;
-        instructions: string;
-        authorid: string;
-        category: string;
-        tags: { id: string; name: string; code: string }[];
-        matchPercentage: number;
-        missingCount: number;
-        imageUrl?: string;
-        ingredients: string[];
-        missingIngredients: { id: string; name: string; amount?: string }[];
-    };
+    recipe: any;
     initialFavorite: boolean;
 }
 
 export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
     const userId = '00000000-0000-0000-0000-000000000000';
+
+    const missingIngredients = recipe.ingredients?.filter((ing: any) => !ing.inPantry && !ing.isStaple) || [];
+    const missingCount = missingIngredients.length;
 
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -40,10 +30,10 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
 
     const handleAddMissingToCart = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        const items = recipe.missingIngredients.map(ing => ({
-            ingredientId: ing.id,
+        const items = missingIngredients.map((ing: any) => ({
+            ingredientId: ing.ingredientId,
             name: ing.name,
-            amount: ing.amount || "As needed"
+            amount: `${ing.amount} ${ing.unit?.abbreviation || ''}`.trim()
         }));
         await addIngredientsToShoppingList(items);
     };
@@ -58,7 +48,7 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute top-3 left-3 flex gap-1 flex-wrap">
-                    {recipe.tags?.map(tag => (
+                    {recipe.tags?.map((tag: any) => (
                         <span key={tag.id} title={tag.name} className="bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter">
                             {tag.code}
                         </span>
@@ -82,7 +72,8 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
             <div className="p-5 flex flex-col flex-1">
                 <div className="mb-3">
                     <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
-                        {recipe.category || "General"}
+                        {/* Now safely accesses the category object */}
+                        {recipe.category?.name || "General"} 
                     </span>
                     <h3 className="text-xl font-bold text-gray-900 line-clamp-1 mt-0.5 group-hover:text-orange-600 transition-colors">
                         {recipe.name}
@@ -91,15 +82,15 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
 
                 {/* Ingredients Preview */}
                 <div className="mb-4 flex-1">
-                    {recipe.missingCount > 0 ? (
+                    {missingCount > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                            {recipe.missingIngredients.slice(0, 2).map((ing, idx) => (
+                            {missingIngredients.slice(0, 2).map((ing: any, idx: number) => (
                                 <span key={idx} className="text-[10px] bg-gray-50 text-gray-500 border border-gray-100 px-2 py-0.5 rounded-md font-medium">
                                     {ing.name}
                                 </span>
                             ))}
-                            {recipe.missingCount > 2 && (
-                                <span className="text-[10px] text-gray-300 font-bold">+{recipe.missingCount - 2} more</span>
+                            {missingCount > 2 && (
+                                <span className="text-[10px] text-gray-300 font-bold">+{missingCount - 2} more</span>
                             )}
                         </div>
                     ) : (
@@ -112,7 +103,7 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
 
                 {/* Actions */}
                 <div className="space-y-2 mt-auto">
-                    {recipe.missingCount > 0 && (
+                    {missingCount > 0 && (
                         <button
                             onClick={handleAddMissingToCart}
                             className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"

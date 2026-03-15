@@ -50,39 +50,118 @@ export const getTags = async (req: Request, res: Response) => {
     }
 };
 
+export const getTaxonomy = async (req: Request, res: Response) => {
+    try {
+        const [categories, subcategories, tags, units, ingredients] = await Promise.all([
+            prisma.category.findMany({ orderBy: { name: 'asc' } }),
+            prisma.subcategory.findMany({ orderBy: { name: 'asc' } }),
+            prisma.tag.findMany({ orderBy: { name: 'asc' } }),
+            prisma.unit.findMany({ orderBy: { name: 'asc' } }),
+            prisma.ingredient.findMany({ orderBy: { name: 'asc' } })
+        ]);
+        
+        return sendSuccess(res, { categories, subcategories, tags, units, ingredients }, "Taxonomy retrieved");
+    } catch (error) {
+        return sendError(res, "Could not fetch taxonomy", 500, error);
+    }
+};
+
+// server/src/controllers/recipeController.ts
+
+export const createRecipe = async (req: Request, res: Response) => {
+  try {
+    const { userId, ...recipeData } = req.body;
+
+    // 1. Basic Validation Boundary
+    if (!recipeData.name || !recipeData.categoryId || !recipeData.instructions) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Missing required fields (Name, Category, Instructions)' 
+      });
+    }
+
+    if (!recipeData.ingredients || recipeData.ingredients.length === 0) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'A recipe must have at least one ingredient.' 
+      });
+    }
+
+    // 2. Execute the Service
+    const newRecipe = await recipeService.createRecipe(userId, recipeData);
+
+    // 3. Return Success
+    // (Assuming sendSuccess uses a standard { status: 'success', data, message } format)
+    return res.status(201).json({
+        status: 'success',
+        data: newRecipe,
+        message: 'Recipe created successfully'
+    });
+
+  } catch (error: any) {
+    console.error("Error creating recipe:", error);
+
+    // Handle Prisma Unique Constraint Violation (e.g., duplicate slug/name)
+    if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'A recipe with this name already exists. Please choose a different name or modify it.' 
+      });
+    }
+
+    return res.status(500).json({ 
+      status: 'error', 
+      message: 'Failed to create recipe due to a server error.' 
+    });
+  }
+};
+
+// Admin Only: Add an Ingredient
+export const createIngredient = async (req: Request, res: Response) => {
+    try {
+        const { userId, name, isStaple } = req.body;
+        
+        // Verify Admin (In the future, extract this to an authMiddleware)
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (user?.role !== 'ADMIN') {
+            return res.status(403).json({ status: 'error', message: 'Forbidden: Admins only' });
+        }
+
+        const ingredient = await prisma.ingredient.create({
+            data: { name, isStaple: isStaple || false }
+        });
+        return sendSuccess(res, ingredient, "Ingredient created");
+    } catch (error) {
+        return sendError(res, "Failed to create ingredient", 500, error);
+    }
+};
+
 export const getRecipeDetail = async (req: Request, res: Response) => {
-  // Use "as string" to cast the types explicitly
   const slug = req.params.slug as string;
   const userId = req.query.userId as string;
 
-  // Check if they actually exist before proceeding
   if (!slug || !userId) {
-    return res.status(400).json({ 
-      status: 'error', 
-      message: 'Missing slug in params or userId in query' 
-    });
+    return res.status(400).json({ status: 'error', message: 'Missing slug or userId' });
   }
 
   try {
-    const recipe = await recipeService.getRecipeBySlug(slug, userId);
-    
-    if (!recipe) {
+    const recipeDto = await recipeService.getRecipeBySlug(slug, userId);
+
+    if (!recipeDto) {
       return res.status(404).json({ status: 'error', message: 'Recipe not found' });
     }
-    
-    const pantryEntries = await prisma.pantryItem.findMany({ where: { userId } });
-    const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
-    
-    // Pass the cleaned data through your helper
-    res.json({ status: 'success', data: mapRecipeToDto(recipe, pantryIds) });
+
+    res.status(200).json({ 
+      status: 'success', 
+      data: recipeDto 
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getRecipeDetail:", error);
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
 
 export const handleToggleFavorite = async (req: Request, res: Response) => {
-  // Use casting to tell TypeScript these are strings
   const slug = req.params.slug as string;
   const userId = req.body.userId as string;
 
@@ -106,7 +185,6 @@ export const handleToggleFavorite = async (req: Request, res: Response) => {
 };
 
 export const getFavorites = async (req: Request, res: Response) => {
-  // Casting userId to string to satisfy TypeScript
   const userId = req.query.userId as string;
 
   if (!userId) {

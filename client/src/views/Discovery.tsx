@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
-import { storageService } from '../services/storageService';
 
 const Discovery: React.FC = () => {
     // 1. Data States
@@ -30,62 +29,21 @@ const Discovery: React.FC = () => {
 
     const userId = '00000000-0000-0000-0000-000000000000';
 
-    useEffect(() => {
-        const fetchMetadata = async () => {
-            // Use the centralized service
-            const cached = storageService.cache.getDiscoveryMeta();
-            if (cached) {
-                setCategories(cached.cats);
-                setAvailableTags(cached.tags);
-                return;
-            }
-
-            try {
-                const [catRes, tagRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/recipes/categories'),
-                    fetch('http://localhost:5000/api/recipes/tags')
-                ]);
-                const cats = await catRes.json();
-                const tags = await tagRes.json();
-
-                if (cats.status === 'success' && tags.status === 'success') {
-                    const meta = { cats: cats.data, tags: tags.data };
-                    setCategories(meta.cats);
-                    setAvailableTags(meta.tags);
-
-                    // Cache it via the service
-                    storageService.cache.setDiscoveryMeta(meta);
-                }
-            } catch (error) {
-                console.error("Failed to load metadata:", error);
-            }
-        };
-        fetchMetadata();
-    }, []);
-
-    // -- DEBOUNCE SEARCH --
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setSearchQuery(searchInput);
-        }, 400); // Wait 400ms after user stops typing to trigger a filter change
-        return () => clearTimeout(handler);
-    }, [searchInput]);
-
-    // -- RESET PAGINATION ON FILTER CHANGE --
-    useEffect(() => {
-        setPage(1);
-        setRecipes([]);
-        setHasMore(true);
-    }, [selectedCategory, searchQuery, selectedTags]);
-
-    // -- FETCH RECIPES (Initial Load + Pagination) --
+    // 4. Core Fetch Function
     const fetchRecipes = useCallback(async () => {
-        if (!hasMore && page > 1) return;
+        // Only block if a request is already active (loadingMore) 
+        // or we've reached the end on subsequent pages.
+        if (loadingMore || (page > 1 && !hasMore)) return;
         
         page === 1 ? setLoading(true) : setLoadingMore(true);
 
         try {
-            const params = new URLSearchParams({ userId, page: page.toString(), limit: '12' });
+            const params = new URLSearchParams({ 
+                userId, 
+                page: page.toString(), 
+                limit: '12' 
+            });
+            
             if (selectedCategory !== 'all') params.append('categoryId', selectedCategory);
             if (searchQuery.trim()) params.append('search', searchQuery.trim());
             if (selectedTags.length > 0) params.append('tags', selectedTags.join(','));
@@ -94,8 +52,9 @@ const Discovery: React.FC = () => {
             const result = await response.json();
 
             if (result.status === 'success') {
-                const { recipes: newRecipes, hasMore: moreAvailable } = result.data; // Destructure the new backend object
+                const { recipes: newRecipes, hasMore: moreAvailable } = result.data;
                 
+                // If it's page 1, we replace the list. If it's page 2+, we append.
                 setRecipes(prev => page === 1 ? newRecipes : [...prev, ...newRecipes]);
                 setHasMore(moreAvailable);
             }
@@ -105,22 +64,49 @@ const Discovery: React.FC = () => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [page, selectedCategory, searchQuery, selectedTags, userId, hasMore]);
+    }, [page, selectedCategory, searchQuery, selectedTags, userId, hasMore, loadingMore]);
 
-    // Trigger fetch when page or filters update
+    // 5. Initial Taxonomy Load (Categories & Tags)
+    useEffect(() => {
+        const fetchTaxonomy = async () => {
+            try {
+                const [catRes, tagRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/recipes/categories'),
+                    fetch('http://localhost:5000/api/recipes/tags')
+                ]);
+                const cResult = await catRes.json();
+                const tResult = await tagRes.json();
+                if (cResult.status === 'success') setCategories(cResult.data);
+                if (tResult.status === 'success') setAvailableTags(tResult.data);
+            } catch (err) {
+                console.error("Failed to load taxonomy", err);
+            }
+        };
+        fetchTaxonomy();
+    }, []);
+
+    // 6. Reset Watcher: Reset to page 1 whenever any filter changes
+    useEffect(() => {
+        setPage(1);
+        setHasMore(true);
+    }, [selectedCategory, searchQuery, selectedTags]);
+
+    // 7. Execution: Run fetch whenever the page or the filter-based function changes
     useEffect(() => {
         fetchRecipes();
-    }, [fetchRecipes]);
+    }, [page, fetchRecipes]);
 
-    // -- TRIGGER INFINITE SCROLL --
+    // 8. Infinite Scroll Watcher
     useEffect(() => {
-        if (inView && hasMore && !loading && !loadingMore) {
+        if (inView && hasMore && !loadingMore && !loading) {
             setPage(prev => prev + 1);
         }
-    }, [inView, hasMore, loading, loadingMore]);
+    }, [inView, hasMore, loadingMore, loading]);
 
     const toggleTag = (tagId: string) => {
-        setSelectedTags(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]);
+        setSelectedTags(prev => 
+            prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+        );
     };
 
     return (
@@ -133,7 +119,7 @@ const Discovery: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-4 mb-4">
                     <div className="relative flex-1">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                        <input 
+                        <input
                             type="text"
                             placeholder="Search by recipe name..."
                             value={searchInput}
@@ -142,13 +128,13 @@ const Discovery: React.FC = () => {
                         />
                     </div>
 
-                    <select 
+                    <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="md:w-64 p-4 rounded-2xl border-2 border-gray-100 bg-white font-bold text-gray-700 outline-none cursor-pointer"
                     >
                         <option value="all">All Categories</option>
-                        {categories.map((cat: any) => (
+                        {categories?.map((cat: any) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                     </select>
@@ -160,11 +146,10 @@ const Discovery: React.FC = () => {
                         <button
                             key={tag.id}
                             onClick={() => toggleTag(tag.id)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
-                                selectedTags.includes(tag.id)
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2 ${selectedTags.includes(tag.id)
                                     ? 'bg-gray-900 text-white border-gray-900'
                                     : 'bg-white text-gray-400 border-gray-100 hover:border-orange-200'
-                            }`}
+                                }`}
                         >
                             {tag.code} {tag.name}
                         </button>
@@ -209,7 +194,7 @@ const Discovery: React.FC = () => {
                     )}
                 </div>
             )}
-            
+
             {!hasMore && recipes.length > 0 && (
                 <div className="py-10 text-center text-gray-400 font-bold text-sm uppercase tracking-widest">
                     You've reached the end

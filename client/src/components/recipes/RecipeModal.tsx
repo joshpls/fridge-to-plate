@@ -22,8 +22,11 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
 
         window.addEventListener('keydown', handleKeyDown);
 
-        return () => window.removeEventListener('keydown', handleKeyDown); // unmount
+        return () => window.removeEventListener('keydown', handleKeyDown); 
     }, [onClose]);
+
+    // Check dynamically if the recipe has the Vegan tag
+    const isVegan = recipe.tags?.some((t: any) => t.code === 'V' || t.name.toLowerCase() === 'vegan');
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleOverlayClick}>
@@ -40,7 +43,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                     <div className="absolute bottom-6 left-6 text-white">
                         <h2 className="text-3xl font-bold">{recipe.name}</h2>
                         <div className="flex gap-2 mt-2">
-                            {recipe.isVegan && <span className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded border border-green-500/30">Vegan</span>}
+                            {isVegan && <span className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded border border-green-500/30">Vegan</span>}
                             <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded font-bold">{recipe.matchPercentage}% Match</span>
                         </div>
                     </div>
@@ -54,9 +57,11 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                             <h3 className="font-bold text-gray-900 mb-3 border-b pb-1">Ingredients</h3>
                             <ul className="text-sm space-y-2">
                                 {recipe.ingredients?.map((item: any) => (
-                                    <li key={item.id} className="flex justify-between">
-                                        <span className="text-gray-700">{item.ingredient.name}</span>
-                                        <span className="text-gray-400 italic text-xs">{item.amount}</span>
+                                    <li key={item.id} className="flex justify-between items-center border-b border-gray-50 pb-1">
+                                        <span className="text-gray-700 font-medium">{item.name}</span>
+                                        <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">
+                                            {item.amount} {item.unit?.abbreviation || ''}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>

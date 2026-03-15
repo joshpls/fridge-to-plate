@@ -1,81 +1,176 @@
 import { prisma } from '../config/db.js';
 import { mapRecipeToDto } from '../utils/helperFunctions.js';
 
+// server/src/services/recipeService.ts
+
+export const createRecipe = async (userId: string, data: any) => {
+  return await prisma.$transaction(async (tx) => {
+    // 1. Ensure the user exists (Fang-style safety check)
+    // We upsert the temp user just in case the DB was reset but the frontend is still using the ID
+    await tx.user.upsert({
+      where: { id: userId },
+      update: {}, // We don't want to change the user if they already exist
+      create: {
+        id: userId,
+        email: 'chef@fridgetoplate.com',
+        password: 'placeholder_password_for_dev', // Satisfies the required field
+        // Add any other required fields from your User model here (e.g., name)
+      }
+    });
+
+    const categoryExists = await tx.category.findUnique({
+      where: { id: data.categoryId }
+    });
+
+    if (!categoryExists) {
+      throw new Error(`Category with ID ${data.categoryId} not found. Please refresh your cache.`);
+    }
+
+    // 2. Create the Recipe
+    return await tx.recipe.create({
+      data: {
+        name: data.name,
+        slug: data.slug,
+        imageUrl: data.imageUrl || null,
+        summary: data.summary || null,
+        instructions: data.instructions,
+        notes: data.notes || null,
+        prepTime: Number(data.prepTime) || 0,
+        cookTime: Number(data.cookTime) || 0,
+        totalTime: (Number(data.prepTime) || 0) + (Number(data.cookTime) || 0),
+        servings: Number(data.servings) || 1,
+        nutrition: data.nutrition || {},
+        
+        // Link to Author
+        author: { connect: { id: userId } },
+        
+        // Link to Category
+        category: { connect: { id: data.categoryId } },
+        
+        // Link to Subcategory (if provided)
+        ...(data.subcategoryId && {
+          subcategory: { connect: { id: data.subcategoryId } }
+        }),
+        
+        // Link to Tags
+        tags: {
+          connect: data.tagIds?.map((id: string) => ({ id })) || []
+        },
+        
+        // Create Ingredient Mappings
+        ingredients: {
+          create: data.ingredients.map((ing: any) => ({
+            amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
+            ingredient: { connect: { id: ing.ingredientId } },
+            unit: { connect: { id: ing.unitId } }
+          }))
+        }
+      }
+    });
+  });
+};
+const recipeIncludes = (userId: string) => ({
+  author: true,
+  category: true,
+  subcategory: true,
+  tags: true,
+  favorites: { where: { userId } },
+  ingredients: {
+    include: {
+      ingredient: true,
+      unit: true // CRITICAL: Must include unit for the new schema
+    }
+  },
+  comments: {
+    include: { user: true },
+    orderBy: { createdAt: 'desc' as const }
+  }
+});
+
 export const getMatches = async (
   userId: string, 
   filters?: { categoryId?: string, search?: string, tags?: string },
   pagination?: { page: number, limit: number }
 ) => {
   const tagIds = filters?.tags ? filters.tags.split(',') : [];
-  
-  // Pagination Math
-  const page = pagination?.page || 1;
-  const limit = pagination?.limit || 12;
-  const skip = (page - 1) * limit;
+  const skip = pagination ? (pagination.page - 1) * pagination.limit : 0;
+  const take = pagination?.limit || 12;
 
-  // Build the Where Clause once so it can be used for both findMany and count
-  const whereClause: any = {
-    AND: [
-      filters?.categoryId && filters.categoryId !== 'all' ? { categoryId: filters.categoryId } : {},
-      filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
-      tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
-    ]
-  };
-
-  // Run queries in parallel for maximum performance
   const [recipes, totalCount, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
-      where: whereClause,
-      skip, // Skip previous pages
-      take: limit, // Only take X amount
-      orderBy: { name: 'asc' }, // MUST have an orderBy to guarantee consistent pagination
-      include: {
-        ingredients: { include: { ingredient: true } },
-        favorites: { where: { userId } },
-        category: true,
-        tags: true
+      where: {
+        AND: [
+          filters?.categoryId ? { categoryId: filters.categoryId } : {},
+          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
+          tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
+        ]
+      },
+      include: recipeIncludes(userId),
+      skip,
+      take,
+      orderBy: { name: 'asc' }
+    }),
+    prisma.recipe.count({
+      where: {
+        AND: [
+          filters?.categoryId ? { categoryId: filters.categoryId } : {},
+          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
+          tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
+        ]
       }
     }),
-    prisma.recipe.count({ where: whereClause }), // Get total recipes matching these filters
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
 
   const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
   
-  const mappedRecipes = recipes.map(recipe => ({
-    ...mapRecipeToDto(recipe, pantryIds),
-    category: recipe.category?.name,
-    tags: recipe.tags
-  }));
-
-  // Return an object containing the recipes AND the pagination metadata
   return {
-    recipes: mappedRecipes,
-    total: totalCount,
-    page,
-    totalPages: Math.ceil(totalCount / limit),
+    recipes: recipes.map(recipe => mapRecipeToDto(recipe, pantryIds)),
+    totalCount,
     hasMore: skip + recipes.length < totalCount
   };
 };
 
 export const getRecipeBySlug = async (slug: string, userId: string) => {
-  return await prisma.recipe.findUnique({
-    where: { slug },
-    include: {
-      ingredients: { include: { ingredient: true } },
-      favorites: { where: { userId } }
-    }
-  });
+  // Fetch both in parallel for better performance
+  const [recipe, pantryEntries] = await Promise.all([
+    prisma.recipe.findUnique({
+      where: { slug },
+      include: {
+        ingredients: { 
+          include: { 
+            ingredient: true,
+            unit: true // CRITICAL: Required for ri.unit.name in mapper
+          } 
+        },
+        category: true,
+        subcategory: true,
+        tags: true,
+        author: true,
+        comments: {
+          include: { user: true },
+          orderBy: { createdAt: 'desc' }
+        },
+        favorites: { where: { userId } }
+      }
+    }),
+    prisma.pantryItem.findMany({ where: { userId } })
+  ]);
+
+  if (!recipe) return null;
+
+  // Create the Set for the mapper
+  const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
+
+  // Return the sanitized DTO directly to the controller
+  return mapRecipeToDto(recipe, pantryIds);
 };
 
 export const getFavoriteRecipes = async (userId: string) => {
   const [recipes, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
       where: { favorites: { some: { userId } } },
-      include: {
-        ingredients: { include: { ingredient: true } },
-        favorites: { where: { userId } }
-      }
+      include: recipeIncludes(userId)
     }),
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
