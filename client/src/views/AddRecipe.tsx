@@ -1,9 +1,10 @@
 import React, { useState, useEffect, type SubmitEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { storageService, type TaxonomyData } from '../services/storageService';
+import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomplete';
 
-// Define our form state interface to keep TypeScript happy and our data predictable
 interface RecipeFormData {
+    id?: string; // New: To track if we are updating an existing recipe
     name: string;
     imageUrl: string;
     summary: string;
@@ -34,38 +35,86 @@ const initialFormState: RecipeFormData = {
 
 const AddRecipe = () => {
     const navigate = useNavigate();
+    const { slug } = useParams<{ slug: string }>(); // Detect if we are in "Edit" mode
+    
     const [formData, setFormData] = useState<RecipeFormData>(initialFormState);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
+    // 1. Load Taxonomy and Existing Recipe Data
     useEffect(() => {
-        const loadTaxonomy = async () => {
-            const cached = storageService.cache.getTaxonomy();
-            if (cached) {
-                setTaxonomy(cached);
-                setLoading(false);
-                return;
-            }
-            // Fallback if cache is empty
+        const initializeForm = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/recipes/taxonomy');
-                const result = await res.json();
-                if (result.status === 'success') {
-                    setTaxonomy(result.data);
-                    storageService.cache.setTaxonomy(result.data);
+                // Fetch Taxonomy
+                const cached = storageService.cache.getTaxonomy();
+                let currentTaxonomy = cached;
+
+                // Fetch if cache is empty
+                if (!currentTaxonomy) {
+                    const res = await fetch('http://localhost:5000/api/recipes/taxonomy');
+                    const result = await res.json();
+
+                    if (result.status === 'success') {
+                        // Use a local constant to guarantee it's not null for TS
+                        const fetchedData: TaxonomyData = result.data;
+
+                        storageService.cache.setTaxonomy(fetchedData);
+                        setTaxonomy(fetchedData);
+                        currentTaxonomy = fetchedData;
+                    }
+                } else {
+                    setTaxonomy(currentTaxonomy);
+                }
+
+                // If Edit Mode: Fetch Recipe and Map to Form
+                if (slug) {
+                    const userId = '00000000-0000-0000-0000-000000000000';
+                    const res = await fetch(`http://localhost:5000/api/recipes/${slug}?userId=${userId}`);
+                    const result = await res.json();
+
+                    if (result.status === 'success') {
+                        const r = result.data;
+                        setFormData({
+                            id: r.id,
+                            name: r.name || '',
+                            imageUrl: r.imageUrl || '',
+                            summary: r.summary || '',
+                            categoryId: r.category?.id || '',
+                            subcategoryId: r.subcategory?.id || '',
+                            prepTime: r.prepTime || '',
+                            cookTime: r.cookTime || '',
+                            servings: r.servings || '',
+                            instructions: r.instructions || '',
+                            notes: r.notes || '',
+                            tagIds: r.tags?.map((t: any) => t.id) || [],
+                            // Map DTO back to form structure
+                            ingredients: r.ingredients?.map((i: any) => ({
+                                ingredientId: i.ingredientId,
+                                amount: i.amount,
+                                unitId: i.unit?.id || ''
+                            })) || [{ ingredientId: '', amount: '', unitId: '' }],
+                            nutrition: {
+                                calories: r.nutrition?.calories || '',
+                                protein: r.nutrition?.protein || '',
+                                carbohydrates: r.nutrition?.carbohydrates || '',
+                                fat: { total: r.nutrition?.fat?.total || '' }
+                            }
+                        });
+                    }
                 }
             } catch (err) {
-                console.error("Failed to load taxonomy", err);
+                console.error("Initialization failed", err);
             } finally {
                 setLoading(false);
             }
         };
-        loadTaxonomy();
-    }, []);
 
-    // --- State Handlers ---
+        initializeForm();
+    }, [slug]);
+
+    // ... [Keep handleChange, handleNutritionChange, toggleTag, handleIngredientChange, handleImageUpload, add/removeIngredientRow identical to before] ...
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const parsedValue = type === 'number' ? (value === '' ? '' : Number(value)) : value;
@@ -92,7 +141,6 @@ const AddRecipe = () => {
         }));
     };
 
-    // --- Ingredient Array Handlers ---
     const handleIngredientChange = (index: number, field: string, value: string) => {
         const newIngredients = [...formData.ingredients];
         newIngredients[index] = {
@@ -102,50 +150,25 @@ const AddRecipe = () => {
         setFormData(prev => ({ ...prev, ingredients: newIngredients }));
     };
 
+    const addIngredientRow = () => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, { ingredientId: '', amount: '', unitId: '' }] }));
+    const removeIngredientRow = (index: number) => setFormData(prev => ({ ...prev, ingredients: prev.ingredients.filter((_, i) => i !== index) }));
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         setIsUploading(true);
-
-        // FormData is required for sending files via fetch
         const uploadData = new FormData();
         uploadData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
-                method: 'POST',
-                body: uploadData, // Note: Do NOT set Content-Type header; the browser sets the multipart boundary automatically
-            });
-
+            const res = await fetch('http://localhost:5000/api/upload', { method: 'POST', body: uploadData });
             const result = await res.json();
-
-            if (result.status === 'success') {
-                // Automatically update the main form data with the new URL
-                setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
-            } else {
-                alert('Image upload failed: ' + result.message);
-            }
+            if (result.status === 'success') setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
         } catch (err) {
-            console.error("Failed to upload image:", err);
-            alert('Failed to connect to upload server.');
+            console.error("Failed to upload", err);
         } finally {
             setIsUploading(false);
         }
-    };
-
-    const addIngredientRow = () => {
-        setFormData(prev => ({
-            ...prev,
-            ingredients: [...prev.ingredients, { ingredientId: '', amount: '', unitId: '' }]
-        }));
-    };
-
-    const removeIngredientRow = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            ingredients: prev.ingredients.filter((_, i) => i !== index)
-        }));
     };
 
     // --- Submission ---
@@ -155,23 +178,27 @@ const AddRecipe = () => {
 
         try {
             const userId = '00000000-0000-0000-0000-000000000000';
-
-            // Clean up empty ingredient rows before sending
             const cleanedData = {
                 ...formData,
                 ingredients: formData.ingredients.filter(ing => ing.ingredientId && ing.amount && ing.unitId)
             };
 
-            const response = await fetch('http://localhost:5000/api/recipes', {
-                method: 'POST',
+            // Dynamically choose PUT (Edit) or POST (Create)
+            const isEdit = !!formData.id;
+            const endpoint = isEdit 
+                ? `http://localhost:5000/api/recipes/${formData.id}` 
+                : 'http://localhost:5000/api/recipes';
+            
+            const response = await fetch(endpoint, {
+                method: isEdit ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...cleanedData, userId })
             });
 
             if (response.ok) {
-                navigate('/discovery'); // Or navigate to the newly created recipe detail page
+                navigate('/discovery'); 
             } else {
-                alert("Failed to save recipe.");
+                alert(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);
             }
         } catch (err) {
             console.error(err);
@@ -182,23 +209,27 @@ const AddRecipe = () => {
 
     if (loading || !taxonomy) return <div className="p-20 text-center text-gray-400 font-bold">Warming up the oven...</div>;
 
-    // Filter subcategories based on selected category
     const availableSubcategories = taxonomy.subcategories.filter(sub => sub.categoryId === formData.categoryId);
+    const isEditMode = !!formData.id;
 
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 pb-32 animate-in fade-in">
-            {/* Sticky Header Bar */}
             <div className="sticky top-20 z-40 bg-white/90 backdrop-blur-md pb-4 mb-8 border-b border-gray-100 flex justify-between items-end">
                 <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">Draft Recipe</h1>
-                    <p className="text-gray-500 font-medium">Create a new culinary masterpiece.</p>
+                    {/* Dynamic Title */}
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+                        {isEditMode ? 'Edit Recipe' : 'Draft Recipe'}
+                    </h1>
+                    <p className="text-gray-500 font-medium">
+                        {isEditMode ? 'Tweak your culinary masterpiece.' : 'Create a new culinary masterpiece.'}
+                    </p>
                 </div>
                 <button
                     type="submit"
                     disabled={saving}
                     className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95 disabled:opacity-50"
                 >
-                    {saving ? 'Saving...' : 'Save Recipe'}
+                    {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
                 </button>
             </div>
 
@@ -330,15 +361,11 @@ const AddRecipe = () => {
                     <div className="space-y-3">
                         {formData.ingredients.map((ing, index) => (
                             <div key={index} className="flex gap-3 items-center bg-white p-2 rounded-2xl border-2 border-gray-100 hover:border-orange-200 transition-colors">
-                                <select
-                                    required
+                                <IngredientAutocomplete
                                     value={ing.ingredientId}
-                                    onChange={(e) => handleIngredientChange(index, 'ingredientId', e.target.value)}
-                                    className="flex-1 p-3 bg-transparent outline-none font-bold text-gray-700 cursor-pointer"
-                                >
-                                    <option value="" disabled>Select Ingredient...</option>
-                                    {taxonomy.ingredients.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                </select>
+                                    ingredients={taxonomy.ingredients}
+                                    onChange={(newId) => handleIngredientChange(index, 'ingredientId', newId)}
+                                />
 
                                 <input
                                     required

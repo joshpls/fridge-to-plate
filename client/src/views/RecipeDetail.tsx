@@ -133,6 +133,12 @@ const RecipeDetail = () => {
                                 </button>
                             ))}
                         </div>
+                        <Link
+                            to={`/edit-recipe/${recipe.slug}`}
+                            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition-all border-2 border-transparent"
+                        >
+                            Edit Recipe
+                        </Link>
                     </div>
                 </div>
             </header>

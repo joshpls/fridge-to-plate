@@ -63,6 +63,9 @@ export const Navigation = () => {
                                 </span>
                             )}
                         </Link>
+                        <Link to="/recipe/add" className={`relative text-sm font-bold transition-colors ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                            Add Recipe
+                        </Link>
                     </div>
                 </div>
 

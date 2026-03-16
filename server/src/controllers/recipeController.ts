@@ -138,10 +138,17 @@ export const createIngredient = async (req: Request, res: Response) => {
 
 export const updateRecipe = async (req: Request, res: Response) => {
   try {
-    const recipeId = req.params.id; // Passed via URL
+    const { id } = req.params; // Passed via URL
+
+    if (typeof id !== 'string') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid recipe ID format'
+      });
+    }
     const { userId, ...recipeData } = req.body;
 
-    const updatedRecipe = await recipeService.updateRecipe(recipeId, userId, recipeData);
+    const updatedRecipe = await recipeService.updateRecipe(id, userId, recipeData);
 
     return res.status(200).json({
         status: 'success',

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
+import FloatingAddButton from '../components/recipes/FloatingAddButton';
 
 const Discovery: React.FC = () => {
     // 1. Data States
@@ -208,6 +209,8 @@ const Discovery: React.FC = () => {
                     onClose={() => setSelectedRecipe(null)}
                 />
             )}
+
+            <FloatingAddButton />
         </div>
     );
 };
