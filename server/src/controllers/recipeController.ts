@@ -136,6 +136,24 @@ export const createIngredient = async (req: Request, res: Response) => {
     }
 };
 
+export const updateRecipe = async (req: Request, res: Response) => {
+  try {
+    const recipeId = req.params.id; // Passed via URL
+    const { userId, ...recipeData } = req.body;
+
+    const updatedRecipe = await recipeService.updateRecipe(recipeId, userId, recipeData);
+
+    return res.status(200).json({
+        status: 'success',
+        data: updatedRecipe,
+        message: 'Recipe updated successfully'
+    });
+  } catch (error: any) {
+    console.error("Error updating recipe:", error);
+    return res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
 export const getRecipeDetail = async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
   const userId = req.query.userId as string;

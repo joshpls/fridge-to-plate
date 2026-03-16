@@ -38,6 +38,7 @@ const AddRecipe = () => {
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         const loadTaxonomy = async () => {
@@ -85,8 +86,8 @@ const AddRecipe = () => {
     const toggleTag = (tagId: string) => {
         setFormData(prev => ({
             ...prev,
-            tagIds: prev.tagIds.includes(tagId) 
-                ? prev.tagIds.filter(id => id !== tagId) 
+            tagIds: prev.tagIds.includes(tagId)
+                ? prev.tagIds.filter(id => id !== tagId)
                 : [...prev.tagIds, tagId]
         }));
     };
@@ -94,11 +95,43 @@ const AddRecipe = () => {
     // --- Ingredient Array Handlers ---
     const handleIngredientChange = (index: number, field: string, value: string) => {
         const newIngredients = [...formData.ingredients];
-        newIngredients[index] = { 
-            ...newIngredients[index], 
-            [field]: field === 'amount' ? (value === '' ? '' : Number(value)) : value 
+        newIngredients[index] = {
+            ...newIngredients[index],
+            [field]: field === 'amount' ? (value === '' ? '' : Number(value)) : value
         };
         setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+
+        // FormData is required for sending files via fetch
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+
+        try {
+            const res = await fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                body: uploadData, // Note: Do NOT set Content-Type header; the browser sets the multipart boundary automatically
+            });
+
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                // Automatically update the main form data with the new URL
+                setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
+            } else {
+                alert('Image upload failed: ' + result.message);
+            }
+        } catch (err) {
+            console.error("Failed to upload image:", err);
+            alert('Failed to connect to upload server.');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const addIngredientRow = () => {
@@ -119,14 +152,13 @@ const AddRecipe = () => {
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault();
         setSaving(true);
-        
+
         try {
             const userId = '00000000-0000-0000-0000-000000000000';
-            
+
             // Clean up empty ingredient rows before sending
             const cleanedData = {
                 ...formData,
-                slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
                 ingredients: formData.ingredients.filter(ing => ing.ingredientId && ing.amount && ing.unitId)
             };
 
@@ -161,8 +193,8 @@ const AddRecipe = () => {
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight">Draft Recipe</h1>
                     <p className="text-gray-500 font-medium">Create a new culinary masterpiece.</p>
                 </div>
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     disabled={saving}
                     className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95 disabled:opacity-50"
                 >
@@ -174,15 +206,60 @@ const AddRecipe = () => {
                 {/* 1. Basic Information */}
                 <section className="bg-gray-50 p-8 rounded-3xl border-2 border-gray-100 space-y-6">
                     <h2 className="text-xl font-black text-gray-800 border-b-2 border-gray-200 pb-2">1. Basics</h2>
-                    
+
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Name *</label>
                         <input required type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Grandma's Lasagna" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none" />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
-                        <input type="url" name="imageUrl" value={formData.imageUrl} onChange={handleChange} placeholder="https://..." className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none text-sm" />
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Image</label>
+
+                        <div className="flex items-center gap-6">
+                            {/* Preview Area */}
+                            <div className="w-32 h-32 shrink-0 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden relative group">
+                                {formData.imageUrl ? (
+                                    <>
+                                        <img src={formData.imageUrl} alt="Recipe Preview" className="w-full h-full object-cover" />
+                                        {/* Hover overlay to let them know they can replace it */}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                            <span className="text-white text-xs font-bold uppercase tracking-widest">Replace</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <span className="text-4xl text-gray-300">📷</span>
+                                )}
+
+                                {/* Loading Overlay */}
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                                        <span className="animate-spin text-2xl">⏳</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Upload Controls */}
+                            <div className="flex-1">
+                                <input
+                                    type="file"
+                                    id="image-upload"
+                                    accept="image/jpeg, image/png, image/webp"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    disabled={isUploading}
+                                />
+                                <label
+                                    htmlFor="image-upload"
+                                    className={`inline-block px-6 py-3 rounded-xl font-bold cursor-pointer transition-all border-2 ${isUploading
+                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 border-gray-200 hover:border-orange-400 hover:text-orange-600 shadow-sm hover:shadow-md'
+                                        }`}
+                                >
+                                    {isUploading ? 'Uploading...' : formData.imageUrl ? 'Choose Different Image' : 'Select Image File'}
+                                </label>
+                                <p className="text-xs font-medium text-gray-400 mt-3">Supports JPG, PNG, or WEBP. Max size 5MB.</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -194,7 +271,7 @@ const AddRecipe = () => {
                 {/* 2. Classification */}
                 <section className="bg-gray-50 p-8 rounded-3xl border-2 border-gray-100 space-y-6">
                     <h2 className="text-xl font-black text-gray-800 border-b-2 border-gray-200 pb-2">2. Classification</h2>
-                    
+
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Category *</label>
@@ -249,33 +326,33 @@ const AddRecipe = () => {
                         <h2 className="text-xl font-black text-gray-800">4. Ingredients *</h2>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{formData.ingredients.length} Items</span>
                     </div>
-                    
+
                     <div className="space-y-3">
                         {formData.ingredients.map((ing, index) => (
                             <div key={index} className="flex gap-3 items-center bg-white p-2 rounded-2xl border-2 border-gray-100 hover:border-orange-200 transition-colors">
-                                <select 
-                                    required 
-                                    value={ing.ingredientId} 
+                                <select
+                                    required
+                                    value={ing.ingredientId}
                                     onChange={(e) => handleIngredientChange(index, 'ingredientId', e.target.value)}
                                     className="flex-1 p-3 bg-transparent outline-none font-bold text-gray-700 cursor-pointer"
                                 >
                                     <option value="" disabled>Select Ingredient...</option>
                                     {taxonomy.ingredients.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                                 </select>
-                                
-                                <input 
-                                    required 
-                                    type="number" 
-                                    step="0.01" 
-                                    placeholder="Qty" 
-                                    value={ing.amount} 
+
+                                <input
+                                    required
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Qty"
+                                    value={ing.amount}
                                     onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
                                     className="w-24 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center"
                                 />
 
-                                <select 
-                                    required 
-                                    value={ing.unitId} 
+                                <select
+                                    required
+                                    value={ing.unitId}
                                     onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
                                     className="w-32 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer"
                                 >
@@ -298,7 +375,7 @@ const AddRecipe = () => {
                 {/* 5. Instructions & Notes */}
                 <section className="bg-gray-50 p-8 rounded-3xl border-2 border-gray-100 space-y-6">
                     <h2 className="text-xl font-black text-gray-800 border-b-2 border-gray-200 pb-2">5. Directions</h2>
-                    
+
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Instructions * <span className="text-gray-400 font-normal">(Separate steps with a new line)</span></label>
                         <textarea required name="instructions" value={formData.instructions} onChange={handleChange} rows={8} className="w-full p-5 rounded-2xl border-2 border-gray-200 focus:border-orange-500 outline-none resize-y leading-relaxed" placeholder="1. Preheat the oven...&#10;2. Mix the dry ingredients..." />
@@ -316,7 +393,7 @@ const AddRecipe = () => {
                         <h2 className="text-xl font-black text-gray-800">6. Core Macros</h2>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Optional</span>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-gray-50 p-4 rounded-2xl">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Calories</label>

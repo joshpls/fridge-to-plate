@@ -1,5 +1,6 @@
 import { prisma } from '../config/db.js';
 import { mapRecipeToDto } from '../utils/helperFunctions.js';
+import { generateUniqueSlug } from '../utils/helperFunctions.js';
 
 // server/src/services/recipeService.ts
 
@@ -30,7 +31,7 @@ export const createRecipe = async (userId: string, data: any) => {
     return await tx.recipe.create({
       data: {
         name: data.name,
-        slug: data.slug,
+        slug: generateUniqueSlug(data.name),
         imageUrl: data.imageUrl || null,
         summary: data.summary || null,
         instructions: data.instructions,
@@ -69,6 +70,61 @@ export const createRecipe = async (userId: string, data: any) => {
     });
   });
 };
+
+export const updateRecipe = async (recipeId: string, userId: string, data: any) => {
+  return await prisma.$transaction(async (tx) => {
+    
+    // 1. Verify ownership
+    const existingRecipe = await tx.recipe.findUnique({ where: { id: recipeId } });
+    if (!existingRecipe || existingRecipe.authorId !== userId) {
+      throw new Error("Unauthorized or Recipe not found.");
+    }
+
+    // 2. We delete existing ingredient mappings first
+    await tx.recipeIngredient.deleteMany({
+      where: { recipeId }
+    });
+
+    // 3. Update the recipe with new data
+    return await tx.recipe.update({
+      where: { id: recipeId },
+      data: {
+        name: data.name,
+        imageUrl: data.imageUrl || null,
+        summary: data.summary || null,
+        instructions: data.instructions,
+        notes: data.notes || null,
+        prepTime: Number(data.prepTime) || 0,
+        cookTime: Number(data.cookTime) || 0,
+        totalTime: (Number(data.prepTime) || 0) + (Number(data.cookTime) || 0),
+        servings: Number(data.servings) || 1,
+        nutrition: data.nutrition || {},
+        
+        category: { connect: { id: data.categoryId } },
+        
+        // Disconnect old subcategory if it was removed, or connect the new one
+        subcategory: data.subcategoryId 
+            ? { connect: { id: data.subcategoryId } }
+            : { disconnect: true },
+
+        // Set tags completely overwrites the old relations with the new array
+        tags: {
+          set: data.tagIds?.map((id: string) => ({ id })) || []
+        },
+
+        // Recreate the ingredients from scratch using the new list
+        ingredients: {
+          create: data.ingredients.map((ing: any) => ({
+            amount: Number(ing.amount),
+            ingredient: { connect: { id: ing.ingredientId } },
+            unit: { connect: { id: ing.unitId } }
+          }))
+        }
+      }
+    });
+  });
+};
+
 const recipeIncludes = (userId: string) => ({
   author: true,
   category: true,

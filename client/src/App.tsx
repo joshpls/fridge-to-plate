@@ -23,6 +23,7 @@ function App() {
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/pantry" element={<Pantry />} />
             <Route path="/recipe/add" element={<AddRecipe />} />
+            <Route path="/edit-recipe/:slug" element={<AddRecipe />} />
             
             {/* Redirect root to discovery */}
             <Route path="/" element={<Navigate to="/discovery" replace />} />

@@ -1,3 +1,26 @@
+export const slugify = (text: string): string => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start
+    .replace(/-+$/, '');            // Trim - from end
+};
+
+/**
+ * Generates a unique slug by appending a short random suffix.
+ * Using a 6-character alphanumeric suffix provides ~2 billion permutations,
+ * making collisions virtually impossible even with thousands of recipes.
+ */
+export const generateUniqueSlug = (name: string): string => {
+  const baseSlug = slugify(name) || 'recipe';
+  const suffix = Math.random().toString(36).substring(2, 8);
+  return `${baseSlug}-${suffix}`;
+};
+
 export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) => {
   if (!recipe) return null;
 
