@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 export interface AuthRequest extends Request {
     user?: {
         id: string;
+        email: string;
         role: string;
     };
 }
@@ -26,7 +27,7 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
 
     try {
         // Verify the token using your secret
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string, role: string };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string, email: string, role: string };
         
         // Attach the decoded user data to the request object
         req.user = decoded;

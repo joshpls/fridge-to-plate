@@ -195,3 +195,31 @@ export const deleteIngredient = async (req: Request, res: Response) => {
         return sendError(res, "Failed to delete ingredient", 500, error);
     }
 };
+
+export const getAllRecipes = async (req: Request, res: Response) => {
+    try {
+        const recipes = await prisma.recipe.findMany({
+            include: {
+                author: { select: { email: true } },
+                category: { select: { name: true } },
+                subcategory: { select: { name: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.status(200).json({ status: 'success', data: recipes });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to fetch recipes' });
+    }
+}
+
+export const deleteRecipe = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.recipe.delete({
+            where: { id: id }
+        });
+        res.status(200).json({ status: 'success', message: 'Recipe deleted' });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to delete recipe' });
+    }
+};

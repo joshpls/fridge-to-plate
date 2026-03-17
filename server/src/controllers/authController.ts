@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import * as authService from '../services/authService.js';
+import type { AuthRequest } from '../middleware/authMiddleware.js';
+import { prisma } from '../config/db.js';
 
 // Helper function to generate tokens
 const generateToken = (userId: string, role: string): string => {
@@ -63,4 +65,18 @@ export const login = async (req: Request, res: Response) => {
     } catch (error: any) {
         return res.status(401).json({ status: 'error', message: error.message }); // 401 Unauthorized
     }
+};
+
+export const getMe = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req?.user?.id as string;
+    // req.user is populated by the requireAuth middleware
+        const user = await prisma.user.findUnique({
+            where: { id: id },
+            select: { id: true, email: true, role: true } // Make sure email is selected!
+        });
+        res.json({ status: 'success', data: user });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
 };

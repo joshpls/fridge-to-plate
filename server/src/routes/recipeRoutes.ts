@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { getMatches, getFavorites, handleToggleFavorite, createRecipe, updateRecipe, getRecipeDetail, getCategories, getTags, getTaxonomy, deleteRecipe} from '../controllers/recipeController.js';
-
-
-// server/src/routes/recipeRoutes.ts
 import express from 'express';
-import * as recipeController from '../controllers/recipeController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
-import { getRecipeBySlug } from '../services/recipeService.js';
+import { getMatches, getFavorites, handleToggleFavorite, createRecipe, updateRecipe, getRecipeDetail, getCategories, getTags, getTaxonomy, deleteRecipe, createComment} from '../controllers/recipeController.js';
+import { prisma } from '../config/db.js';
+
 
 const router = express.Router();
 
@@ -24,8 +20,9 @@ router.get('/:slug', getRecipeDetail);
 router.post('/:slug/favorite', handleToggleFavorite);
 
 // PROTECTED ROUTES (Requires Login)
-// Notice how we inject `requireAuth` before the controller function
-router.post('/', requireAuth, recipeController.createRecipe);
+router.post('/', requireAuth, createRecipe);
+
+router.post('/:id/comments', requireAuth, createComment);
 
 // ADMIN ONLY ROUTES
 router.delete('/:id', requireAuth, requireAdmin, deleteRecipe);

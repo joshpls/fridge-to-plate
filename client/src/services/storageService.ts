@@ -58,6 +58,16 @@ export const storageService = {
             storageService.shopping.save(updatedList);
         },
 
+        toggleBought: (ingredientId: string) => {
+            const list = storageService.shopping.get();
+            const updatedList = list.map(item => 
+                item.ingredientId === ingredientId 
+                    ? { ...item, bought: !item.bought } 
+                    : item
+            );
+            storageService.shopping.save(updatedList);
+        },
+
         removeItem: (ingredientId: string) => {
             const list = storageService.shopping.get().filter(i => i.ingredientId !== ingredientId);
             storageService.shopping.save(list);

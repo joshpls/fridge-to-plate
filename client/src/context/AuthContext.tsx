@@ -22,43 +22,60 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true); // Prevents flickers on page reload
+    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [loading, setLoading] = useState(true);
 
-    // On initial load, check if we have a saved session
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const verifySession = async () => {
+            if (!token) {
+                setLoading(false);
+                return;
+            }
 
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
-    }, []);
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-    const login = (newToken: string, userData: User) => {
-        setToken(newToken);
-        setUser(userData);
-        localStorage.setItem('token', newToken);
+                if (response.ok) {
+                    const result = await response.json();
+                    setUser(result.data); // Set the real user data from DB
+                } else {
+                    // Token is invalid/expired
+                    logout();
+                }
+            } catch (err) {
+                console.error("Session verification failed", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        verifySession();
+    }, [token]);
+
+    const login = (userToken: string, userData: User) => {
+        localStorage.setItem('token', userToken);
         localStorage.setItem('user', JSON.stringify(userData));
+        setToken(userToken);
+        setUser(userData);
     };
 
     const logout = () => {
-        setToken(null);
-        setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
     };
 
     return (
         <AuthContext.Provider value={{ 
             user, 
             token, 
-            isAuthenticated: !!user, 
-            isAdmin: user?.role === 'ADMIN',
             login, 
-            logout,
+            logout, 
+            isAuthenticated: !!user,
+            isAdmin: user?.role === 'ADMIN',
             loading 
         }}>
             {!loading && children}

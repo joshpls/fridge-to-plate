@@ -276,3 +276,27 @@ export const getFavorites = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const createComment = async (req: Request, res: Response) => {
+      try {
+        const { content, rating, userId } = req.body;
+        const recipeId = req.params.id as string;
+
+        const newComment = await prisma.comment.create({
+            data: { 
+                content, 
+                rating: rating ? Number(rating) : null, 
+                userId, 
+                recipeId 
+            },
+            include: { 
+                user: { select: { email: true } } 
+            }
+        });
+
+        res.status(201).json({ status: 'success', data: newComment });
+    } catch (error) {
+        console.error("Comment Post Error:", error);
+        res.status(500).json({ status: 'error', message: "Failed to post comment" });
+    }
+}

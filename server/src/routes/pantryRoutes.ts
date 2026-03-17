@@ -1,12 +1,14 @@
-// src/routes/pantryRoutes.ts
-import { Router } from 'express';
-import { getIngredients, savePantry, getPantry, bulkAddToPantry } from '../controllers/pantryController.js';
+// server/src/routes/pantryRoutes.ts
+import express from 'express';
+import { requireAuth } from '../middleware/authMiddleware.js';
+import { getPantry, savePantry, bulkAddToPantry } from '../controllers/pantryController.js';
 
-const router = Router();
+const router = express.Router();
 
-router.get('/ingredients', getIngredients);
-router.get('/pantry', getPantry);
-router.post('/pantry', savePantry);
-router.post('/pantry/bulk-add', bulkAddToPantry);
+router.use(requireAuth); // Apply to all routes in this file
+
+router.get('/', getPantry);
+router.post('/', savePantry); // Replaces the whole pantry
+router.post('/bulk', bulkAddToPantry); // Appends to the pantry
 
 export default router;

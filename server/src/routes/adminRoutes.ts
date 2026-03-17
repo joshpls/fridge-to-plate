@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, updateIngredient, deleteIngredient } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { createIngredient } from '../controllers/recipeController.js';
 
@@ -16,6 +16,10 @@ router.get('/stats', getSystemStats);
 // User Management
 router.get('/users', getAllUsers);
 
+// Recipe Management
+router.get('/recipes', requireAuth, requireAdmin, getAllRecipes);
+router.delete('/recipes/:id', requireAuth, requireAdmin, deleteRecipe);
+
 // Categories & Subcategories
 router.post('/categories', requireAuth, requireAdmin, createCategory);
 router.put('/categories/:id', updateCategory);
@@ -25,7 +29,7 @@ router.post('/categories/:categoryId/subcategories', requireAuth, requireAdmin, 
 router.put('/subcategories/:id', updateSubcategory);
 router.delete('/subcategories/:id', deleteSubcategory);
 
-// Ingredients
+// Ingredient Management
 router.post('/ingredients', createIngredient);
 router.put('/ingredients/:id', updateIngredient);
 router.delete('/ingredients/:id', deleteIngredient);

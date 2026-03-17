@@ -3,70 +3,90 @@ import { useEffect, useState } from 'react';
 import { storageService, type ShoppingListItem } from '../services/storageService';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { X } from 'lucide-react'; // Assuming you have lucide-react installed
 
 const ShoppingList = () => {
     const [items, setItems] = useState<ShoppingListItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
-    const userId = user?.id;
+    const [isSyncing, setIsSyncing] = useState(false);
+    
+    // Grab the token from AuthContext to secure the API call
+    const { token } = useAuth();
 
-    // Load from Local Storage instead of API
     const loadLocalList = () => {
         setItems(storageService.shopping.get());
-        setLoading(false);
     };
 
     useEffect(() => {
         loadLocalList();
-        // Listen for updates from other components (like RecipeCard)
         window.addEventListener('shoppingListUpdated', loadLocalList);
         return () => window.removeEventListener('shoppingListUpdated', loadLocalList);
     }, []);
 
-    const toggleItem = (ingredientId: string) => {
+    const handleToggleBought = (ingredientId: string) => {
+        storageService.shopping.toggleBought(ingredientId);
+    };
+
+    const handleRemoveItem = (e: React.MouseEvent, ingredientId: string) => {
+        e.stopPropagation(); // Prevent the toggle from firing when clicking remove
         storageService.shopping.removeItem(ingredientId);
-        toast.success("Item removed from list");
+        toast.success("Item removed");
     };
 
     const handleClearList = () => {
-        storageService.shopping.clear();
-        toast.success("List Cleared");
-    };
-
-    const buyAll = async () => {
-        const list = storageService.shopping.get();
-        const ingredientIds = list.map(item => item.ingredientId);
-
-        try {
-            const res = await fetch(`http://localhost:5000/api/pantry/bulk-add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, ingredientIds })
-            });
-
-            if (res.ok) {
-                storageService.shopping.clear();
-                window.dispatchEvent(new Event('pantryUpdated'));
-                toast.success("Pantry updated! 🛒");
-            }
-        } catch (err) {
-            toast.error("Failed to update pantry");
+        if (window.confirm("Are you sure you want to clear your list?")) {
+            storageService.shopping.clear();
+            toast.success("List Cleared");
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-gray-500">Loading your list...</div>;
+    const buyAll = async () => {
+        if (!token) {
+            toast.error("You must be logged in to update your pantry.");
+            return;
+        }
+
+        const list = storageService.shopping.get();
+        // Optional: Only stock items that are marked as "bought"
+        // const boughtItems = list.filter(item => item.bought);
+        // const ingredientIds = boughtItems.map(item => item.ingredientId);
+        
+        const ingredientIds = list.map(item => item.ingredientId);
+
+        setIsSyncing(true);
+        try {
+            const res = await fetch(`http://localhost:5000/api/pantry/bulk`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Added the missing auth header!
+                },
+                body: JSON.stringify({ ingredientIds })
+            });
+
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                toast.success("Pantry successfully stocked!");
+                storageService.shopping.clear(); // Empty the cart on success
+            } else {
+                toast.error(result.message || "Failed to stock pantry");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Network error while syncing to pantry");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     return (
-        <div className="max-w-2xl mx-auto p-6">
-            <header className="flex justify-between items-end mb-8 border-b border-gray-100 pb-6">
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900">Groceries</h1>
-                    <p className="text-gray-500 text-sm mt-1">Items stored locally for offline access.</p>
-                </div>
+        <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24">
+            <header className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Shopping List</h1>
                 {items.length > 0 && (
-                    <button
+                    <button 
                         onClick={handleClearList}
-                        className="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl font-bold text-xs uppercase hover:bg-red-50 hover:text-red-600 transition-all"
+                        className="text-sm font-bold text-gray-400 hover:text-red-500 transition-colors"
                     >
                         Clear All
                     </button>
@@ -75,33 +95,55 @@ const ShoppingList = () => {
 
             {items.length === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400">Your list is empty!</p>
+                    <span className="text-4xl mb-3 block">🛒</span>
+                    <p className="text-gray-400 font-medium">Your cart is empty.</p>
+                    <p className="text-sm text-gray-400 mt-2">Find a recipe and tap "Add Missing" to start shopping!</p>
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {items.map((item) => (
-                        <div
+                    {items.map(item => (
+                        <div 
                             key={item.ingredientId}
-                            onClick={() => toggleItem(item.ingredientId)}
-                            className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-orange-200 cursor-pointer transition-all"
+                            onClick={() => handleToggleBought(item.ingredientId)}
+                            className={`flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm cursor-pointer transition-all ${
+                                item.bought ? 'border-gray-100 opacity-50 bg-gray-50' : 'border-gray-200 hover:border-orange-300'
+                            }`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-6 h-6 rounded-full border-2 border-orange-200 hover:bg-orange-100" />
-                                <div>
+                                {/* Visual Checkbox */}
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                    item.bought ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                                }`}>
+                                    {item.bought && <span className="text-white text-xs font-bold">✓</span>}
+                                </div>
+                                
+                                <div className={item.bought ? 'line-through text-gray-400' : ''}>
                                     <p className="font-bold text-gray-800">{item.name}</p>
                                     <p className="text-xs text-gray-500">{item.amount}</p>
                                 </div>
                             </div>
-                            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Remove</span>
+
+                            {/* Delete Button */}
+                            <button 
+                                onClick={(e) => handleRemoveItem(e, item.ingredientId)}
+                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
                     ))}
 
                     <div className="mt-10 pt-6">
                         <button
                             onClick={buyAll}
-                            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-orange-600 transition-all shadow-xl active:scale-95"
+                            disabled={isSyncing}
+                            className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-xl active:scale-95 ${
+                                isSyncing 
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                    : 'bg-gray-900 text-white hover:bg-orange-600'
+                            }`}
                         >
-                            Buy All & Stock Pantry
+                            {isSyncing ? 'Stocking Fridge...' : 'Buy All & Stock Pantry'}
                         </button>
                     </div>
                 </div>

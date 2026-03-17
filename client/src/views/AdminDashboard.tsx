@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { CategoriesTab } from '../components/admin/CategoriesTab';
 import { IngredientsTab } from '../components/admin/IngredientsTab';
+import { RecipesTab } from '../components/admin/RecipesTab';
+import { UsersTab } from '../components/admin/UsersTab';
 
 const AdminDashboard = () => {
     const { token } = useAuth();
@@ -98,59 +100,9 @@ const AdminDashboard = () => {
                         <p className="text-gray-500 max-w-md mx-auto font-medium">Select a tab above to manage your application data, monitor users, or update the recipe taxonomy.</p>
                     </div>
                 )}
-                {/* User Management Tab */}
-                {activeTab === 'users' && (
-                    <div className="animate-in fade-in">
-                        <div className="flex justify-between items-end mb-6">
-                            <div>
-                                <h2 className="text-2xl font-black text-gray-900">User Directory</h2>
-                                <p className="text-gray-500 font-medium text-sm">Manage access levels and community members.</p>
-                            </div>
-                        </div>
 
-                        {loadingUsers ? (
-                            <div className="py-10 text-center text-gray-400 font-bold">Loading users...</div>
-                        ) : (
-                            <div className="bg-white rounded-2xl border-2 border-gray-100 overflow-hidden">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-50 border-b-2 border-gray-100">
-                                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Email Address</th>
-                                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Joined Date</th>
-                                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Role</th>
-                                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {users.map(u => (
-                                            <tr key={u.id} className="hover:bg-orange-50/30 transition-colors group">
-                                                <td className="p-4 font-bold text-gray-900">{u.email}</td>
-                                                <td className="p-4 font-medium text-gray-500 text-sm">
-                                                    {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${u.role === 'ADMIN' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'
-                                                        }`}>
-                                                        {u.role}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button 
-                                                        className="px-3 py-1 text-[10px] font-black text-orange-500 hover:text-orange-700"
-                                                        onClick={() => handleToggleRole(u.id)}
-                                                    >
-                                                        Toggle Role
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                )}
-
+                {activeTab === 'users' && <UsersTab />}
+                {activeTab === 'recipes' && <RecipesTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'ingredients' && <IngredientsTab />}
             </main>

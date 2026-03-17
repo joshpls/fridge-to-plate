@@ -11,13 +11,17 @@ export const Navigation = () => {
     const [shoppingCount, setShoppingCount] = useState(0);
     
     // 1. Hook into the Auth Context
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
+    const { user, isAuthenticated, isAdmin, logout, token } = useAuth();
 
     const fetchAllCounts = async () => {
         try {
             // 2. Only fetch pantry count from DB if a user is logged in
             if (isAuthenticated && user?.id) {
-                const pantryRes = await fetch(`http://localhost:5000/api/pantry?userId=${user.id}`);
+                const pantryRes = await fetch(`http://localhost:5000/api/pantry?userId=${user.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const pResult = await pantryRes.json();
                 if (pResult.status === 'success') setPantryCount(pResult.data.length);
             } else {
@@ -110,13 +114,13 @@ export const Navigation = () => {
                     }
 
                     {/* 5. Authentication UI Toggle */}
-                    <div className="h-8 w-[1px] bg-gray-100" />
+                    <div className="h-8 w-px bg-gray-100" />
 
                     {isAuthenticated ? (
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
                                 <span className="text-xs font-black text-gray-900 leading-none">
-                                    {user?.email.split('@')[0]}
+                                    {user?.email ? user.email.split('@')[0] : 'Guest'}
                                 </span>
                                 {isAdmin && (
                                     <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter">

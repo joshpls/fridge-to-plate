@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+// src/pages/Pantry.tsx
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Search, Plus, X, Refrigerator } from 'lucide-react';
-import { refreshPantryCount } from '../utils/events'; // Importing your new utility
+import { refreshPantryCount } from '../utils/events';
+import { taxonomyService } from '../services/taxonomyService';
+import { useAuth } from '../context/AuthContext';
 
 interface Ingredient {
     id: string;
@@ -12,44 +14,89 @@ interface Ingredient {
 
 const Pantry = () => {
     const navigate = useNavigate();
-    const [allIngredients, setAllIngredients] = useState<any[]>([]);
+    const { token, isAuthenticated } = useAuth();
+    
+    const [allIngredients, setAllIngredients] = useState<Ingredient[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [myPantry, setMyPantry] = useState<Ingredient[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
 
-    // 1. Fetch Data
+    // Use a ref to prevent auto-saving on the very first render
+    const initialLoadDone = useRef(false);
+
+    // 1. Fetch Data (Cached Ingredients + Live Pantry)
     useEffect(() => {
-        const controller = new AbortController();
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
 
         const loadInitialData = async () => {
             try {
                 setLoading(true);
 
-                const [ingredientsRes, pantryRes] = await Promise.all([
-                    axios.get('/api/ingredients', { signal: controller.signal }),
-                    axios.get('/api/pantry', { signal: controller.signal })
-                ]);
+                // Instantly grab all ingredients from cache/API
+                const taxonomy = await taxonomyService.getTaxonomy();
+                if (taxonomy) {
+                    setAllIngredients(taxonomy.ingredients);
+                }
 
-                setAllIngredients(ingredientsRes.data.data || []);
-                setMyPantry(pantryRes.data.data || []);
-
-            } catch (err: any) {
-                if (axios.isCancel(err)) return;
+                // Fetch user's actual pantry
+                const pantryRes = await fetch('http://localhost:5000/api/pantry', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const pantryResult = await pantryRes.json();
+                
+                if (pantryResult.status === 'success') {
+                    setMyPantry(pantryResult.data || []);
+                }
+            } catch (err) {
                 console.error("Initialization failed:", err);
             } finally {
                 setLoading(false);
+                // Mark initial load as done so we can start watching for auto-saves
+                setTimeout(() => { initialLoadDone.current = true; }, 500);
             }
         };
 
         loadInitialData();
+    }, [isAuthenticated, token, navigate]);
 
-        return () => controller.abort();
-    }, []);
+    // 2. Auto-Save Logic
+    // Whenever myPantry changes (after initial load), sync it to the database silently
+    useEffect(() => {
+        if (!initialLoadDone.current) return;
 
-    // 2. Filter results based on search input
+        const syncPantry = async () => {
+            setIsSyncing(true);
+            try {
+                const ingredientIds = myPantry.map(ing => ing.id);
+                await fetch('http://localhost:5000/api/pantry', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ ingredientIds })
+                });
+                refreshPantryCount();
+            } catch (err) {
+                console.error("Failed to sync pantry:", err);
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        // Debounce the save slightly so rapid clicking doesn't spam the API
+        const timer = setTimeout(syncPantry, 800);
+        return () => clearTimeout(timer);
+    }, [myPantry, token]);
+
+    // 3. Handlers
     const filteredResults = allIngredients.filter(ing =>
         ing.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !myPantry.find(p => p.id === ing.id)
+        !myPantry.some(p => p.id === ing.id)
     );
 
     const addToPantry = (ing: Ingredient) => {
@@ -61,39 +108,32 @@ const Pantry = () => {
         setMyPantry(myPantry.filter(ing => ing.id !== id));
     };
 
-    const savePantryToDb = async () => {
-        try {
-            const ingredientIds = myPantry.map(ing => ing.id);
-            await axios.post('http://localhost:5000/api/pantry', { ingredientIds });
-
-            refreshPantryCount();
-
-            alert("Pantry synced successfully!");
-        } catch (err) {
-            console.error("Failed to sync pantry:", err);
-        }
-    };
-
     const handleFindRecipes = () => {
-        // Navigate to discovery and pass a state flag
         navigate('/discovery', { state: { filterByPantry: true } });
     };
 
+    if (loading) return <div className="p-20 text-center font-bold text-gray-400">Loading your fridge...</div>;
+
     return (
-        <div className="max-w-2xl mx-auto p-6 space-y-8">
-            <header className="flex items-center gap-3 border-b pb-4">
-                <Refrigerator className="text-emerald-600" size={32} />
-                <h1 className="text-2xl font-bold text-gray-800">My Virtual Fridge</h1>
+        <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24">
+            <header className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-3">
+                    <Refrigerator className="text-orange-500" size={32} />
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Virtual Fridge</h1>
+                </div>
+                <div className="text-sm font-bold text-gray-400">
+                    {isSyncing ? 'Syncing...' : 'All changes saved ✓'}
+                </div>
             </header>
 
             {/* Search Input */}
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="text-gray-900" size={20} />
+            <div className="relative z-20">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="text-gray-400" size={20} />
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-100 rounded-2xl leading-5 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-0 focus:border-orange-500 transition-colors text-lg font-medium shadow-sm"
                     placeholder="Search for eggs, spinach, pasta..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -101,17 +141,17 @@ const Pantry = () => {
 
                 {/* Autocomplete Dropdown */}
                 {searchTerm && filteredResults.length > 0 && (
-                    <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 shadow-xl max-h-60 rounded-xl py-2 overflow-auto focus:outline-none sm:text-sm">
-                        {filteredResults.slice(0, 5).map((ing) => (
+                    <ul className="absolute mt-2 w-full bg-white border border-gray-100 shadow-2xl max-h-72 rounded-2xl py-2 overflow-auto focus:outline-none">
+                        {filteredResults.slice(0, 10).map((ing) => (
                             <li
                                 key={ing.id}
                                 onClick={() => addToPantry(ing)}
-                                className="cursor-pointer select-none relative py-3 px-4 hover:bg-emerald-50 flex justify-between items-center transition-colors group"
+                                className="cursor-pointer select-none relative py-3 px-5 hover:bg-orange-50 flex justify-between items-center transition-colors group border-b border-gray-50 last:border-0"
                             >
-                                <span className="text-gray-900 font-medium group-hover:text-emerald-900">
+                                <span className="text-gray-700 font-bold group-hover:text-orange-700">
                                     {ing.name}
                                 </span>
-                                <Plus size={16} className="text-emerald-500" />
+                                <Plus size={18} className="text-gray-300 group-hover:text-orange-500" />
                             </li>
                         ))}
                     </ul>
@@ -119,23 +159,28 @@ const Pantry = () => {
             </div>
 
             {/* Current Pantry Display */}
-            <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                    Currently in Stock ({myPantry.length})
+            <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex justify-between items-center">
+                    <span>Currently in Stock</span>
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{myPantry.length} items</span>
                 </h2>
-                <div className="flex flex-wrap gap-2">
+                
+                <div className="flex flex-wrap gap-2.5">
                     {myPantry.length === 0 ? (
-                        <p className="text-gray-400 italic">Your fridge is empty. Start adding ingredients!</p>
+                        <div className="text-center w-full py-10">
+                            <span className="text-4xl mb-3 block">🧊</span>
+                            <p className="text-gray-400 font-medium">Your fridge is empty. Start typing above to add ingredients!</p>
+                        </div>
                     ) : (
                         myPantry.map((ing) => (
                             <span
                                 key={ing.id}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 font-medium text-sm animate-in fade-in zoom-in duration-200"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 text-orange-900 border border-orange-100 font-bold text-sm animate-in fade-in zoom-in duration-200 group"
                             >
                                 {ing.name}
                                 <button
                                     onClick={() => removeFromPantry(ing.id)}
-                                    className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors"
+                                    className="bg-orange-100/50 hover:bg-orange-200 text-orange-600 rounded-full p-0.5 transition-colors"
                                 >
                                     <X size={14} />
                                 </button>
@@ -147,18 +192,12 @@ const Pantry = () => {
 
             {/* Action Buttons */}
             {myPantry.length > 0 && (
-                <div className="flex gap-4">
-                    <button
-                        onClick={savePantryToDb}
-                        className="flex-1 bg-white border-2 border-emerald-600 text-emerald-600 font-bold py-3 px-4 rounded-xl hover:bg-emerald-50 transition-colors"
-                    >
-                        Save Pantry
-                    </button>
+                <div className="pt-4">
                     <button
                         onClick={handleFindRecipes}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform active:scale-95"
+                        className="w-full bg-gray-900 hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all active:scale-[0.98] uppercase tracking-widest"
                     >
-                        Find Recipes
+                        Find Recipes I Can Make
                     </button>
                 </div>
             )}

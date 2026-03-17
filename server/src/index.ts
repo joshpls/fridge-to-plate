@@ -5,6 +5,7 @@ import { pool } from './config/db.js';
 import pantryRoutes from './routes/pantryRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import recipeRoutes from './routes/recipeRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -17,11 +18,12 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api', pantryRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/pantry', pantryRoutes);
 app.use('/api/recipes', recipeRoutes);
+app.use('/api/comments', commentRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 app.use('/api/upload', uploadRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use(errorHandler);
 
