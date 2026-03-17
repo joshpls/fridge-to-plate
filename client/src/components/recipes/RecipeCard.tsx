@@ -10,7 +10,7 @@ interface RecipeCardProps {
 
 export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, token } = useAuth();
     const userId = user?.id;
 
     const missingIngredients = recipe.ingredients?.filter((ing: any) => !ing.inPantry && !ing.isStaple) || [];
@@ -30,7 +30,7 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
         try {
             const response = await fetch(`http://localhost:5000/api/recipes/${recipe.slug}/favorite`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ userId })
             });
             if (response.ok) setIsFavorite(!isFavorite);

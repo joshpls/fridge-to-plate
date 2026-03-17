@@ -180,7 +180,11 @@ export const getMatches = async (
   const [recipes, totalCount, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
       where: finalWhere,
-      include: recipeIncludes(userId), // CRITICAL: This was commented out before!
+      include: userId ? recipeIncludes(userId) : { 
+          category: true, 
+          tags: true, 
+          ingredients: { include: { ingredient: true, unit: true } } 
+      },
       skip,
       take,
       orderBy: { name: filters?.sort === 'desc' ? 'desc' : 'asc' } // Default Ascending
@@ -289,4 +293,18 @@ export const toggleRecipeFavorite = async (userId: string, recipeSlug: string) =
     });
     return { favorited: true };
   }
+};
+
+export const getAuthoredRecipes = async (userId: string) => {
+  const [recipes, pantryEntries] = await Promise.all([
+    prisma.recipe.findMany({
+      where: { authorId: userId },
+      include: recipeIncludes(userId),
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.pantryItem.findMany({ where: { userId } })
+  ]);
+
+  const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
+  return recipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds));
 };

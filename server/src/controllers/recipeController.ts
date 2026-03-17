@@ -300,3 +300,13 @@ export const createComment = async (req: Request, res: Response) => {
         res.status(500).json({ status: 'error', message: "Failed to post comment" });
     }
 }
+
+export const getAuthoredRecipes = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        const recipes = await recipeService.getAuthoredRecipes(userId);
+        res.status(200).json({ status: 'success', data: recipes });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to fetch authored recipes' });
+    }
+};

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { storageService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
+import { getDisplayName } from '../utils/userUtils';
 
 export const Navigation = () => {
     const location = useLocation();
@@ -73,7 +74,7 @@ export const Navigation = () => {
                         {isAuthenticated && (
                             <>
                                 <Link to="/favorites" className={`text-sm font-bold transition-colors ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
-                                    Favorites
+                                    My Cookbook
                                 </Link>
                                 <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
                                     Pantry
@@ -120,7 +121,7 @@ export const Navigation = () => {
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
                                 <span className="text-xs font-black text-gray-900 leading-none">
-                                    {user?.email ? user.email.split('@')[0] : 'Guest'}
+                                    {getDisplayName(user)}
                                 </span>
                                 {isAdmin && (
                                     <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter">
