@@ -7,21 +7,35 @@ import type { AuthRequest } from '../middleware/authMiddleware.js';
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
-    // 1. Extract the authenticated userId from the request object
-    // This is populated by your authMiddleware (likely req.user.id)
     const userId = (req as any).user?.id;
 
     // if (!userId) {
     //   return sendError(res, "Authentication required", 401);
     // }
 
-    // 2. Extract filters and pagination from the URL query
-    const { categoryId, search, tags, page, limit } = req.query;
+    // Extract all the new filters from the URL query
+    const { 
+      categoryId, 
+      subcategoryId, 
+      search, 
+      tags, 
+      includeIngredients, 
+      excludeIngredients, 
+      favoritesOnly, 
+      sort, 
+      page, 
+      limit 
+    } = req.query;
     
     const filters = {
       categoryId: categoryId as string,
+      subcategoryId: subcategoryId as string,
       search: search as string,
       tags: tags as string,
+      includeIngredients: includeIngredients as string,
+      excludeIngredients: excludeIngredients as string,
+      favoritesOnly: favoritesOnly as string,
+      sort: sort as 'asc' | 'desc',
     };
     
     const pagination = {

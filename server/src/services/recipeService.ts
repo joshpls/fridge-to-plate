@@ -124,40 +124,75 @@ const recipeIncludes = (userId: string) => ({
 
 export const getMatches = async (
   userId: string, 
-  filters?: { categoryId?: string, search?: string, tags?: string },
+  filters?: { 
+    categoryId?: string; 
+    subcategoryId?: string;
+    search?: string; 
+    tags?: string;
+    includeIngredients?: string; // comma-separated ingredient IDs
+    excludeIngredients?: string; // comma-separated ingredient IDs
+    favoritesOnly?: string;      // 'true' or 'false'
+    sort?: 'asc' | 'desc';
+  },
   pagination?: { page: number, limit: number }
 ) => {
   const tagIds = filters?.tags ? filters.tags.split(',') : [];
+  const includeIngIds = filters?.includeIngredients ? filters.includeIngredients.split(',') : [];
+  const excludeIngIds = filters?.excludeIngredients ? filters.excludeIngredients.split(',') : [];
+  
   const skip = pagination ? (pagination.page - 1) * pagination.limit : 0;
   const take = pagination?.limit || 12;
 
+  // Build the dynamic WHERE clause
+  const whereClause: any = { AND: [] };
+
+  if (filters?.categoryId) whereClause.AND.push({ categoryId: filters.categoryId });
+  if (filters?.subcategoryId) whereClause.AND.push({ subcategoryId: filters.subcategoryId });
+  if (filters?.search) whereClause.AND.push({ name: { contains: filters.search, mode: 'insensitive' } });
+  if (filters?.favoritesOnly === 'true') whereClause.AND.push({ favorites: { some: { userId } } });
+
+  // 1. Tags (AND logic - must have ALL selected tags)
+  if (tagIds.length > 0) {
+    tagIds.forEach(tagId => {
+      whereClause.AND.push({ tags: { some: { id: tagId } } });
+    });
+  }
+
+  // 2. Include Ingredients (must have ALL these ingredients)
+  if (includeIngIds.length > 0) {
+    includeIngIds.forEach(ingId => {
+      whereClause.AND.push({ ingredients: { some: { ingredientId: ingId } } });
+    });
+  }
+
+  // 3. Exclude Ingredients (must NOT have ANY of these ingredients)
+  if (excludeIngIds.length > 0) {
+    whereClause.AND.push({
+      NOT: {
+        ingredients: { some: { ingredientId: { in: excludeIngIds } } }
+      }
+    });
+  }
+
+  // If no filters were applied, remove the empty AND array to prevent Prisma errors
+  const finalWhere = whereClause.AND.length > 0 ? whereClause : {};
+
   const [recipes, totalCount, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
-      where: {
-        AND: [
-          filters?.categoryId ? { categoryId: filters.categoryId } : {},
-          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
-          tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
-        ]
-      },
-      // include: recipeIncludes(userId),
+      where: finalWhere,
+      include: recipeIncludes(userId), // CRITICAL: This was commented out before!
       skip,
       take,
-      orderBy: { name: 'asc' }
+      orderBy: { name: filters?.sort === 'desc' ? 'desc' : 'asc' } // Default Ascending
     }),
     prisma.recipe.count({
-      where: {
-        AND: [
-          filters?.categoryId ? { categoryId: filters.categoryId } : {},
-          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' } } : {},
-          tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
-        ]
-      }
+      where: finalWhere
     }),
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
 
   const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
+  
   return {
     recipes: recipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds)),
     totalCount,

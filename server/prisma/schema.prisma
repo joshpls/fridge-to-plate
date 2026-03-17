@@ -127,6 +127,7 @@ model Favorite {
 model Comment {
   id        String   @id @default(uuid())
   content   String
+  rating    Int? // Optional 1-5 star rating
   userId    String
   recipeId  String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
