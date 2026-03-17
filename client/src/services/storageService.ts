@@ -5,12 +5,22 @@ export interface ShoppingListItem {
     bought: boolean;
 }
 
+export interface Subcategory {
+    id: string;
+    name: string;
+}
+
+export interface Category {
+    id: string;
+    name: string;
+    subcategories: Subcategory[];
+}
+
 export interface TaxonomyData {
-    categories: any[];
-    subcategories: any[];
+    categories: Category[];
     tags: any[];
     units: any[];
-    ingredients: any[]; // Cached ingredients so the form dropdown is instant
+    ingredients: any[];
 }
 
 // Keys for our storage domains
@@ -80,6 +90,7 @@ export const storageService = {
 
         getTaxonomy: () => storageService.cache.get<TaxonomyData>(KEYS.TAXONOMY),
         setTaxonomy: (data: TaxonomyData) => storageService.cache.set(KEYS.TAXONOMY, data),
+        clearTaxonomy: () => sessionStorage.removeItem(KEYS.TAXONOMY),
 
         clearAll: () => sessionStorage.clear()
     }

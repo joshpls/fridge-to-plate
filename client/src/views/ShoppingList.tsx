@@ -2,11 +2,13 @@
 import { useEffect, useState } from 'react';
 import { storageService, type ShoppingListItem } from '../services/storageService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const ShoppingList = () => {
     const [items, setItems] = useState<ShoppingListItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const userId = '00000000-0000-0000-0000-000000000000';
+    const { user } = useAuth();
+    const userId = user?.id;
 
     // Load from Local Storage instead of API
     const loadLocalList = () => {

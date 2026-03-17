@@ -3,8 +3,14 @@ import { useInView } from 'react-intersection-observer';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
 import FloatingAddButton from '../components/recipes/FloatingAddButton';
+import { useAuth } from '../context/AuthContext';
+import { taxonomyService } from '../services/taxonomyService';
 
 const Discovery: React.FC = () => {
+    // Authentication
+    const { user, token } = useAuth();
+    const userId = user?.id as string;
+    
     // 1. Data States
     const [recipes, setRecipes] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
@@ -28,8 +34,6 @@ const Discovery: React.FC = () => {
     // Intersection Observer to detect when user scrolls to the bottom
     const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 });
 
-    const userId = '00000000-0000-0000-0000-000000000000';
-
     // 4. Core Fetch Function
     const fetchRecipes = useCallback(async () => {
         // Only block if a request is already active (loadingMore) 
@@ -39,8 +43,8 @@ const Discovery: React.FC = () => {
         page === 1 ? setLoading(true) : setLoadingMore(true);
 
         try {
-            const params = new URLSearchParams({ 
-                userId, 
+            const params = new URLSearchParams({
+                userId,
                 page: page.toString(), 
                 limit: '12' 
             });
@@ -49,7 +53,11 @@ const Discovery: React.FC = () => {
             if (searchQuery.trim()) params.append('search', searchQuery.trim());
             if (selectedTags.length > 0) params.append('tags', selectedTags.join(','));
 
-            const response = await fetch(`http://localhost:5000/api/recipes/matches?${params.toString()}`);
+            const response = await fetch(`http://localhost:5000/api/recipes/matches?${params.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const result = await response.json();
 
             if (result.status === 'success') {
@@ -70,21 +78,15 @@ const Discovery: React.FC = () => {
     // 5. Initial Taxonomy Load (Categories & Tags)
     useEffect(() => {
         const fetchTaxonomy = async () => {
-            try {
-                const [catRes, tagRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/recipes/categories'),
-                    fetch('http://localhost:5000/api/recipes/tags')
-                ]);
-                const cResult = await catRes.json();
-                const tResult = await tagRes.json();
-                if (cResult.status === 'success') setCategories(cResult.data);
-                if (tResult.status === 'success') setAvailableTags(tResult.data);
-            } catch (err) {
-                console.error("Failed to load taxonomy", err);
+            const taxonomy = await taxonomyService.getTaxonomy(true);
+            if (taxonomy) {
+                setCategories(taxonomy.categories);
+                setAvailableTags(taxonomy.tags);
             }
-        };
+        }
         fetchTaxonomy();
     }, []);
+
 
     // 6. Reset Watcher: Reset to page 1 whenever any filter changes
     useEffect(() => {

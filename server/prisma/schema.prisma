@@ -1,7 +1,6 @@
 // server/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
-  // url is now handled via prisma.config.ts in Prisma 7
 }
 
 generator client {
@@ -17,6 +16,8 @@ model User {
   favorites      Favorite[]
   comments       Comment[]
   createdRecipes Recipe[]     @relation("UserRecipes")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 }
 
 model Ingredient {
@@ -31,7 +32,7 @@ model PantryItem {
   id           String     @id @default(uuid())
   userId       String
   ingredientId String
-  user         User       @relation(fields: [userId], references: [id])
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @default(now()) @updatedAt
@@ -40,52 +41,52 @@ model PantryItem {
 }
 
 model Recipe {
-  id           String   @id @default(uuid()) 
+  id           String  @id @default(uuid())
   name         String
-  slug         String   @unique
-  summary      String?  @db.Text              // NEW: Short description
-  instructions String   @db.Text 
-  imageUrl     String? 
-  
-  prepTime     Int?     
-  cookTime     Int?
-  totalTime    Int?     
-  servings     Int      @default(1)
+  slug         String  @unique
+  summary      String? @db.Text // NEW: Short description
+  instructions String  @db.Text
+  imageUrl     String?
 
-  notes        String?  @db.Text              // Optional chef notes
-  nutrition    Json?    // e.g., { "calories": 500, "protein": "25g", "fat": "15g" }
+  prepTime  Int?
+  cookTime  Int?
+  totalTime Int?
+  servings  Int  @default(1)
 
-  authorId     String
-  author       User     @relation("UserRecipes", fields: [authorId], references: [id])
+  notes     String? @db.Text // Optional chef notes
+  nutrition Json? // e.g., { "calories": 500, "protein": "25g", "fat": "15g" }
 
-  categoryId     String?
-  category       Category?     @relation(fields: [categoryId], references: [id]) 
-  
-  subcategoryId  String?
-  subcategory    Subcategory?  @relation(fields: [subcategoryId], references: [id])
+  authorId String
+  author   User   @relation("UserRecipes", fields: [authorId], references: [id], onDelete: Cascade)
 
-  tags         Tag[]    @relation("RecipeTags") 
-  ingredients  RecipeIngredient[] 
-  favorites    Favorite[] 
-  comments     Comment[] 
-  createdAt    DateTime           @default(now()) 
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  subcategoryId String?
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+
+  tags        Tag[]              @relation("RecipeTags")
+  ingredients RecipeIngredient[]
+  favorites   Favorite[]
+  comments    Comment[]
+  createdAt   DateTime           @default(now())
 }
 
 model Category {
   id            String        @id @default(uuid())
   name          String        @unique
-  subcategories Subcategory[] // NEW: One-to-Many relationship
+  subcategories Subcategory[]
   recipes       Recipe[]
 }
 
 model Subcategory {
-  id         String   @id @default(uuid())
-  name       String   @unique
-  
+  id   String @id @default(uuid())
+  name String @unique
+
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
-  recipes    Recipe[]
+
+  recipes Recipe[]
 }
 
 model Tag {
@@ -98,27 +99,27 @@ model Tag {
 model Unit {
   id                String             @id @default(uuid())
   name              String             @unique // e.g., "Cup", "Teaspoon", "Gram", "Whole"
-  abbreviation      String?            // e.g., "c", "tsp", "g"
+  abbreviation      String? // e.g., "c", "tsp", "g"
   recipeIngredients RecipeIngredient[]
 }
 
 model RecipeIngredient {
-  id           String     @id @default(uuid())
+  id           String @id @default(uuid())
   recipeId     String
   ingredientId String
-  unitId       String     // NEW: Link to Unit
-  amount       Float      // NEW: Changed from String to Float (e.g., 1.5 instead of "1 1/2")
-  
-  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  unit         Unit       @relation(fields: [unitId], references: [id])
+  unitId       String // NEW: Link to Unit
+  amount       Float // NEW: Changed from String to Float (e.g., 1.5 instead of "1 1/2")
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit       Unit       @relation(fields: [unitId], references: [id])
 }
 
 model Favorite {
   userId   String
   recipeId String
-  user     User   @relation(fields: [userId], references: [id])
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@id([userId, recipeId])
 }
@@ -128,7 +129,7 @@ model Comment {
   content   String
   userId    String
   recipeId  String
-  user      User     @relation(fields: [userId], references: [id])
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

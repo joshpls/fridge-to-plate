@@ -1,24 +1,9 @@
 import { prisma } from '../config/db.js';
-import { mapRecipeToDto } from '../utils/helperFunctions.js';
-import { generateUniqueSlug } from '../utils/helperFunctions.js';
-
-// server/src/services/recipeService.ts
+import { mapRecipeToDto, generateUniqueSlug } from '../utils/helperFunctions.js';
 
 export const createRecipe = async (userId: string, data: any) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Ensure the user exists (Fang-style safety check)
-    // We upsert the temp user just in case the DB was reset but the frontend is still using the ID
-    await tx.user.upsert({
-      where: { id: userId },
-      update: {}, // We don't want to change the user if they already exist
-      create: {
-        id: userId,
-        email: 'chef@fridgetoplate.com',
-        password: 'placeholder_password_for_dev', // Satisfies the required field
-        // Add any other required fields from your User model here (e.g., name)
-      }
-    });
-
+    // 1. Verify Category exists
     const categoryExists = await tx.category.findUnique({
       where: { id: data.categoryId }
     });
@@ -27,7 +12,7 @@ export const createRecipe = async (userId: string, data: any) => {
       throw new Error(`Category with ID ${data.categoryId} not found. Please refresh your cache.`);
     }
 
-    // 2. Create the Recipe
+    // 2. Create the Recipe (No more user upsert needed here, auth middleware handles it!)
     return await tx.recipe.create({
       data: {
         name: data.name,
@@ -42,23 +27,12 @@ export const createRecipe = async (userId: string, data: any) => {
         servings: Number(data.servings) || 1,
         nutrition: data.nutrition || {},
         
-        // Link to Author
         author: { connect: { id: userId } },
-        
-        // Link to Category
         category: { connect: { id: data.categoryId } },
+        ...(data.subcategoryId && { subcategory: { connect: { id: data.subcategoryId } } }),
         
-        // Link to Subcategory (if provided)
-        ...(data.subcategoryId && {
-          subcategory: { connect: { id: data.subcategoryId } }
-        }),
+        tags: { connect: data.tagIds?.map((id: string) => ({ id })) || [] },
         
-        // Link to Tags
-        tags: {
-          connect: data.tagIds?.map((id: string) => ({ id })) || []
-        },
-        
-        // Create Ingredient Mappings
         ingredients: {
           create: data.ingredients.map((ing: any) => ({
             amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
@@ -70,7 +44,6 @@ export const createRecipe = async (userId: string, data: any) => {
     });
   });
 };
-
 export const updateRecipe = async (recipeId: string, userId: string, data: any) => {
   return await prisma.$transaction(async (tx) => {
     
@@ -125,6 +98,12 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any) 
   });
 };
 
+export const deleteRecipe = async (id: string) => {
+    return await prisma.recipe.delete({
+        where: { id }
+    });
+};
+
 const recipeIncludes = (userId: string) => ({
   author: true,
   category: true,
@@ -161,7 +140,7 @@ export const getMatches = async (
           tagIds.length > 0 ? { tags: { some: { id: { in: tagIds } } } } : {}
         ]
       },
-      include: recipeIncludes(userId),
+      // include: recipeIncludes(userId),
       skip,
       take,
       orderBy: { name: 'asc' }
@@ -178,10 +157,9 @@ export const getMatches = async (
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
 
-  const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
-  
+  const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
   return {
-    recipes: recipes.map(recipe => mapRecipeToDto(recipe, pantryIds)),
+    recipes: recipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds)),
     totalCount,
     hasMore: skip + recipes.length < totalCount
   };
@@ -231,8 +209,8 @@ export const getFavoriteRecipes = async (userId: string) => {
     prisma.pantryItem.findMany({ where: { userId } })
   ]);
 
-  const pantryIds = new Set(pantryEntries.map(p => p.ingredientId));
-  return recipes.map(recipe => mapRecipeToDto(recipe, pantryIds));
+  const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
+  return recipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds));
 };
 
 export const toggleRecipeFavorite = async (userId: string, recipeSlug: string) => {

@@ -6,6 +6,8 @@ import pantryRoutes from './routes/pantryRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import recipeRoutes from './routes/recipeRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import path from 'path';
 
 const app = express();
@@ -19,6 +21,8 @@ app.use('/api', pantryRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 app.use('/api/upload', uploadRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use(errorHandler);
 
 // Startup Verification

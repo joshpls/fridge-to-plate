@@ -1,10 +1,12 @@
 import React, { useState, useEffect, type SubmitEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { storageService, type TaxonomyData } from '../services/storageService';
+import { type TaxonomyData } from '../services/storageService';
 import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomplete';
+import { useAuth } from '../context/AuthContext';
+import { taxonomyService } from '../services/taxonomyService';
 
 interface RecipeFormData {
-    id?: string; // New: To track if we are updating an existing recipe
+    id?: string;
     name: string;
     imageUrl: string;
     summary: string;
@@ -36,6 +38,8 @@ const initialFormState: RecipeFormData = {
 const AddRecipe = () => {
     const navigate = useNavigate();
     const { slug } = useParams<{ slug: string }>(); // Detect if we are in "Edit" mode
+    const { user } = useAuth();
+    const userId = user?.id;
     
     const [formData, setFormData] = useState<RecipeFormData>(initialFormState);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
@@ -48,29 +52,13 @@ const AddRecipe = () => {
         const initializeForm = async () => {
             try {
                 // Fetch Taxonomy
-                const cached = storageService.cache.getTaxonomy();
-                let currentTaxonomy = cached;
-
-                // Fetch if cache is empty
-                if (!currentTaxonomy) {
-                    const res = await fetch('http://localhost:5000/api/recipes/taxonomy');
-                    const result = await res.json();
-
-                    if (result.status === 'success') {
-                        // Use a local constant to guarantee it's not null for TS
-                        const fetchedData: TaxonomyData = result.data;
-
-                        storageService.cache.setTaxonomy(fetchedData);
-                        setTaxonomy(fetchedData);
-                        currentTaxonomy = fetchedData;
-                    }
-                } else {
-                    setTaxonomy(currentTaxonomy);
+                const taxonomy = await taxonomyService.getTaxonomy(true);
+                if (taxonomy) {
+                    setTaxonomy(taxonomy);
                 }
 
                 // If Edit Mode: Fetch Recipe and Map to Form
                 if (slug) {
-                    const userId = '00000000-0000-0000-0000-000000000000';
                     const res = await fetch(`http://localhost:5000/api/recipes/${slug}?userId=${userId}`);
                     const result = await res.json();
 
@@ -177,7 +165,6 @@ const AddRecipe = () => {
         setSaving(true);
 
         try {
-            const userId = '00000000-0000-0000-0000-000000000000';
             const cleanedData = {
                 ...formData,
                 ingredients: formData.ingredients.filter(ing => ing.ingredientId && ing.amount && ing.unitId)
@@ -209,7 +196,9 @@ const AddRecipe = () => {
 
     if (loading || !taxonomy) return <div className="p-20 text-center text-gray-400 font-bold">Warming up the oven...</div>;
 
-    const availableSubcategories = taxonomy.subcategories.filter(sub => sub.categoryId === formData.categoryId);
+    const availableSubcategories = taxonomy.categories.find(
+        cat => cat.id === formData.categoryId
+    )?.subcategories || [];
     const isEditMode = !!formData.id;
 
     return (

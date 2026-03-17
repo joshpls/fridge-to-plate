@@ -1,0 +1,197 @@
+// server/src/controllers/adminController.ts
+import type { Request, Response } from 'express';
+import { prisma } from '../config/db.js';
+import type { AuthRequest } from '../middleware/authMiddleware.js'; // Use .js extension
+import { sendSuccess, sendError } from '../utils/responseHandler.js';
+
+export const getSystemStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const [userCount, recipeCount, ingredientCount] = await Promise.all([
+            prisma.user.count(),
+            prisma.recipe.count(),
+            prisma.ingredient.count()
+        ]);
+
+        return sendSuccess(res, { 
+            users: userCount, 
+            recipes: recipeCount, 
+            ingredients: ingredientCount 
+        }, "Stats fetched successfully");
+    } catch (error: any) {
+        return sendError(res, error.message, 500);
+    }
+};
+
+export const getAllUsers = async (req: AuthRequest, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: { id: true, email: true, role: true, createdAt: true },
+            orderBy: { createdAt: 'desc' }
+        });
+        return sendSuccess(res, users, "Users fetched successfully");
+    } catch (error: any) {
+        return sendError(res, error.message, 500);
+    }
+};
+
+export const toggleUserRole = async (req: AuthRequest, res: Response) => {
+    try {
+        const targetUserId = req.params.id as string;
+        const requestingUserId = req.user?.id;
+
+        if (targetUserId === requestingUserId) {
+            return sendError(res, "Safety catch: You cannot change your own role.", 400);
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!user) {
+            return sendError(res, "User not found", 404);
+        }
+
+        const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
+        const updatedUser = await prisma.user.update({
+            where: { id: targetUserId },
+            data: { role: newRole }
+        });
+
+        const { password, ...userWithoutPassword } = updatedUser;
+        return sendSuccess(res, userWithoutPassword, `User role updated to ${newRole}`);
+    } catch (error) {
+        return sendError(res, "Failed to update role", 500, error);
+    }
+};
+
+export const createCategory = async (req: AuthRequest, res: Response) => {
+    try {
+        const { name } = req.body;
+        if (!name) return sendError(res, "Category name is required", 400);
+
+        const category = await prisma.category.create({
+            data: { name }
+        });
+
+        return sendSuccess(res, category, "Category created successfully", 201);
+    } catch (error) {
+        return sendError(res, "Failed to create category", 500, error);
+    }
+};
+
+export const createSubcategory = async (req: AuthRequest, res: Response) => {
+    try {
+        const { categoryId } = req.params;
+        const { name } = req.body;
+
+        if (typeof categoryId !== 'string') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid Category ID format'
+            });
+        }
+
+        if (!name || !categoryId) {
+            return sendError(res, "Name and Category ID are required", 400);
+        }
+
+        const subcategory = await prisma.subcategory.create({
+            data: {
+                name,
+                categoryId
+            }
+        });
+
+        return sendSuccess(res, subcategory, "Subcategory created successfully", 201);
+    } catch (error) {
+        return sendError(res, "Failed to create subcategory", 500, error);
+    }
+};
+
+// Add to server/src/controllers/adminController.ts
+
+// --- CATEGORY CRUD ---
+export const updateCategory = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        const { name } = req.body;
+        const category = await prisma.category.update({
+            where: { id: id },
+            data: { name }
+        });
+        return sendSuccess(res, category, "Category updated");
+    } catch (error) {
+        return sendError(res, "Failed to update category", 500, error);
+    }
+};
+
+export const deleteCategory = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.category.delete({ where: { id } });
+        return sendSuccess(res, null, "Category deleted");
+    } catch (error: any) {
+        if (error.code === 'P2003') return sendError(res, "Cannot delete: Category is in use by recipes.", 400);
+        return sendError(res, "Failed to delete category", 500, error);
+    }
+};
+
+// --- SUBCATEGORY CRUD ---
+export const updateSubcategory = async (req: Request, res: Response) => {
+        const id = req.params.id as string;
+
+    try {
+        const { name } = req.body;
+        const subcategory = await prisma.subcategory.update({
+            where: { id: id },
+            data: { name }
+        });
+        return sendSuccess(res, subcategory, "Subcategory updated");
+    } catch (error) {
+        return sendError(res, "Failed to update subcategory", 500, error);
+    }
+};
+
+export const deleteSubcategory = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.subcategory.delete({ where: { id: id } });
+        return sendSuccess(res, null, "Subcategory deleted");
+    } catch (error: any) {
+        if (error.code === 'P2003') return sendError(res, "Cannot delete: Subcategory is in use.", 400);
+        return sendError(res, "Failed to delete subcategory", 500, error);
+    }
+};
+
+// --- INGREDIENT CRUD ---
+export const createIngredient = async (req: Request, res: Response) => {
+    try {
+        const { name } = req.body;
+        const ingredient = await prisma.ingredient.create({ data: { name } });
+        return sendSuccess(res, ingredient, "Ingredient created", 201);
+    } catch (error) {
+        return sendError(res, "Failed to create ingredient", 500, error);
+    }
+};
+
+export const updateIngredient = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        const { name } = req.body;
+        const ingredient = await prisma.ingredient.update({
+            where: { id: id },
+            data: { name }
+        });
+        return sendSuccess(res, ingredient, "Ingredient updated");
+    } catch (error) {
+        return sendError(res, "Failed to update ingredient", 500, error);
+    }
+};
+
+export const deleteIngredient = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        await prisma.ingredient.delete({ where: { id: id } });
+        return sendSuccess(res, null, "Ingredient deleted");
+    } catch (error: any) {
+        if (error.code === 'P2003') return sendError(res, "Cannot delete: Ingredient is used in recipes or pantries.", 400);
+        return sendError(res, "Failed to delete ingredient", 500, error);
+    }
+};

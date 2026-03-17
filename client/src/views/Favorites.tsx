@@ -2,8 +2,11 @@
 import { useEffect, useState } from 'react';
 import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
+import { useAuth } from '../context/AuthContext';
 
 const Favorites = () => {
+    const { user } = useAuth();
+    const userId = user?.id;
     const [favorites, setFavorites] = useState([]);
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -11,7 +14,7 @@ const Favorites = () => {
     useEffect(() => {
         const fetchFavorites = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/recipes/favorites?userId=00000000-0000-0000-0000-000000000000');
+                const response = await fetch(`http://localhost:5000/api/recipes/favorites?userId=${userId}`);
                 const result = await response.json();
                 if (result.status === 'success') setFavorites(result.data);
             } catch (error) {

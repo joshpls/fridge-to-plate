@@ -3,12 +3,19 @@ import * as recipeService from '../services/recipeService.js';
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
 import { mapRecipeToDto } from '../utils/helperFunctions.js';
 import { prisma } from '../config/db.js';
-
-const TEMP_USER_ID = "00000000-0000-0000-0000-000000000000";
+import type { AuthRequest } from '../middleware/authMiddleware.js';
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
-    // 1. Extract filters and pagination from the URL query
+    // 1. Extract the authenticated userId from the request object
+    // This is populated by your authMiddleware (likely req.user.id)
+    const userId = (req as any).user?.id;
+
+    // if (!userId) {
+    //   return sendError(res, "Authentication required", 401);
+    // }
+
+    // 2. Extract filters and pagination from the URL query
     const { categoryId, search, tags, page, limit } = req.query;
     
     const filters = {
@@ -19,11 +26,10 @@ export const getMatches = async (req: Request, res: Response) => {
     
     const pagination = {
       page: parseInt(page as string) || 1,
-      limit: parseInt(limit as string) || 12, // Default to 12 recipes per page
+      limit: parseInt(limit as string) || 12,
     };
 
-    // 2. Pass to service
-    const matchData = await recipeService.getMatches(TEMP_USER_ID, filters, pagination);
+    const matchData = await recipeService.getMatches(userId, filters, pagination);
     
     return sendSuccess(res, matchData, "Recipe matches found");
   } catch (error) {
@@ -52,68 +58,59 @@ export const getTags = async (req: Request, res: Response) => {
 
 export const getTaxonomy = async (req: Request, res: Response) => {
     try {
-        const [categories, subcategories, tags, units, ingredients] = await Promise.all([
-            prisma.category.findMany({ orderBy: { name: 'asc' } }),
-            prisma.subcategory.findMany({ orderBy: { name: 'asc' } }),
+        const [categories, tags, units, ingredients] = await Promise.all([
+            // Nest subcategories directly inside categories
+            prisma.category.findMany({ 
+                orderBy: { name: 'asc' },
+                include: { 
+                    subcategories: {
+                        orderBy: { name: 'asc' }
+                    }
+                }
+            }),
             prisma.tag.findMany({ orderBy: { name: 'asc' } }),
             prisma.unit.findMany({ orderBy: { name: 'asc' } }),
             prisma.ingredient.findMany({ orderBy: { name: 'asc' } })
         ]);
         
-        return sendSuccess(res, { categories, subcategories, tags, units, ingredients }, "Taxonomy retrieved");
+        return sendSuccess(res, { categories, tags, units, ingredients }, "Taxonomy retrieved");
     } catch (error) {
         return sendError(res, "Could not fetch taxonomy", 500, error);
     }
 };
 
-// server/src/controllers/recipeController.ts
 
-export const createRecipe = async (req: Request, res: Response) => {
-  try {
-    const { userId, ...recipeData } = req.body;
+// Notice we change `req: Request` to `req: AuthRequest`
+export const createRecipe = async (req: AuthRequest, res: Response) => {
+    try {
+        // The bouncer (requireAuth) guarantees req.user exists by the time we get here
+        const userId = req.user!.id; 
+        
+        // Strip out any fake userId the frontend might try to send
+        const { userId: fakeId, ...recipeData } = req.body; 
 
-    // 1. Basic Validation Boundary
-    if (!recipeData.name || !recipeData.categoryId || !recipeData.instructions) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'Missing required fields (Name, Category, Instructions)' 
-      });
+        // 1. Basic Validation Boundary
+      if (!recipeData.name || !recipeData.categoryId || !recipeData.instructions) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Missing required fields (Name, Category, Instructions)'
+        });
+      }
+
+      if (!recipeData.ingredients || recipeData.ingredients.length === 0) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'A recipe must have at least one ingredient.'
+        });
+      }
+
+        // Pass the verified ID from the token into the service
+        const newRecipe = await recipeService.createRecipe(userId, recipeData);
+
+        return res.status(201).json({ status: 'success', data: newRecipe });
+    } catch (error: any) {
+        return res.status(500).json({ status: 'error', message: error.message });
     }
-
-    if (!recipeData.ingredients || recipeData.ingredients.length === 0) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'A recipe must have at least one ingredient.' 
-      });
-    }
-
-    // 2. Execute the Service
-    const newRecipe = await recipeService.createRecipe(userId, recipeData);
-
-    // 3. Return Success
-    // (Assuming sendSuccess uses a standard { status: 'success', data, message } format)
-    return res.status(201).json({
-        status: 'success',
-        data: newRecipe,
-        message: 'Recipe created successfully'
-    });
-
-  } catch (error: any) {
-    console.error("Error creating recipe:", error);
-
-    // Handle Prisma Unique Constraint Violation (e.g., duplicate slug/name)
-    if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'A recipe with this name already exists. Please choose a different name or modify it.' 
-      });
-    }
-
-    return res.status(500).json({ 
-      status: 'error', 
-      message: 'Failed to create recipe due to a server error.' 
-    });
-  }
 };
 
 // Admin Only: Add an Ingredient
@@ -159,6 +156,39 @@ export const updateRecipe = async (req: Request, res: Response) => {
     console.error("Error updating recipe:", error);
     return res.status(500).json({ status: 'error', message: error.message });
   }
+};
+
+export const deleteRecipe = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ status: 'error', message: 'Recipe ID is required' });
+        }
+
+      if (typeof id !== 'string') {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Invalid recipe ID format'
+        });
+      }
+
+        await recipeService.deleteRecipe(id);
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Recipe deleted successfully'
+        });
+    } catch (error: any) {
+        console.error("Error deleting recipe:", error);
+        
+        // If Prisma can't find the record, it throws a specific error code
+        if (error.code === 'P2025') {
+            return res.status(404).json({ status: 'error', message: 'Recipe not found' });
+        }
+
+        return res.status(500).json({ status: 'error', message: error.message });
+    }
 };
 
 export const getRecipeDetail = async (req: Request, res: Response) => {

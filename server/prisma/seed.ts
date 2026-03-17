@@ -4,6 +4,7 @@ import { generateUniqueSlug } from '../src/utils/helperFunctions.js';
 import { categoryNames, subCategories, tagsData } from './taxonomy.js';
 import { ingredientsToSeed } from './ingredients.js';
 import { recipes } from './recipes.js';
+import bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -41,17 +42,21 @@ async function main() {
     const tagMap = (await tx.tag.findMany()).reduce((acc, t) => ({ ...acc, [t.code]: t.id }), {} as any);
 
     console.log('🚀 Upserting Dev User...');
+    
+    const saltRounds = 10;
+    const hashedAdminPassword = await bcrypt.hash("admin123", saltRounds);
 
     await tx.user.upsert({
       where: { id: TEMP_USER_ID },
-      update: {},
+      update: { password: hashedAdminPassword, role: 'ADMIN' },
       create: {
         id: TEMP_USER_ID,
         email: "dev@example.com",
-        password: "secure_dev_password"
+        password: hashedAdminPassword,
+        role: 'ADMIN'
       },
     });
-
+    
     console.log('📏 Syncing Units...');
     const units = [
         { name: 'Cup', abbreviation: 'c' },

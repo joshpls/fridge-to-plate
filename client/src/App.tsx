@@ -7,6 +7,9 @@ import ShoppingList from './views/ShoppingList';
 import Favorites from './views/Favorites';
 import Pantry from './views/Pantry';
 import AddRecipe from './views/AddRecipe';
+import Auth from './views/Auth';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import AdminDashboard from './views/AdminDashboard';
 
 function App() {
   return (
@@ -24,6 +27,16 @@ function App() {
             <Route path="/pantry" element={<Pantry />} />
             <Route path="/recipe/add" element={<AddRecipe />} />
             <Route path="/edit-recipe/:slug" element={<AddRecipe />} />
+            <Route path="/auth" element={<Auth />} />
+
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Redirect root to discovery */}
             <Route path="/" element={<Navigate to="/discovery" replace />} />

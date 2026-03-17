@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition';
+import { useAuth } from '../context/AuthContext';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
     const [recipe, setRecipe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+    const { user, isAdmin, isAuthenticated, token } = useAuth();
+    const userId = user?.id;
 
     // State for Scaling, Pantry, and Staples Filter
     const [multiplier, setMultiplier] = useState(1);
@@ -17,8 +20,6 @@ const RecipeDetail = () => {
     useEffect(() => {
         const fetchDetail = async () => {
             try {
-                const userId = '00000000-0000-0000-0000-000000000000';
-
                 const [recipeRes] = await Promise.all([
                     fetch(`http://localhost:5000/api/recipes/${slug}?userId=${userId}`)
                 ]);
@@ -64,6 +65,18 @@ const RecipeDetail = () => {
             }
         }
     }, [recipe, showStaples]);
+
+    const handleDelete = async () => {
+        if (!window.confirm("Are you sure?")) return;
+        
+        await fetch(`http://localhost:5000/api/recipes/${recipe.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}` // Passing the bouncer!
+            }
+        });
+        // navigate home...
+    };
 
     if (loading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold text-xl">Prepping your kitchen...</div>;
     if (!recipe) return <div className="p-20 text-center text-red-500 font-bold">Recipe not found.</div>;
@@ -133,12 +146,22 @@ const RecipeDetail = () => {
                                 </button>
                             ))}
                         </div>
-                        <Link
-                            to={`/edit-recipe/${recipe.slug}`}
-                            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition-all border-2 border-transparent"
-                        >
-                            Edit Recipe
-                        </Link>
+                        {(isAdmin || (isAuthenticated && user?.id === recipe?.authorId)) && (
+                            <Link
+                                to={`/edit-recipe/${recipe.slug}`}
+                                // className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition-all border-2 border-transparent"
+                            >
+                                <button className="bg-orange-400 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-500 transition-all shadow-md hover:shadow-lg">
+                                    Edit Recipe
+                                </button>
+                            </Link>
+                        )}
+                        
+                        {isAdmin && (
+                            <button onClick={handleDelete} className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-600 transition-all shadow-md hover:shadow-lg">
+                                Delete Recipe
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>

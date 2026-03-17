@@ -1,6 +1,7 @@
 // src/components/recipes/RecipeCard.tsx
 import React from 'react';
 import { addIngredientsToShoppingList } from '../../utils/shoppingUtils'; // Or use storageService directly
+import { useAuth } from '../../context/AuthContext';
 
 interface RecipeCardProps {
     recipe: any;
@@ -9,7 +10,8 @@ interface RecipeCardProps {
 
 export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
-    const userId = '00000000-0000-0000-0000-000000000000';
+    const { user, isAuthenticated } = useAuth();
+    const userId = user?.id;
 
     const missingIngredients = recipe.ingredients?.filter((ing: any) => !ing.inPantry && !ing.isStaple) || [];
     const missingCount = missingIngredients.length;
@@ -54,14 +56,15 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
                         </span>
                     ))}
                 </div>
-                <button
-                    onClick={toggleFavorite}
-                    className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${
-                        isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'
-                    }`}
-                >
-                    {isFavorite ? '❤️' : '🤍'}
-                </button>
+                {isAuthenticated &&
+                    <button
+                        onClick={toggleFavorite}
+                        className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'
+                            }`}
+                    >
+                        {isFavorite ? '❤️' : '🤍'}
+                    </button>
+                }
                 <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Match</p>
                     <p className="text-sm font-black text-orange-600 leading-none">{recipe.matchPercentage}%</p>
