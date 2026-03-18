@@ -120,9 +120,9 @@ export const Navigation = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center gap-4">
                             <div className="flex flex-col items-end">
-                                <span className="text-xs font-black text-gray-900 leading-none">
+                                <Link to="/profile" className="text-xs font-black text-gray-900 leading-none hover:text-orange-600 transition-colors">
                                     {getDisplayName(user)}
-                                </span>
+                                </Link>
                                 {isAdmin && (
                                     <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter">
                                         Admin

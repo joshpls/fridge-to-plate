@@ -98,11 +98,15 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) 
     
     // Favorites & Comments
     isFavorite: !!recipe.favorites?.length,
-    comments: recipe.comments?.map((c: any) => ({
-      id: c.id,
-      content: c.content,
-      createdAt: c.createdAt,
-      user: c.user?.email.split('@')[0]
-    })) || []
+    comments: recipe.comments?.map((comment: any) => ({
+      ...comment,
+      user: comment.user ? {
+        id: comment.user.id,
+        email: comment.user.email,
+        firstName: comment.user.firstName,
+        lastName: comment.user.lastName,
+        alias: comment.user.alias
+      } : null
+    })),
   };
 };

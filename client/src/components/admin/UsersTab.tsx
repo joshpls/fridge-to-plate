@@ -61,6 +61,8 @@ export const UsersTab = () => {
                     <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
                         <tr>
                             <th className="p-4">User</th>
+                            <th className="p-4">Name</th>
+                            <th className="p-4">Alias</th>
                             <th className="p-4">Role</th>
                             <th className="p-4">Joined</th>
                             <th className="p-4 text-right">Actions</th>
@@ -77,6 +79,20 @@ export const UsersTab = () => {
                                         <div>
                                             <p className="font-bold text-gray-900">{u.email}</p>
                                             <p className="text-[10px] text-gray-400 font-mono">{u.id}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div>
+                                            <p className="font-bold text-gray-900">{u.lastName}, {u.firstName}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div>
+                                            <p className="font-bold text-gray-900">{u.alias}</p>
                                         </div>
                                     </div>
                                 </td>

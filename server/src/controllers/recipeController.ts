@@ -290,7 +290,14 @@ export const createComment = async (req: Request, res: Response) => {
                 recipeId 
             },
             include: { 
-                user: { select: { email: true } } 
+                user: { 
+                    select: { 
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        alias: true
+                    } 
+                } 
             }
         });
 

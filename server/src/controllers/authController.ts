@@ -67,13 +67,37 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        const { firstName, lastName, alias } = req.body;
+
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { firstName, lastName, alias },
+            select: { id: true, email: true, role: true, firstName: true, lastName: true, alias: true }
+        });
+
+        res.status(200).json({ status: 'success', data: updatedUser });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to update profile' });
+    }
+};
+
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const id = req?.user?.id as string;
     // req.user is populated by the requireAuth middleware
         const user = await prisma.user.findUnique({
             where: { id: id },
-            select: { id: true, email: true, role: true } // Make sure email is selected!
+            select: { 
+                id: true, 
+                email: true, 
+                role: true,
+                firstName: true,
+                lastName: true,
+                alias: true
+            }
         });
         res.json({ status: 'success', data: user });
   } catch (error) {

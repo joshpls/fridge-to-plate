@@ -10,8 +10,6 @@ const AdminDashboard = () => {
     const { token } = useAuth();
     const [stats, setStats] = useState({ users: 0, recipes: 0, ingredients: 0 });
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'recipes' | 'categories' | 'ingredients'>('overview');
-    const [users, setUsers] = useState<any[]>([]);
-    const [loadingUsers, setLoadingUsers] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -23,47 +21,6 @@ const AdminDashboard = () => {
         };
         fetchStats();
     }, [token]);
-
-    useEffect(() => {
-        if (activeTab === 'users' && users.length === 0) {
-            setLoadingUsers(true);
-            fetch('http://localhost:5000/api/admin/users', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(res => res.json())
-                .then(result => {
-                    if (result.status === 'success') setUsers(result.data);
-                })
-                .finally(() => setLoadingUsers(false));
-        }
-    }, [activeTab, token, users.length]);
-
-    const handleToggleRole = async (targetUserId: string) => {
-        try {
-            const res = await fetch(`http://localhost:5000/api/admin/users/${targetUserId}/role`, {
-                method: 'PATCH',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            const result = await res.json();
-
-            if (result.status === 'success') {
-                // Instantly update the UI by mapping over our current state
-                setUsers(prevUsers => 
-                    prevUsers.map(u => 
-                        u.id === targetUserId ? { ...u, role: result.data.role } : u
-                    )
-                );
-            } else {
-                toast.error(result.message); // E.g., "You cannot change your own role."
-            }
-        } catch (err) {
-            console.error("Failed to toggle role", err);
-            toast.error("A network error occurred.");
-        }
-    };
 
     return (
         <div className="max-w-6xl mx-auto p-8">

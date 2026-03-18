@@ -4,12 +4,16 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 // Define the shape of our User and the Context
 interface User {
     id: string;
+    firstName: string;
+    lastName: string;
+    alias: string;
     email: string;
     role: 'USER' | 'ADMIN';
 }
 
 interface AuthContextType {
     user: User | null;
+    updateUserParams: (data: Partial<User>) => void;
     token: string | null;
     isAuthenticated: boolean;
     isAdmin: boolean;
@@ -24,6 +28,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
+
+    const updateUserParams = (newData: Partial<User>) => {
+        setUser(prev => prev ? { ...prev, ...newData } : null);
+    };
 
     useEffect(() => {
         const verifySession = async () => {
@@ -70,7 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <AuthContext.Provider value={{ 
-            user, 
+            user,
+            updateUserParams, 
             token, 
             login, 
             logout, 

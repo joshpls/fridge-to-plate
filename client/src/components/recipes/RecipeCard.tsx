@@ -2,6 +2,7 @@
 import React from 'react';
 import { addIngredientsToShoppingList } from '../../utils/shoppingUtils'; 
 import { useAuth } from '../../context/AuthContext';
+import { getDisplayName } from '../../utils/userUtils';
 
 interface RecipeCardProps {
     recipe: any;
@@ -22,8 +23,8 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
         ? (ratings.reduce((sum: number, c: any) => sum + c.rating, 0) / ratings.length).toFixed(1)
         : null;
 
-    // Format Author Name from email
-    const authorName = recipe.author?.email ? `@${recipe.author.email.split('@')[0]}` : "@chef";
+    // Format Author Name
+    const authorName = getDisplayName(recipe.author);
 
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevents opening the modal when clicking the heart
@@ -102,7 +103,7 @@ export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
                 <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
                     {recipe.name}
                 </h3>
-                <p className="text-xs font-medium text-gray-400 mt-1 mb-3">{authorName}</p>
+                <p className="text-xs font-medium text-gray-400 mt-1 mb-1">👨‍🍳 By {authorName}</p>
 
                 {/* Ingredients Preview */}
                 <div className="mb-4 flex-1">

@@ -4,6 +4,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition';
 import { useAuth } from '../context/AuthContext';
+import { getDisplayName } from '../utils/userUtils';
+import toast from 'react-hot-toast';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -25,6 +27,8 @@ const RecipeDetail = () => {
     const [newComment, setNewComment] = useState('');
     const [newRating, setNewRating] = useState<number>(5);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+    console.log("Recipe: ", recipe);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -48,7 +52,7 @@ const RecipeDetail = () => {
     }, [slug, userId]);
 
     // Derived Values
-    const authorName = recipe?.author?.email ? `@${recipe.author.email.split('@')[0]}` : "@chef";
+    const authorName = recipe?.author ? getDisplayName(recipe.author) : "@chef";
     const ratings = recipe?.comments?.filter((c: any) => c.rating) || [];
     const avgRating = ratings.length > 0
         ? (ratings.reduce((sum: number, c: any) => sum + c.rating, 0) / ratings.length).toFixed(1)
@@ -97,7 +101,10 @@ const RecipeDetail = () => {
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newComment.trim() || !isAuthenticated) return;
+        if (!newComment.trim() || !isAuthenticated) {
+            toast.error("You must be signed in to leave a review.");
+            return;
+        }
         setIsSubmittingComment(true);
 
         try {
@@ -117,11 +124,13 @@ const RecipeDetail = () => {
                     ...recipe,
                     comments: [result.data, ...recipe.comments]
                 });
+                toast.success("Review posted!");
                 setNewComment('');
                 setNewRating(5);
             }
         } catch (err) {
             console.error("Failed to post comment", err);
+            toast.error("Network error. Please try again.");
         } finally {
             setIsSubmittingComment(false);
         }
@@ -415,7 +424,7 @@ const RecipeDetail = () => {
                                         )}
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
-                                                <span className="font-black text-gray-900 block">{comment.user?.email?.split('@')[0] || 'Anonymous'}</span>
+                                                <span className="font-black text-gray-900 block">{getDisplayName(comment.user) ?? 'Anonymous'}</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                                     {new Date(comment.createdAt).toLocaleDateString()}
                                                 </span>

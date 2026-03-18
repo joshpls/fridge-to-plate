@@ -1,6 +1,53 @@
 import { prisma } from '../config/db.js';
 import { mapRecipeToDto, generateUniqueSlug } from '../utils/helperFunctions.js';
 
+const userProfileSelect = {
+    select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        alias: true
+    }
+};
+
+const recipeIncludes = (userId: string) => ({
+  author: userProfileSelect, // Changed from true
+  category: true,
+  subcategory: true,
+  tags: true,
+  favorites: { where: { userId } },
+  ingredients: {
+    include: {
+      ingredient: true,
+      unit: true 
+    }
+  },
+  comments: {
+    include: { 
+        user: userProfileSelect // Changed from true
+    },
+    orderBy: { createdAt: 'desc' as const }
+  }
+});
+
+const fallbackIncludes = {
+    author: userProfileSelect, // <-- Crucial: Always fetch the author!
+    category: true,
+    subcategory: true,
+    tags: true,
+    ingredients: {
+        include: {
+            ingredient: true,
+            unit: true 
+        }
+    },
+    comments: {
+        include: { user: userProfileSelect },
+        orderBy: { createdAt: 'desc' as const }
+    }
+};
+
 export const createRecipe = async (userId: string, data: any) => {
   return await prisma.$transaction(async (tx) => {
     // 1. Verify Category exists
@@ -104,24 +151,6 @@ export const deleteRecipe = async (id: string) => {
     });
 };
 
-const recipeIncludes = (userId: string) => ({
-  author: true,
-  category: true,
-  subcategory: true,
-  tags: true,
-  favorites: { where: { userId } },
-  ingredients: {
-    include: {
-      ingredient: true,
-      unit: true // CRITICAL: Must include unit for the new schema
-    }
-  },
-  comments: {
-    include: { user: true },
-    orderBy: { createdAt: 'desc' as const }
-  }
-});
-
 export const getMatches = async (
   userId: string, 
   filters?: { 
@@ -179,15 +208,11 @@ export const getMatches = async (
 
   const [recipes, totalCount, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
-      where: finalWhere,
-      include: userId ? recipeIncludes(userId) : { 
-          category: true, 
-          tags: true, 
-          ingredients: { include: { ingredient: true, unit: true } } 
-      },
-      skip,
-      take,
-      orderBy: { name: filters?.sort === 'desc' ? 'desc' : 'asc' } // Default Ascending
+        where: finalWhere,
+        include: userId ? recipeIncludes(userId) : fallbackIncludes, 
+        skip,
+        take,
+        orderBy: { name: filters?.sort === 'desc' ? 'desc' : 'asc' }
     }),
     prisma.recipe.count({
       where: finalWhere
@@ -219,9 +244,9 @@ export const getRecipeBySlug = async (slug: string, userId: string) => {
         category: true,
         subcategory: true,
         tags: true,
-        author: true,
+        author: userProfileSelect,
         comments: {
-          include: { user: true },
+          include: { user: userProfileSelect },
           orderBy: { createdAt: 'desc' }
         },
         favorites: { where: { userId } }

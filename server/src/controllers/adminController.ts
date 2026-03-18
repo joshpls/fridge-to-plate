@@ -25,7 +25,7 @@ export const getSystemStats = async (req: AuthRequest, res: Response) => {
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     try {
         const users = await prisma.user.findMany({
-            select: { id: true, email: true, role: true, createdAt: true },
+            select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true },
             orderBy: { createdAt: 'desc' }
         });
         return sendSuccess(res, users, "Users fetched successfully");

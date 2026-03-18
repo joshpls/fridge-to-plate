@@ -1,6 +1,7 @@
 // src/components/recipes/RecipeModal.tsx
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getDisplayName } from '../../utils/userUtils';
 
 interface RecipeModalProps {
     recipe: any;
@@ -23,7 +24,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
     }, [onClose]);
 
     // Derived values
-    const authorName = recipe.author?.email ? `@${recipe.author.email.split('@')[0]}` : "@chef";
+    const authorName = getDisplayName(recipe.author);
     const ratings = recipe.comments?.filter((c: any) => c.rating) || [];
     const avgRating = ratings.length > 0
         ? (ratings.reduce((sum: number, c: any) => sum + c.rating, 0) / ratings.length).toFixed(1)

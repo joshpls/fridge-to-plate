@@ -10,6 +10,7 @@ import AddRecipe from './views/AddRecipe';
 import Auth from './views/Auth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import AdminDashboard from './views/AdminDashboard';
+import Profile from './views/Profile';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/recipe/add" element={<AddRecipe />} />
             <Route path="/edit-recipe/:slug" element={<AddRecipe />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/profile" element={<Profile />} />
 
             <Route
               path="/admin"
