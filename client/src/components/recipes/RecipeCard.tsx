@@ -7,15 +7,17 @@ import { getDisplayName } from '../../utils/userUtils';
 interface RecipeCardProps {
     recipe: any;
     initialFavorite: boolean;
+    showStaples?: boolean;
 }
 
-export const RecipeCard = ({ recipe, initialFavorite }: RecipeCardProps) => {
+export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
     const { user, isAuthenticated, token } = useAuth();
     const userId = user?.id;
 
-    const missingIngredients = recipe.ingredients?.filter((ing: any) => !ing.inPantry && !ing.isStaple) || [];
-    const missingCount = missingIngredients.length;
+    const missingIngredients = recipe.ingredients?.filter((ing: any) =>
+        !ing.inPantry && (showStaples || !ing.isStaple)
+    ) || []; const missingCount = missingIngredients.length;
 
     // Calculate Average Rating
     const ratings = recipe.comments?.filter((c: any) => c.rating) || [];

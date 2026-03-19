@@ -29,6 +29,10 @@ interface FilterBarProps {
     setFavoritesOnly: (val: boolean) => void;
     sortOrder: 'asc' | 'desc';
     setSortOrder: (val: 'asc' | 'desc') => void;
+
+    // Staples
+    showStaples: boolean;
+    setShowStaples: (val: boolean) => void;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -40,7 +44,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     includeIngredients, setIncludeIngredients,
     excludeIngredients, setExcludeIngredients,
     favoritesOnly, setFavoritesOnly,
-    sortOrder, setSortOrder
+    sortOrder, setSortOrder,
+    showStaples, setShowStaples
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -142,6 +147,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${favoritesOnly ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
                         >
                             {favoritesOnly ? '❤️ Favorites Only' : '🤍 Show All'}
+                        </button>
+
+                        <button
+                            onClick={() => setShowStaples(!showStaples)}
+                            className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${!showStaples ? 'bg-gray-800 text-white shadow-md border-transparent' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                        >
+                            {!showStaples ? '🙈 Hiding Staples' : '👀 Showing Staples'}
                         </button>
 
                         <button 

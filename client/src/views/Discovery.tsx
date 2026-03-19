@@ -28,6 +28,7 @@ const Discovery: React.FC = () => {
     const [excludeIngredients, setExcludeIngredients] = useState<string[]>([]);
     
     const [favoritesOnly, setFavoritesOnly] = useState(false);
+    const [showStaples, setShowStaples] = useState(false);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     // 3. Pagination & Loading States
@@ -131,7 +132,6 @@ const Discovery: React.FC = () => {
                 </h1>
             </header>
 
-            {/* The New Extracted Filter Component */}
             <FilterBar 
                 taxonomy={taxonomy}
                 
@@ -157,6 +157,9 @@ const Discovery: React.FC = () => {
                 
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
+
+                showStaples={showStaples}
+                setShowStaples={setShowStaples}
             />
 
             {/* Grid */}
@@ -168,7 +171,7 @@ const Discovery: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {recipes.map((recipe: any) => (
                         <div key={recipe.slug} onClick={() => setSelectedRecipe(recipe)}>
-                            <RecipeCard recipe={recipe} initialFavorite={recipe.isFavorite || false} />
+                            <RecipeCard recipe={recipe} initialFavorite={recipe.isFavorite || false} showStaples={showStaples} />
                         </div>
                     ))}
                 </div>
