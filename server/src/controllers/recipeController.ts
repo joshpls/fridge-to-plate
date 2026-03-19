@@ -4,14 +4,22 @@ import { sendSuccess, sendError } from '../utils/responseHandler.js';
 import { mapRecipeToDto } from '../utils/helperFunctions.js';
 import { prisma } from '../config/db.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
+import jwt from 'jsonwebtoken';
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    let userId = (req as any).user?.id;
 
-    // if (!userId) {
-    //   return sendError(res, "Authentication required", 401);
-    // }
+    // If the route isn't strictly protected, manually decode the token if it exists
+    if (!userId && req.headers.authorization?.startsWith('Bearer ')) {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+            userId = decoded.id;
+        } catch (e) {
+            // Token is invalid or expired. Ignore and treat as a guest.
+        }
+    }
 
     // Extract all the new filters from the URL query
     const { 
