@@ -141,23 +141,57 @@ const AddRecipe = () => {
     const addIngredientRow = () => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, { ingredientId: '', amount: '', unitId: '' }] }));
     const removeIngredientRow = (index: number) => setFormData(prev => ({ ...prev, ingredients: prev.ingredients.filter((_, i) => i !== index) }));
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const uploadFileToServer = async (file: File) => {
         setIsUploading(true);
         const uploadData = new FormData();
         uploadData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', { method: 'POST', body: uploadData });
+            const res = await fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                body: uploadData
+            });
             const result = await res.json();
-            if (result.status === 'success') setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
+            // Note: Make sure to check what your backend returns (e.g., result.imageUrl or result.url)
+            if (result.status === 'success') {
+                setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
+            } else {
+                alert("Upload failed: " + result.message);
+            }
         } catch (err) {
             console.error("Failed to upload", err);
+            alert("Network error during upload.");
         } finally {
             setIsUploading(false);
         }
     };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) uploadFileToServer(file);
+    };
+
+    // Listen for Paste events anywhere on the page
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        e.preventDefault(); // Stop default paste behavior
+                        uploadFileToServer(file);
+                        break; // Only handle the first image found in the clipboard
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, []);
 
     // --- Submission ---
     const handleSubmit = async (e: SubmitEvent) => {
@@ -277,7 +311,9 @@ const AddRecipe = () => {
                                 >
                                     {isUploading ? 'Uploading...' : formData.imageUrl ? 'Choose Different Image' : 'Select Image File'}
                                 </label>
-                                <p className="text-xs font-medium text-gray-400 mt-3">Supports JPG, PNG, or WEBP. Max size 5MB.</p>
+                                <p className="text-xs font-medium text-gray-400 mt-3">
+                                    Supports JPG, PNG, or WEBP. You can also press <kbd className="bg-gray-200 px-1 rounded text-gray-700">Ctrl+V</kbd> to paste an image anywhere on this page.
+                                </p>
                             </div>
                         </div>
                     </div>
