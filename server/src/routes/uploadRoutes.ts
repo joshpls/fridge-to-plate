@@ -1,42 +1,58 @@
-import { Router } from 'express';
+// server/src/routes/uploadRoutes.ts
+import express from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 import path from 'path';
-import fs from 'fs';
+import crypto from 'crypto';
+import fs from 'fs/promises';
 
-const router = Router();
+const router = express.Router();
 
-// Ensure the upload directory exists
-const uploadDir = path.join(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure Multer storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        // Create a unique filename: timestamp-originalName
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
+// This keeps the raw 10MB file in RAM instead of writing it to the SD card first
+const storage = multer.memoryStorage();
 const upload = multer({ 
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB max upload limit
 });
 
-// The endpoint the frontend will hit
-router.post('/', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ status: 'error', message: 'No file uploaded' });
-    }
+// Ensure the uploads directory exists
+const uploadDir = path.join(process.cwd(), 'public/uploads');
+fs.mkdir(uploadDir, { recursive: true }).catch(console.error);
 
-    // Return the path that the frontend can use to display the image
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
-    res.json({ status: 'success', imageUrl });
+router.post('/', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ status: 'error', message: 'No file uploaded' });
+        }
+
+        // Generate a random filename with a .webp extension
+        const randomName = crypto.randomBytes(16).toString('hex');
+        const filename = `${randomName}.webp`;
+        const outputPath = path.join(uploadDir, filename);
+
+        // 2. Compress and resize using Sharp
+        await sharp(req.file.buffer)
+            .resize({ 
+                width: 1200, 
+                height: 1200, 
+                fit: 'inside', // Maintains aspect ratio, won't stretch
+                withoutEnlargement: true // Don't scale up tiny images
+            })
+            .webp({ quality: 80 })
+            .toFile(outputPath);
+
+        // 3. Return the URL
+        const imageUrl = `http://localhost:5000/uploads/${filename}`;
+        
+        return res.status(200).json({ 
+            status: 'success', 
+            imageUrl // match frontend
+        });
+
+    } catch (error) {
+        console.error('Image processing error:', error);
+        return res.status(500).json({ status: 'error', message: 'Failed to process image' });
+    }
 });
 
 export default router;
