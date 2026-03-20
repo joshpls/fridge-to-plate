@@ -3,13 +3,12 @@ import { useEffect, useState } from 'react';
 import { storageService, type ShoppingListItem } from '../services/storageService';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { X } from 'lucide-react'; // Assuming you have lucide-react installed
+import { X, Printer } from 'lucide-react'; // Added Printer icon
 
 const ShoppingList = () => {
     const [items, setItems] = useState<ShoppingListItem[]>([]);
     const [isSyncing, setIsSyncing] = useState(false);
     
-    // Grab the token from AuthContext to secure the API call
     const { token } = useAuth();
 
     const loadLocalList = () => {
@@ -27,7 +26,7 @@ const ShoppingList = () => {
     };
 
     const handleRemoveItem = (e: React.MouseEvent, ingredientId: string) => {
-        e.stopPropagation(); // Prevent the toggle from firing when clicking remove
+        e.stopPropagation(); 
         storageService.shopping.removeItem(ingredientId);
         toast.success("Item removed");
     };
@@ -39,6 +38,11 @@ const ShoppingList = () => {
         }
     };
 
+    // --- NEW: Print Function ---
+    const handlePrint = () => {
+        window.print();
+    };
+
     const buyAll = async () => {
         if (!token) {
             toast.error("You must be logged in to update your pantry.");
@@ -46,10 +50,6 @@ const ShoppingList = () => {
         }
 
         const list = storageService.shopping.get();
-        // Optional: Only stock items that are marked as "bought"
-        // const boughtItems = list.filter(item => item.bought);
-        // const ingredientIds = boughtItems.map(item => item.ingredientId);
-        
         const ingredientIds = list.map(item => item.ingredientId);
 
         setIsSyncing(true);
@@ -58,7 +58,7 @@ const ShoppingList = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Added the missing auth header!
+                    'Authorization': `Bearer ${token}` 
                 },
                 body: JSON.stringify({ ingredientIds })
             });
@@ -67,7 +67,7 @@ const ShoppingList = () => {
 
             if (result.status === 'success') {
                 toast.success("Pantry successfully stocked!");
-                storageService.shopping.clear(); // Empty the cart on success
+                storageService.shopping.clear(); 
             } else {
                 toast.error(result.message || "Failed to stock pantry");
             }
@@ -80,60 +80,84 @@ const ShoppingList = () => {
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24">
-            <header className="flex items-center justify-between border-b border-gray-100 pb-4">
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Shopping List</h1>
-                {items.length > 0 && (
-                    <button 
-                        onClick={handleClearList}
-                        className="text-sm font-bold text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                        Clear All
-                    </button>
-                )}
+        // Added print:p-0 to remove padding on printed page
+        <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24 print:p-0 print:m-0 print:space-y-4">
+            
+            <header className="flex items-center justify-between border-b border-gray-100 pb-4 print:border-b-2 print:border-black">
+                <div>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight print:text-4xl">Shopping List</h1>
+                    {/* Only show the date on the printed version */}
+                    <p className="hidden print:block text-gray-500 font-bold mt-1">
+                        {new Date().toLocaleDateString()}
+                    </p>
+                </div>
+
+                {/* Hide these controls when printing */}
+                <div className="flex gap-4 items-center print:hidden">
+                    {items.length > 0 && (
+                        <>
+                            <button 
+                                onClick={handlePrint}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+                            >
+                                <Printer size={16} /> Print
+                            </button>
+                            <button 
+                                onClick={handleClearList}
+                                className="text-sm font-bold text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                                Clear All
+                            </button>
+                        </>
+                    )}
+                </div>
             </header>
 
             {items.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 print:hidden">
                     <span className="text-4xl mb-3 block">🛒</span>
                     <p className="text-gray-400 font-medium">Your cart is empty.</p>
                     <p className="text-sm text-gray-400 mt-2">Find a recipe and tap "Add Missing" to start shopping!</p>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 print:space-y-2">
                     {items.map(item => (
                         <div 
                             key={item.ingredientId}
                             onClick={() => handleToggleBought(item.ingredientId)}
-                            className={`flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm cursor-pointer transition-all ${
-                                item.bought ? 'border-gray-100 opacity-50 bg-gray-50' : 'border-gray-200 hover:border-orange-300'
+                            // Print styles: Remove background/shadows, add simple bottom border
+                            className={`flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm cursor-pointer transition-all print:border-0 print:border-b print:border-gray-300 print:rounded-none print:shadow-none print:p-2 ${
+                                item.bought ? 'border-gray-100 opacity-50 bg-gray-50 print:opacity-100 print:bg-transparent' : 'border-gray-200 hover:border-orange-300'
                             }`}
                         >
                             <div className="flex items-center gap-4">
-                                {/* Visual Checkbox */}
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                    item.bought ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                                {/* Visual Checkbox (For web and print) */}
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors print:w-5 print:h-5 print:rounded-sm print:border-black ${
+                                    item.bought ? 'border-orange-500 bg-orange-500 print:bg-white' : 'border-gray-300'
                                 }`}>
-                                    {item.bought && <span className="text-white text-xs font-bold">✓</span>}
+                                    {/* Show checkmark if bought online, or leave empty box for printing */}
+                                    <span className={`text-white text-xs font-bold ${item.bought ? 'block print:hidden' : 'hidden'}`}>✓</span>
                                 </div>
                                 
-                                <div className={item.bought ? 'line-through text-gray-400' : ''}>
-                                    <p className="font-bold text-gray-800">{item.name}</p>
-                                    <p className="text-xs text-gray-500">{item.amount}</p>
+                                {/* Item Name & Amount */}
+                                <div className={`${item.bought ? 'line-through text-gray-400 print:no-underline print:text-black' : 'print:text-black'}`}>
+                                    <p className="font-bold text-gray-800 print:text-black print:text-lg">{item.name}</p>
+                                    <p className="text-xs text-gray-500 print:text-gray-600 print:text-sm">{item.amount}</p>
                                 </div>
                             </div>
 
-                            {/* Delete Button */}
+                            {/* Hide Delete Button when printing */}
                             <button 
                                 onClick={(e) => handleRemoveItem(e, item.ingredientId)}
-                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors print:hidden"
                             >
                                 <X size={18} />
                             </button>
                         </div>
                     ))}
 
-                    <div className="mt-10 pt-6">
+                    {/* Hide "Buy All" when printing */}
+                    <div className="mt-10 pt-6 print:hidden">
                         <button
                             onClick={buyAll}
                             disabled={isSyncing}

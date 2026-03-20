@@ -32,3 +32,11 @@ body {
     background-color: #f9f9f9;
   }
 }
+
+@media print {
+  nav, 
+  .navbar, 
+  header.global-header {
+    display: none !important;
+  }
+}
