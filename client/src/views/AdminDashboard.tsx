@@ -1,26 +1,39 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-hot-toast';
 import { CategoriesTab } from '../components/admin/CategoriesTab';
 import { IngredientsTab } from '../components/admin/IngredientsTab';
 import { RecipesTab } from '../components/admin/RecipesTab';
 import { UsersTab } from '../components/admin/UsersTab';
+import { TagsUnitsTab } from '../components/admin/TagsUnitsTab';
 
 const AdminDashboard = () => {
     const { token } = useAuth();
     const [stats, setStats] = useState({ users: 0, recipes: 0, ingredients: 0 });
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'recipes' | 'categories' | 'ingredients'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'recipes' | 'categories' | 'ingredients' | 'tags-units'>('overview');
 
     useEffect(() => {
         const fetchStats = async () => {
-            const res = await fetch('http://localhost:5000/api/admin/stats', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await res.json();
-            if (result.status === 'success') setStats(result.data);
+            try {
+                const res = await fetch('http://localhost:5000/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                if (result.status === 'success') setStats(result.data);
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            }
         };
         fetchStats();
     }, [token]);
+
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'users', label: 'Users' },
+        { id: 'recipes', label: 'Recipes' },
+        { id: 'categories', label: 'Categories' },
+        { id: 'ingredients', label: 'Ingredients' },
+        { id: 'tags-units', label: 'Tags & Units' }
+    ];
 
     return (
         <div className="max-w-6xl mx-auto p-8">
@@ -37,15 +50,15 @@ const AdminDashboard = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-8 border-b border-gray-100 mb-8">
-                {['overview', 'users', 'recipes', 'categories', 'ingredients'].map((tab) => (
+            <div className="flex flex-wrap gap-8 border-b border-gray-100 mb-8">
+                {tabs.map((tab) => (
                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab as any)}
-                        className={`pb-4 text-sm font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'text-gray-900 border-b-2 border-orange-500' : 'text-gray-300 hover:text-gray-500'
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`pb-4 text-sm font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'text-gray-900 border-b-2 border-orange-500' : 'text-gray-300 hover:text-gray-500'
                             }`}
                     >
-                        {tab}
+                        {tab.label}
                     </button>
                 ))}
             </div>
@@ -62,6 +75,7 @@ const AdminDashboard = () => {
                 {activeTab === 'recipes' && <RecipesTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'ingredients' && <IngredientsTab />}
+                {activeTab === 'tags-units' && <TagsUnitsTab />}
             </main>
         </div>
     );

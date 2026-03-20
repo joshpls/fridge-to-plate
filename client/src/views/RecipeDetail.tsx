@@ -5,7 +5,8 @@ import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer } from 'lucide-react'; // Added icon
+import { Printer } from 'lucide-react';
+import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 
 const RecipeDetail = () => {
@@ -28,6 +29,7 @@ const RecipeDetail = () => {
     const [newComment, setNewComment] = useState('');
     const [newRating, setNewRating] = useState<number>(5);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [measurementSystem, setMeasurementSystem] = useState<'original' | 'metric' | 'imperial'>('original');
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -57,17 +59,38 @@ const RecipeDetail = () => {
         ? (ratings.reduce((sum: number, c: any) => sum + c.rating, 0) / ratings.length).toFixed(1)
         : null;
 
-    const scaledAmount = (amount: number) => {
-        const result = amount * multiplier;
-        return Number.isInteger(result) ? result : result.toFixed(2);
+    const formatIngredientAmount = (baseAmount: number, baseUnitName: string) => {
+        const scaled = baseAmount * multiplier;
+
+        if (measurementSystem === 'original' || !baseUnitName) {
+            const finalNum = Number.isInteger(scaled) ? scaled : parseFloat(scaled.toFixed(2));
+            return { amount: finalNum, unit: baseUnitName || '' };
+        }
+
+        const converted = convertUnit(scaled, baseUnitName, measurementSystem);
+
+        if (converted.amount === scaled) {
+            const finalNum = Number.isInteger(scaled) ? scaled : parseFloat(scaled.toFixed(2));
+            return { amount: finalNum, unit: converted.unit };
+        }
+
+        let finalAmountStr = converted.amount.toFixed(1);
+        if (finalAmountStr.endsWith('.0')) {
+            finalAmountStr = finalAmountStr.slice(0, -2);
+        }
+
+        return { amount: finalAmountStr, unit: converted.unit };
     };
 
     const addToShoppingList = async () => {
-        const itemsToAdd = missingIngredients.map((item: any) => ({
+
+        const itemsToAdd = missingIngredients.map((item: any) => {
+            const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
+            return {
             ingredientId: item.ingredientId,
             name: item.name,
-            amount: `${scaledAmount(item.amount)} ${item.unit?.abbreviation || ''}`.trim()
-        }));
+            amount: `${amount} ${unit}`.trim()
+            }});
         await addIngredientsToShoppingList(itemsToAdd);
     };
 
@@ -83,7 +106,6 @@ const RecipeDetail = () => {
         }
     }, [recipe, showStaples]);
 
-    // --- Action Handlers ---
     const handlePrint = () => {
         window.print();
     };
@@ -303,6 +325,21 @@ const RecipeDetail = () => {
                                 >
                                     {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
                                 </button>
+                                <button
+                                    onClick={() => {
+                                        setMeasurementSystem(prev => {
+                                            if (prev === 'original') return 'metric';
+                                            if (prev === 'metric') return 'imperial';
+                                            return 'original';
+                                        });
+                                    }}
+                                    className="w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm flex items-center justify-between"
+                                >
+                                    <span>Units:</span>
+                                    <span className="uppercase tracking-widest bg-blue-100 px-2 py-1 rounded-md text-[10px] text-blue-800">
+                                        {measurementSystem === 'original' ? 'Original' : measurementSystem === 'metric' ? 'Metric (g, ml)' : 'Imperial (oz, cup)'}
+                                    </span>
+                                </button>
                             </div>
                         </div>
 
@@ -320,24 +357,27 @@ const RecipeDetail = () => {
                         )}
 
                         <ul className="space-y-3 print:space-y-1">
-                            {recipe.ingredients.map((item: any) => (
-                                <li key={item.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />
-                                        <div>
-                                            <p className="font-bold text-gray-800 text-sm print:text-black print:text-sm">
-                                                {item.name}
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
-                                                {scaledAmount(item.amount)} {item.unit?.name || ''}
-                                            </p>
+                            {recipe.ingredients.map((item: any) => {
+                                const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
+                                return (
+                                    <li key={item.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2.5 h-2.5 rounded-full ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />
+                                            <div>
+                                                <p className="font-bold text-gray-800 text-sm print:text-black print:text-sm">
+                                                    {item.name}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
+                                                    {amount} {unit}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple ) ? 'text-orange-500 bg-orange-50' : 'hidden'}`}>
-                                        {item.inPantry ? 'In Pantry' : 'Missing'}
-                                    </span>
-                                </li>
-                            ))}
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50' : 'hidden'}`}>
+                                            {item.inPantry ? 'In Pantry' : 'Missing'}
+                                        </span>
+                                    </li>
+                                )
+                            })}
                         </ul>
                     </section>
 

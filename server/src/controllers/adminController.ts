@@ -223,3 +223,81 @@ export const deleteRecipe = async (req: Request, res: Response) => {
         res.status(500).json({ status: 'error', message: 'Failed to delete recipe' });
     }
 };
+
+// --- TAGS ---
+
+export const createTag = async (req: Request, res: Response) => {
+    try {
+        const { name, code } = req.body;
+        
+        // Ensure the code is uppercase
+        const newTag = await prisma.tag.create({
+            data: { 
+                name, 
+                code: code.toUpperCase().trim() 
+            }
+        });
+
+        res.status(201).json({ status: 'success', data: newTag });
+    } catch (error: any) {
+        console.error("Failed to create tag:", error);
+        // Handle potential unique constraint errors (e.g., code already exists)
+        if (error.code === 'P2002') {
+            return res.status(400).json({ status: 'error', message: 'A tag with this code or name already exists.' });
+        }
+        res.status(500).json({ status: 'error', message: 'Failed to create tag' });
+    }
+};
+
+export const deleteTag = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+
+        await prisma.tag.delete({
+            where: { id }
+        });
+
+        res.status(200).json({ status: 'success', message: 'Tag deleted successfully' });
+    } catch (error) {
+        console.error("Failed to delete tag:", error);
+        res.status(500).json({ status: 'error', message: 'Failed to delete tag. It may be in use by existing recipes.' });
+    }
+};
+
+// --- UNITS ---
+
+export const createUnit = async (req: Request, res: Response) => {
+    try {
+        const { name, abbreviation } = req.body;
+
+        const newUnit = await prisma.unit.create({
+            data: { 
+                name, 
+                abbreviation: abbreviation.toLowerCase().trim() 
+            }
+        });
+
+        res.status(201).json({ status: 'success', data: newUnit });
+    } catch (error: any) {
+        console.error("Failed to create unit:", error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ status: 'error', message: 'A unit with this abbreviation or name already exists.' });
+        }
+        res.status(500).json({ status: 'error', message: 'Failed to create unit' });
+    }
+};
+
+export const deleteUnit = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+
+        await prisma.unit.delete({
+            where: { id }
+        });
+
+        res.status(200).json({ status: 'success', message: 'Unit deleted successfully' });
+    } catch (error) {
+        console.error("Failed to delete unit:", error);
+        res.status(500).json({ status: 'error', message: 'Failed to delete unit. It may be attached to existing ingredients.' });
+    }
+};

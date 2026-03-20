@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { createIngredient } from '../controllers/recipeController.js';
 
@@ -33,6 +33,14 @@ router.delete('/subcategories/:id', deleteSubcategory);
 router.post('/ingredients', createIngredient);
 router.put('/ingredients/:id', updateIngredient);
 router.delete('/ingredients/:id', deleteIngredient);
+
+// Tag Management
+router.post('/tags', createTag);
+router.delete('/tags/:id', deleteTag);
+
+// Unit Management
+router.post('/units', createUnit);
+router.delete('/units/:id', deleteUnit);
 
 router.patch('/users/:id/role', requireAuth, requireAdmin, toggleUserRole);
 
