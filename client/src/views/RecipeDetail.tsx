@@ -455,7 +455,7 @@ const RecipeDetail = () => {
                             </form>
                         ) : (
                             <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8 text-center print:hidden">
-                                <p className="text-gray-500 font-medium">Please <Link to="/login" className="text-orange-600 font-bold hover:underline">log in</Link> to leave a review.</p>
+                                <p className="text-gray-500 font-medium">Please <Link to="/auth" className="text-orange-600 font-bold hover:underline">log in</Link> to leave a review.</p>
                             </div>
                         )}
 

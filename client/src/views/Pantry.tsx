@@ -29,7 +29,7 @@ const Pantry = () => {
     // 1. Fetch Data (Cached Ingredients + Live Pantry)
     useEffect(() => {
         if (!isAuthenticated) {
-            navigate('/login');
+            navigate('/auth');
             return;
         }
 
