@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { X, Printer } from 'lucide-react'; // Added Printer icon
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 const ShoppingList = () => {
     const [items, setItems] = useState<ShoppingListItem[]>([]);
@@ -55,11 +56,10 @@ const ShoppingList = () => {
 
         setIsSyncing(true);
         try {
-            const res = await fetch(`${API_BASE}/pantry/bulk`, {
+            const res = await fetchWithAuth(`${API_BASE}/pantry/bulk`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ ingredientIds })
             });

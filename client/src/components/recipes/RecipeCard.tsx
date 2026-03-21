@@ -4,6 +4,7 @@ import { addIngredientsToShoppingList } from '../../utils/shoppingUtils';
 import { useAuth } from '../../context/AuthContext';
 import { getDisplayName } from '../../utils/userUtils';
 import { API_BASE, getNetworkImageUrl } from '../../utils/apiConfig';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 interface RecipeCardProps {
     recipe: any;
@@ -32,9 +33,9 @@ export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardP
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevents opening the modal when clicking the heart
         try {
-            const response = await fetch(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
+            const response = await fetchWithAuth(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId })
             });
             if (response.ok) setIsFavorite(!isFavorite);

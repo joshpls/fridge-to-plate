@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { User, Shield } from 'lucide-react';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 const Profile = () => {
     const { user, token, updateUserParams } = useAuth();
@@ -28,11 +29,10 @@ const Profile = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_BASE}/auth/profile`, {
+            const res = await fetchWithAuth(`${API_BASE}/auth/profile`, {
                 method: 'PATCH',
                 headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
             });

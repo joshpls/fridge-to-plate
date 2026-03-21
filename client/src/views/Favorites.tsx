@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Search, Edit3, Trash2, Heart, ChefHat } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 const Favorites = () => {
     const { user, token, isAuthenticated } = useAuth();
@@ -29,12 +30,8 @@ const Favorites = () => {
             try {
                 // Fetch both lists in parallel for speed
                 const [favRes, authRes] = await Promise.all([
-                    fetch(`${API_BASE}/recipes/favorites?userId=${userId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`${API_BASE}/recipes/authored`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
+                    fetchWithAuth(`${API_BASE}/recipes/favorites?userId=${userId}`),
+                    fetchWithAuth(`${API_BASE}/recipes/authored`)
                 ]);
 
                 const favResult = await favRes.json();

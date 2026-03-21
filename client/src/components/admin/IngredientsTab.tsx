@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 interface Ingredient {
     id: string;
@@ -35,9 +36,9 @@ export const IngredientsTab = () => {
         if (!newIngredientName.trim()) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/ingredients`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/ingredients`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newIngredientName })
             });
             if (res.ok) {
@@ -53,9 +54,9 @@ export const IngredientsTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/ingredients/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/ingredients/${id}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
             });
             if (res.ok) {
@@ -69,9 +70,8 @@ export const IngredientsTab = () => {
         if (!window.confirm("Delete this ingredient? It will fail if recipes use it.")) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/ingredients/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/ingredients/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
             if (res.ok) {

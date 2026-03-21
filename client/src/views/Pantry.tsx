@@ -6,6 +6,7 @@ import { refreshPantryCount } from '../utils/events';
 import { taxonomyService } from '../services/taxonomyService';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 interface Ingredient {
     id: string;
@@ -44,9 +45,7 @@ const Pantry = () => {
                 }
 
                 // Fetch user's actual pantry
-                const pantryRes = await fetch(`${API_BASE}/pantry`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const pantryRes = await fetchWithAuth(`${API_BASE}/pantry`);
                 const pantryResult = await pantryRes.json();
                 
                 if (pantryResult.status === 'success') {
@@ -73,10 +72,9 @@ const Pantry = () => {
             setIsSyncing(true);
             try {
                 const ingredientIds = myPantry.map(ing => ing.id);
-                await fetch(`${API_BASE}/pantry`, {
+                await fetchWithAuth(`${API_BASE}/pantry`, {
                     method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
+                    headers: {
                         'Content-Type': 'application/json' 
                     },
                     body: JSON.stringify({ ingredientIds })

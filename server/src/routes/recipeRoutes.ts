@@ -8,17 +8,16 @@ const router = express.Router();
 router.get('/', createRecipe);
 router.get('/categories', getCategories);
 router.get('/tags', getTags);
-router.get('/favorites', getFavorites);
 router.get('/matches', getMatches);
 router.get('/taxonomy', getTaxonomy);
-router.get('/authored', requireAuth, getAuthoredRecipes);
-
 router.put('/:id', updateRecipe);
 router.get('/:slug', getRecipeDetail);
-router.post('/:slug/favorite', handleToggleFavorite);
 
 // PROTECTED ROUTES (Requires Login)
 router.post('/', requireAuth, createRecipe);
+router.get('/favorites', requireAuth, getFavorites);
+router.get('/authored', requireAuth, getAuthoredRecipes);
+router.post('/:slug/favorite', requireAuth, handleToggleFavorite);
 
 router.post('/:id/comments', requireAuth, createComment);
 

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { API_BASE } from '../../utils/apiConfig';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 export const TagsUnitsTab = () => {
     const { token } = useAuth();
@@ -17,7 +18,7 @@ export const TagsUnitsTab = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/recipes/taxonomy`);
+            const res = await fetchWithAuth(`${API_BASE}/recipes/taxonomy`);
             const result = await res.json();
             if (result.status === 'success') {
                 setTags(result.data.tags || []);
@@ -38,9 +39,9 @@ export const TagsUnitsTab = () => {
     const handleAddTag = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${API_BASE}/admin/tags`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/tags`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newTag)
             });
             if (res.ok) {
@@ -58,9 +59,8 @@ export const TagsUnitsTab = () => {
     const handleDeleteTag = async (id: string) => {
         if (!window.confirm('Delete this tag? This may affect recipes using it.')) return;
         try {
-            const res = await fetch(`${API_BASE}/admin/tags/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/tags/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
                 toast.success('Tag deleted');
@@ -75,9 +75,9 @@ export const TagsUnitsTab = () => {
     const handleAddUnit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${API_BASE}/admin/units`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/units`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newUnit)
             });
             if (res.ok) {
@@ -95,9 +95,8 @@ export const TagsUnitsTab = () => {
     const handleDeleteUnit = async (id: string) => {
         if (!window.confirm('Delete this unit? Ingredients using this unit might break.')) return;
         try {
-            const res = await fetch(`${API_BASE}/admin/units/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await fetchWithAuth(`${API_BASE}/admin/units/${id}`, {
+                method: 'DELETE'
             });
             if (res.ok) {
                 toast.success('Unit deleted');

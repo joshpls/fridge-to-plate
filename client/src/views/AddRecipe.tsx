@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE } from '../utils/apiConfig';
 import { getNetworkImageUrl } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 
 interface RecipeFormData {
@@ -62,9 +63,7 @@ const AddRecipe = () => {
 
                 // If Edit Mode: Fetch Recipe and Map to Form
                 if (slug) {
-                    const res = await fetch(`${API_BASE}/recipes/${slug}?userId=${userId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const res = await fetchWithAuth(`${API_BASE}/recipes/${slug}?userId=${userId}`);
                     const result = await res.json();
 
                     if (result.status === 'success') {
@@ -152,7 +151,7 @@ const AddRecipe = () => {
         uploadData.append('image', file);
 
         try {
-            const res = await fetch(`${API_BASE}/upload`, {
+            const res = await fetchWithAuth(`${API_BASE}/upload`, {
                 method: 'POST',
                 body: uploadData
             });
@@ -215,9 +214,9 @@ const AddRecipe = () => {
                 ? `${API_BASE}/recipes/${formData.id}` 
                 : `${API_BASE}/recipes`;
             
-            const response = await fetch(endpoint, {
+            const response = await fetchWithAuth(endpoint, {
                 method: isEdit ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...cleanedData, userId })
             });
 

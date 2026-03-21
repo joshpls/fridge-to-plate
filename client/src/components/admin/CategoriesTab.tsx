@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 
 interface Subcategory {
@@ -41,10 +42,9 @@ export const CategoriesTab = () => {
         if (!newCategoryName.trim()) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/categories`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/categories`, {
                 method: 'POST',
                 headers: { 
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({ name: newCategoryName })
@@ -64,10 +64,9 @@ export const CategoriesTab = () => {
         if (!newSubcatName.trim()) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/categories/${categoryId}/subcategories`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/categories/${categoryId}/subcategories`, {
                 method: 'POST',
                 headers: { 
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({ name: newSubcatName })
@@ -93,9 +92,9 @@ export const CategoriesTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/categories/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/categories/${id}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
             });
             if (res.ok) {
@@ -109,9 +108,8 @@ export const CategoriesTab = () => {
         if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/categories/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/categories/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
             if (res.ok) {
@@ -128,9 +126,9 @@ export const CategoriesTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/subcategories/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/subcategories/${id}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
             });
             if (res.ok) {
@@ -144,9 +142,8 @@ export const CategoriesTab = () => {
         if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/subcategories/${id}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/subcategories/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
             if (res.ok) {

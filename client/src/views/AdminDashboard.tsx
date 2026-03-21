@@ -6,6 +6,7 @@ import { RecipesTab } from '../components/admin/RecipesTab';
 import { UsersTab } from '../components/admin/UsersTab';
 import { TagsUnitsTab } from '../components/admin/TagsUnitsTab';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 const AdminDashboard = () => {
     const { token } = useAuth();
@@ -15,9 +16,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await fetch(`${API_BASE}/admin/stats`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetchWithAuth(`${API_BASE}/admin/stats`);
                 const result = await res.json();
                 if (result.status === 'success') setStats(result.data);
             } catch (error) {

@@ -11,6 +11,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 
 const app = express();
@@ -18,9 +19,9 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api', globalLimiter);
-// app.use('/api/auth', authLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);

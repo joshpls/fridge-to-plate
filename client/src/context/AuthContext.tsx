@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 // Define the shape of our User and the Context
 interface User {
@@ -34,6 +35,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     useEffect(() => {
+        const handleForceLogout = () => {
+            console.warn("Session fully expired. Forcing logout.");
+            logout();
+        };
+
+        window.addEventListener('auth:forceLogout', handleForceLogout);
+        
+        return () => window.removeEventListener('auth:forceLogout', handleForceLogout);
+    }, []);
+
+    useEffect(() => {
         const verifySession = async () => {
             if (!token) {
                 setLoading(false);
@@ -41,9 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             try {
-                const response = await fetch(`${API_BASE}/auth/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetchWithAuth(`${API_BASE}/auth/me`);
 
                 if (response.ok) {
                     const result = await response.json();

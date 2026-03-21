@@ -8,6 +8,7 @@ import { FilterBar } from '../components/recipes/FilterBar';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 const Discovery: React.FC = () => {
     const { user, token } = useAuth();
@@ -61,9 +62,7 @@ const Discovery: React.FC = () => {
             if (excludeIngredients.length > 0) params.append('excludeIngredients', excludeIngredients.join(','));
             if (favoritesOnly) params.append('favoritesOnly', 'true');
 
-            const response = await fetch(`${API_BASE}/recipes/matches?${params.toString()}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
             const result = await response.json();
 
             if (result.status === 'success') {
