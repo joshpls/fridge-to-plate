@@ -1,6 +1,5 @@
 export const getNetworkImageUrl = (dbUrl: string) => {
     if (!dbUrl) return '';
-    console.log("Image URL: ", dbUrl);
     
     // If the image URL hardcoded 'localhost', swap it for our current active server IP
     if (dbUrl.includes('localhost:5000')) {

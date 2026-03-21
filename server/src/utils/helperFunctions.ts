@@ -1,3 +1,13 @@
+const userProfileSelect = {
+    select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        alias: true
+    }
+};
+
 export const slugify = (text: string): string => {
   return text
     .toString()
@@ -68,7 +78,11 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) 
 
     // Author (Sanitized)
     author: recipe.author ? {
+      id: recipe.author.id,
       email: recipe.author.email,
+      firstName: recipe.author.firstName,
+      lastName: recipe.author.lastName,
+      alias: recipe.author.alias,
       handle: recipe.author.email.split('@')[0]
     } : null,
 

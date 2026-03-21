@@ -1,8 +1,6 @@
 
 const getUnitSystem = (unit: string): 'metric' | 'imperial' | 'neutral' => {
     const u = unit.toLowerCase().trim();
-
-    console.log("u:", u);
     
     const metric = ['g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters'];
     const imperial = ['tsp', 'teaspoon', 'teaspoons', 'tbsp', 'tablespoon', 'tablespoons', 'cup', 'cups', 'fl oz', 'fluid ounce', 'oz', 'ounce', 'ounces', 'lb', 'pound', 'pounds', 'pt', 'pint', 'qt', 'quart', 'gal', 'gallon'];
@@ -23,7 +21,6 @@ export const convertUnit = (amount: number, unit: string, targetSystem: 'imperia
     if (!amount || !unit) return { amount, unit };
 
     const currentSystem = getUnitSystem(unit);
-    console.log("Current System: ", currentSystem);
 
     if (currentSystem === targetSystem || currentSystem === 'neutral') {
         return { amount, unit };
