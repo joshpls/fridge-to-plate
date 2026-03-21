@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { API_BASE } from '../../utils/apiConfig';
 
 export const TagsUnitsTab = () => {
     const { token } = useAuth();
@@ -16,7 +17,7 @@ export const TagsUnitsTab = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:5000/api/recipes/taxonomy');
+            const res = await fetch(`${API_BASE}/recipes/taxonomy`);
             const result = await res.json();
             if (result.status === 'success') {
                 setTags(result.data.tags || []);
@@ -37,7 +38,7 @@ export const TagsUnitsTab = () => {
     const handleAddTag = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:5000/api/admin/tags', {
+            const res = await fetch(`${API_BASE}/admin/tags`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newTag)
@@ -57,7 +58,7 @@ export const TagsUnitsTab = () => {
     const handleDeleteTag = async (id: string) => {
         if (!window.confirm('Delete this tag? This may affect recipes using it.')) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/tags/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/tags/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -74,7 +75,7 @@ export const TagsUnitsTab = () => {
     const handleAddUnit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:5000/api/admin/units', {
+            const res = await fetch(`${API_BASE}/admin/units`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newUnit)
@@ -94,7 +95,7 @@ export const TagsUnitsTab = () => {
     const handleDeleteUnit = async (id: string) => {
         if (!window.confirm('Delete this unit? Ingredients using this unit might break.')) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/units/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/units/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

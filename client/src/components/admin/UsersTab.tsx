@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Shield, User as UserIcon, Mail, Calendar } from 'lucide-react';
+import { API_BASE } from '../../utils/apiConfig';
 
 export const UsersTab = () => {
     const { token, user: currentUser } = useAuth();
@@ -11,7 +12,7 @@ export const UsersTab = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/admin/users', {
+            const res = await fetch(`${API_BASE}/admin/users`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
@@ -33,7 +34,7 @@ export const UsersTab = () => {
 
         const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
+            const res = await fetch(`${API_BASE}/admin/users/${userId}/role`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',

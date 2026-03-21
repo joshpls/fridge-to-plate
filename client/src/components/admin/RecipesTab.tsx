@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { Search, Trash2, ExternalLink, ArrowUpDown } from 'lucide-react';
+import { API_BASE } from '../../utils/apiConfig';
 
 export const RecipesTab = () => {
     const { token } = useAuth();
@@ -18,7 +19,7 @@ export const RecipesTab = () => {
 
     const fetchRecipes = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/admin/recipes', {
+            const res = await fetch(`${API_BASE}/admin/recipes`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await res.json();
@@ -40,7 +41,7 @@ export const RecipesTab = () => {
         if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/recipes/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/recipes/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

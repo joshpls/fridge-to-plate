@@ -6,6 +6,7 @@ import { RecipeModal } from '../components/recipes/RecipeModal';
 import { useAuth } from '../context/AuthContext';
 import { Search, Edit3, Trash2, Heart, ChefHat } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_BASE } from '../utils/apiConfig';
 
 const Favorites = () => {
     const { user, token, isAuthenticated } = useAuth();
@@ -28,10 +29,10 @@ const Favorites = () => {
             try {
                 // Fetch both lists in parallel for speed
                 const [favRes, authRes] = await Promise.all([
-                    fetch(`http://localhost:5000/api/recipes/favorites?userId=${userId}`, {
+                    fetch(`${API_BASE}/recipes/favorites?userId=${userId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
-                    fetch(`http://localhost:5000/api/recipes/authored`, {
+                    fetch(`${API_BASE}/recipes/authored`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);
@@ -70,7 +71,7 @@ const Favorites = () => {
         if (!window.confirm(`Are you sure you want to permanently delete "${recipeName}"?`)) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/recipes/${recipeId}`, {
+            const res = await fetch(`${API_BASE}/recipes/${recipeId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

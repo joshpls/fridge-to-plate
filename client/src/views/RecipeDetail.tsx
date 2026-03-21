@@ -8,6 +8,7 @@ import { getDisplayName } from '../utils/userUtils';
 import { Printer } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
+import { API_BASE } from '../utils/apiConfig';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -35,7 +36,7 @@ const RecipeDetail = () => {
         const fetchDetail = async () => {
             try {
                 const [recipeRes] = await Promise.all([
-                    fetch(`http://localhost:5000/api/recipes/${slug}?userId=${userId}`)
+                    fetch(`${API_BASE}/recipes/${slug}?userId=${userId}`)
                 ]);
 
                 const recipeResult = await recipeRes.json();
@@ -113,7 +114,7 @@ const RecipeDetail = () => {
     const handleDeleteRecipe = async () => {
         if (!window.confirm("Are you sure you want to delete this recipe entirely?")) return;
         try {
-            await fetch(`http://localhost:5000/api/recipes/${recipe.id}`, {
+            await fetch(`${API_BASE}/recipes/${recipe.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -132,7 +133,7 @@ const RecipeDetail = () => {
         setIsSubmittingComment(true);
 
         try {
-            const res = await fetch(`http://localhost:5000/api/recipes/${recipe.id}/comments`, {
+            const res = await fetch(`${API_BASE}/recipes/${recipe.id}/comments`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -162,7 +163,7 @@ const RecipeDetail = () => {
     const handleDeleteComment = async (commentId: string) => {
         if (!window.confirm("Delete this comment?")) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
+            const res = await fetch(`${API_BASE}/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

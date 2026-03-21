@@ -123,7 +123,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                 </p>
                             )}
 
-                            <div className="text-sm text-gray-700 line-clamp-[10] leading-relaxed whitespace-pre-wrap">
+                            <div className="text-sm text-gray-700 line-clamp-10 leading-relaxed whitespace-pre-wrap">
                                 {recipe.instructions || "No instructions provided."}
                             </div>
                         </div>
@@ -140,7 +140,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                     </button>
                     <button
                         onClick={() => navigate(`/recipe/${recipe.slug}`)}
-                        className="flex-[2] px-4 py-3.5 bg-orange-600 text-white font-black hover:bg-orange-700 rounded-2xl shadow-xl shadow-orange-200 transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5"
+                        className="flex-2 px-4 py-3.5 bg-orange-600 text-white font-black hover:bg-orange-700 rounded-2xl shadow-xl shadow-orange-200 transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5"
                     >
                         View Full Recipe & Cook
                     </button>

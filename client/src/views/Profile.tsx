@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { User, Shield } from 'lucide-react';
+import { API_BASE } from '../utils/apiConfig';
 
 const Profile = () => {
     const { user, token, updateUserParams } = useAuth();
@@ -12,7 +13,6 @@ const Profile = () => {
         alias: ''
     });
 
-    // Hydrate form with existing user data
     useEffect(() => {
         if (user) {
             setFormData({
@@ -23,12 +23,12 @@ const Profile = () => {
         }
     }, [user]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/profile', {
+            const res = await fetch(`${API_BASE}/auth/profile`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -41,7 +41,6 @@ const Profile = () => {
 
             if (result.status === 'success') {
                 toast.success('Profile updated successfully!');
-                // Instantly update global context
                 updateUserParams(formData); 
             } else {
                 toast.error(result.message || 'Failed to update profile');
@@ -64,7 +63,7 @@ const Profile = () => {
                 
                 {/* Email (Read Only) */}
                 <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 items-center gap-2">
                         <Shield size={14} /> Account Email
                     </label>
                     <input 
@@ -98,7 +97,7 @@ const Profile = () => {
                 </div>
 
                 <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 items-center gap-2">
                         <User size={14} /> Display Alias
                     </label>
                     <input 

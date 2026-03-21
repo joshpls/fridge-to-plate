@@ -3,6 +3,7 @@ import React from 'react';
 import { addIngredientsToShoppingList } from '../../utils/shoppingUtils'; 
 import { useAuth } from '../../context/AuthContext';
 import { getDisplayName } from '../../utils/userUtils';
+import { API_BASE } from '../../utils/apiConfig';
 
 interface RecipeCardProps {
     recipe: any;
@@ -31,7 +32,7 @@ export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardP
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevents opening the modal when clicking the heart
         try {
-            const response = await fetch(`http://localhost:5000/api/recipes/${recipe.slug}/favorite`, {
+            const response = await fetch(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ userId })

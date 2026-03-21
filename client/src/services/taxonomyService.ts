@@ -1,7 +1,6 @@
 // src/services/taxonomyService.ts
 import { storageService, type TaxonomyData } from './storageService';
-
-const BASE_URL = 'http://localhost:5000/api/recipes/taxonomy';
+import { API_BASE } from '../utils/apiConfig';
 
 export const taxonomyService = {
     /**
@@ -15,7 +14,7 @@ export const taxonomyService = {
         }
 
         try {
-            const res = await fetch(BASE_URL);
+            const res = await fetch(`${API_BASE}/recipes/taxonomy`);
             const result = await res.json();
 
             if (result.status === 'success') {

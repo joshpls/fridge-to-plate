@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { taxonomyService } from '../../services/taxonomyService';
+import { API_BASE } from '../../utils/apiConfig';
+
 
 interface Subcategory {
     id: string;
@@ -21,6 +23,7 @@ export const CategoriesTab = () => {
     const [newSubcatName, setNewSubcatName] = useState('');
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    
 
     const loadData = async (force = false) => {
         setLoading(true);
@@ -38,7 +41,7 @@ export const CategoriesTab = () => {
         if (!newCategoryName.trim()) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/admin/categories', {
+            const res = await fetch(`${API_BASE}/admin/categories`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -61,7 +64,7 @@ export const CategoriesTab = () => {
         if (!newSubcatName.trim()) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/categories/${categoryId}/subcategories`, {
+            const res = await fetch(`${API_BASE}/admin/categories/${categoryId}/subcategories`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -90,7 +93,7 @@ export const CategoriesTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/categories/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/categories/${id}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
@@ -106,7 +109,7 @@ export const CategoriesTab = () => {
         if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/categories/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/categories/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -125,7 +128,7 @@ export const CategoriesTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/subcategories/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/subcategories/${id}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
@@ -141,7 +144,7 @@ export const CategoriesTab = () => {
         if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/subcategories/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/subcategories/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -150,7 +153,7 @@ export const CategoriesTab = () => {
                 taxonomyService.invalidateCache();
                 loadData(true);
             } else {
-                alert(result.message); // Displays the "Cannot delete: in use" message
+                alert(result.message);
             }
         } catch (err) { console.error(err); }
     };

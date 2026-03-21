@@ -7,6 +7,7 @@ import FloatingAddButton from '../components/recipes/FloatingAddButton';
 import { FilterBar } from '../components/recipes/FilterBar';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
+import { API_BASE } from '../utils/apiConfig';
 
 const Discovery: React.FC = () => {
     const { user, token } = useAuth();
@@ -60,7 +61,7 @@ const Discovery: React.FC = () => {
             if (excludeIngredients.length > 0) params.append('excludeIngredients', excludeIngredients.join(','));
             if (favoritesOnly) params.append('favoritesOnly', 'true');
 
-            const response = await fetch(`http://localhost:5000/api/recipes/matches?${params.toString()}`, {
+            const response = await fetch(`${API_BASE}/recipes/matches?${params.toString()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const result = await response.json();

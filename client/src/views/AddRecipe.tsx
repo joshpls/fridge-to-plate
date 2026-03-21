@@ -4,6 +4,7 @@ import { type TaxonomyData } from '../services/storageService';
 import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomplete';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
+import { API_BASE } from '../utils/apiConfig';
 
 interface RecipeFormData {
     id?: string;
@@ -59,7 +60,7 @@ const AddRecipe = () => {
 
                 // If Edit Mode: Fetch Recipe and Map to Form
                 if (slug) {
-                    const res = await fetch(`http://localhost:5000/api/recipes/${slug}?userId=${userId}`);
+                    const res = await fetch(`${API_BASE}/recipes/${slug}?userId=${userId}`);
                     const result = await res.json();
 
                     if (result.status === 'success') {
@@ -147,7 +148,7 @@ const AddRecipe = () => {
         uploadData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
+            const res = await fetch(`${API_BASE}/upload`, {
                 method: 'POST',
                 body: uploadData
             });
@@ -207,8 +208,8 @@ const AddRecipe = () => {
             // Dynamically choose PUT (Edit) or POST (Create)
             const isEdit = !!formData.id;
             const endpoint = isEdit 
-                ? `http://localhost:5000/api/recipes/${formData.id}` 
-                : 'http://localhost:5000/api/recipes';
+                ? `${API_BASE}/recipes/${formData.id}` 
+                : `${API_BASE}/recipes`;
             
             const response = await fetch(endpoint, {
                 method: isEdit ? 'PUT' : 'POST',

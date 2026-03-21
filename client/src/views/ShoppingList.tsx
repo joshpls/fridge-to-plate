@@ -4,6 +4,7 @@ import { storageService, type ShoppingListItem } from '../services/storageServic
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { X, Printer } from 'lucide-react'; // Added Printer icon
+import { API_BASE } from '../utils/apiConfig';
 
 const ShoppingList = () => {
     const [items, setItems] = useState<ShoppingListItem[]>([]);
@@ -54,7 +55,7 @@ const ShoppingList = () => {
 
         setIsSyncing(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/pantry/bulk`, {
+            const res = await fetch(`${API_BASE}/pantry/bulk`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { storageService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
+import { API_BASE } from '../utils/apiConfig';
 
 export const Navigation = () => {
     const location = useLocation();
@@ -18,7 +19,7 @@ export const Navigation = () => {
         try {
             // 2. Only fetch pantry count from DB if a user is logged in
             if (isAuthenticated && user?.id) {
-                const pantryRes = await fetch(`http://localhost:5000/api/pantry?userId=${user.id}`, {
+                const pantryRes = await fetch(`${API_BASE}/pantry?userId=${user.id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

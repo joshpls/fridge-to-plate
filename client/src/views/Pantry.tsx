@@ -5,6 +5,7 @@ import { Search, Plus, X, Refrigerator } from 'lucide-react';
 import { refreshPantryCount } from '../utils/events';
 import { taxonomyService } from '../services/taxonomyService';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../utils/apiConfig';
 
 interface Ingredient {
     id: string;
@@ -43,7 +44,7 @@ const Pantry = () => {
                 }
 
                 // Fetch user's actual pantry
-                const pantryRes = await fetch('http://localhost:5000/api/pantry', {
+                const pantryRes = await fetch(`${API_BASE}/pantry`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const pantryResult = await pantryRes.json();
@@ -72,7 +73,7 @@ const Pantry = () => {
             setIsSyncing(true);
             try {
                 const ingredientIds = myPantry.map(ing => ing.id);
-                await fetch('http://localhost:5000/api/pantry', {
+                await fetch(`${API_BASE}/pantry`, {
                     method: 'POST',
                     headers: { 
                         'Authorization': `Bearer ${token}`,

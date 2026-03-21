@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { taxonomyService } from '../../services/taxonomyService';
+import { API_BASE } from '../../utils/apiConfig';
 
 interface Ingredient {
     id: string;
@@ -34,7 +35,7 @@ export const IngredientsTab = () => {
         if (!newIngredientName.trim()) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/admin/ingredients', {
+            const res = await fetch(`${API_BASE}/admin/ingredients`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newIngredientName })
@@ -52,7 +53,7 @@ export const IngredientsTab = () => {
         if (!newName || newName === currentName) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/ingredients/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/ingredients/${id}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
@@ -68,7 +69,7 @@ export const IngredientsTab = () => {
         if (!window.confirm("Delete this ingredient? It will fail if recipes use it.")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/ingredients/${id}`, {
+            const res = await fetch(`${API_BASE}/admin/ingredients/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
