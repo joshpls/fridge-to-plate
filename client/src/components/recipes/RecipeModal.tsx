@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDisplayName } from '../../utils/userUtils';
+import { getNetworkImageUrl } from '../../utils/apiConfig';
 
 interface RecipeModalProps {
     recipe: any;
@@ -36,9 +37,9 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                 
                 {/* Header Image & Close */}
                 <div className="relative h-72 bg-gray-200">
-                    <img 
-                        src={recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1000&q=80'} 
-                        alt={recipe.name} 
+                    <img
+                        src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1000&q=80')}
+                        alt={recipe.name}
                         className="w-full h-full object-cover"
                     />
                     <button

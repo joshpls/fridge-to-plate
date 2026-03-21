@@ -5,6 +5,8 @@ import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomp
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE } from '../utils/apiConfig';
+import { getNetworkImageUrl } from '../utils/apiConfig';
+
 
 interface RecipeFormData {
     id?: string;
@@ -39,7 +41,7 @@ const initialFormState: RecipeFormData = {
 const AddRecipe = () => {
     const navigate = useNavigate();
     const { slug } = useParams<{ slug: string }>(); // Detect if we are in "Edit" mode
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const userId = user?.id;
     
     const [formData, setFormData] = useState<RecipeFormData>(initialFormState);
@@ -60,7 +62,9 @@ const AddRecipe = () => {
 
                 // If Edit Mode: Fetch Recipe and Map to Form
                 if (slug) {
-                    const res = await fetch(`${API_BASE}/recipes/${slug}?userId=${userId}`);
+                    const res = await fetch(`${API_BASE}/recipes/${slug}?userId=${userId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                     const result = await res.json();
 
                     if (result.status === 'success') {
@@ -213,7 +217,7 @@ const AddRecipe = () => {
             
             const response = await fetch(endpoint, {
                 method: isEdit ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ ...cleanedData, userId })
             });
 
@@ -275,7 +279,7 @@ const AddRecipe = () => {
                             <div className="w-32 h-32 shrink-0 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden relative group">
                                 {formData.imageUrl ? (
                                     <>
-                                        <img src={formData.imageUrl} alt="Recipe Preview" className="w-full h-full object-cover" />
+                                        <img src={getNetworkImageUrl(formData.imageUrl)} alt="Recipe Preview" className="w-full h-full object-cover" />
                                         {/* Hover overlay to let them know they can replace it */}
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                             <span className="text-white text-xs font-bold uppercase tracking-widest">Replace</span>

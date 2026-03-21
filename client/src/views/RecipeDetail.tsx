@@ -8,7 +8,7 @@ import { getDisplayName } from '../utils/userUtils';
 import { Printer } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
-import { API_BASE } from '../utils/apiConfig';
+import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 
 const RecipeDetail = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -200,11 +200,7 @@ const RecipeDetail = () => {
             </div>
 
             <div className="w-full h-80 md:h-96 rounded-3xl overflow-hidden mb-8 relative shadow-sm print:h-64 print:rounded-none print:shadow-none print:border-b-2 print:border-gray-200">
-                <img 
-                    src={recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80'} 
-                    alt={recipe.name} 
-                    className="w-full h-full object-cover"
-                />
+                <img src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent print:hidden" />
                 
                 <div className="absolute top-4 right-4 flex gap-2 print:hidden">

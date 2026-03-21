@@ -35,19 +35,16 @@ router.post('/', upload.single('image'), async (req, res) => {
             .resize({ 
                 width: 1200, 
                 height: 1200, 
-                fit: 'inside', // Maintains aspect ratio, won't stretch
-                withoutEnlargement: true // Don't scale up tiny images
+                fit: 'inside',
+                withoutEnlargement: true 
             })
             .webp({ quality: 80 })
             .toFile(outputPath);
 
         // 3. Return the URL
-        const imageUrl = `http://localhost:5000/uploads/${filename}`;
-        
-        return res.status(200).json({ 
-            status: 'success', 
-            imageUrl // match frontend
-        });
+        // Change req.file.filename to the 'filename' variable defined above
+        const fileUrl = `/uploads/${filename}`; 
+        return res.status(200).json({ status: 'success', imageUrl: fileUrl });
 
     } catch (error) {
         console.error('Image processing error:', error);

@@ -3,7 +3,7 @@ import React from 'react';
 import { addIngredientsToShoppingList } from '../../utils/shoppingUtils'; 
 import { useAuth } from '../../context/AuthContext';
 import { getDisplayName } from '../../utils/userUtils';
-import { API_BASE } from '../../utils/apiConfig';
+import { API_BASE, getNetworkImageUrl } from '../../utils/apiConfig';
 
 interface RecipeCardProps {
     recipe: any;
@@ -58,7 +58,7 @@ export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardP
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden">
                 <img
-                    src={recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80'}
+                    src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80')}
                     alt={recipe.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />

@@ -1,3 +1,23 @@
+export const getNetworkImageUrl = (dbUrl: string) => {
+    if (!dbUrl) return '';
+    console.log("Image URL: ", dbUrl);
+    
+    // If the image URL hardcoded 'localhost', swap it for our current active server IP
+    if (dbUrl.includes('localhost:5000')) {
+        // Extract the base server URL (e.g., http://97.115.198.3:5000)
+        const currentServer = API_BASE.replace('/api', '');
+        return dbUrl.replace('http://localhost:5000', currentServer);
+    }
+    
+    // If it's already a relative path (e.g., /uploads/image.jpg), append the server URL
+    if (dbUrl.startsWith('/uploads')) {
+        const currentServer = API_BASE.replace('/api', '');
+        return `${currentServer}${dbUrl}`;
+    }
+
+    return dbUrl; // Return as-is if it's an external URL (like Unsplash)
+};
+
 const getBaseUrl = () => {
     const envUrl = import.meta.env.VITE_API_URL;
 
