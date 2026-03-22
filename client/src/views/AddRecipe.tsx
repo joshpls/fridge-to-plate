@@ -7,7 +7,7 @@ import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE } from '../utils/apiConfig';
 import { getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface RecipeFormData {
     id?: string;
@@ -27,7 +27,22 @@ interface RecipeFormData {
         calories: number | '';
         protein: string;
         carbohydrates: string;
-        fat: { total: string };
+        fat: { 
+            total: string;
+            saturatedFat?: string;
+            polyunsaturatedFat?: string;
+            monounsaturatedFat?: string;
+            transFat?: string;
+        };
+        fiber?: string;
+        sugar?: string;
+        sodium?: string;
+        potassium?: string;
+        vitaminA?: string;
+        vitaminC?: string;
+        calcium?: string;
+        iron?: string;
+        [key: string]: any;
     };
 }
 
@@ -36,13 +51,17 @@ const initialFormState: RecipeFormData = {
     prepTime: '', cookTime: '', servings: '', instructions: '', notes: '',
     tagIds: [],
     ingredients: [{ ingredientId: '', amount: '', unitId: '' }],
-    nutrition: { calories: '', protein: '', carbohydrates: '', fat: { total: '' } }
+    nutrition: { 
+        calories: '', protein: '', carbohydrates: '', 
+        fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },
+        fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminC: '', calcium: '', iron: ''
+    }
 };
 
 const AddRecipe = () => {
     const navigate = useNavigate();
-    const { slug } = useParams<{ slug: string }>(); // Detect if we are in "Edit" mode
-    const { user, token } = useAuth();
+    const { slug } = useParams<{ slug: string }>(); 
+    const { user } = useAuth();
     const userId = user?.id;
     
     const [formData, setFormData] = useState<RecipeFormData>(initialFormState);
@@ -50,24 +69,27 @@ const AddRecipe = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    
+    // UI State for Nutrition Expansion
+    const [showDetailedNutrition, setShowDetailedNutrition] = useState(false);
 
-    // 1. Load Taxonomy and Existing Recipe Data
     useEffect(() => {
         const initializeForm = async () => {
             try {
-                // Fetch Taxonomy
                 const taxonomy = await taxonomyService.getTaxonomy(true);
                 if (taxonomy) {
                     setTaxonomy(taxonomy);
                 }
 
-                // If Edit Mode: Fetch Recipe and Map to Form
                 if (slug) {
                     const res = await fetchWithAuth(`${API_BASE}/recipes/${slug}?userId=${userId}`);
                     const result = await res.json();
 
                     if (result.status === 'success') {
                         const r = result.data;
+                        const fetchedNutrition = r.nutrition || {};
+                        const fetchedFat = fetchedNutrition.fat || {};
+
                         setFormData({
                             id: r.id,
                             name: r.name || '',
@@ -81,19 +103,38 @@ const AddRecipe = () => {
                             instructions: r.instructions || '',
                             notes: r.notes || '',
                             tagIds: r.tags?.map((t: any) => t.id) || [],
-                            // Map DTO back to form structure
                             ingredients: r.ingredients?.map((i: any) => ({
                                 ingredientId: i.ingredientId,
                                 amount: i.amount,
                                 unitId: i.unit?.id || ''
                             })) || [{ ingredientId: '', amount: '', unitId: '' }],
                             nutrition: {
-                                calories: r.nutrition?.calories || '',
-                                protein: r.nutrition?.protein || '',
-                                carbohydrates: r.nutrition?.carbohydrates || '',
-                                fat: { total: r.nutrition?.fat?.total || '' }
+                                calories: fetchedNutrition.calories || '',
+                                protein: fetchedNutrition.protein || '',
+                                carbohydrates: fetchedNutrition.carbohydrates || '',
+                                fat: { 
+                                    total: fetchedFat.total || '',
+                                    saturatedFat: fetchedFat.saturatedFat || '',
+                                    polyunsaturatedFat: fetchedFat.polyunsaturatedFat || '',
+                                    monounsaturatedFat: fetchedFat.monounsaturatedFat || '',
+                                    transFat: fetchedFat.transFat || ''
+                                },
+                                fiber: fetchedNutrition.fiber || '',
+                                sugar: fetchedNutrition.sugar || '',
+                                sodium: fetchedNutrition.sodium || '',
+                                potassium: fetchedNutrition.potassium || '',
+                                vitaminA: fetchedNutrition.vitaminA || '',
+                                vitaminC: fetchedNutrition.vitaminC || '',
+                                calcium: fetchedNutrition.calcium || '',
+                                iron: fetchedNutrition.iron || '',
                             }
                         });
+
+                        // Auto-expand detailed nutrition if existing data has it
+                        const hasDetailed = ['fiber', 'sugar', 'sodium', 'potassium', 'vitaminA', 'vitaminC', 'calcium', 'iron'].some(k => fetchedNutrition[k]) 
+                            || ['saturatedFat', 'polyunsaturatedFat', 'monounsaturatedFat', 'transFat'].some(k => fetchedFat[k]);
+                        
+                        if (hasDetailed) setShowDetailedNutrition(true);
                     }
                 }
             } catch (err) {
@@ -104,24 +145,38 @@ const AddRecipe = () => {
         };
 
         initializeForm();
-    }, [slug]);
+    }, [slug, userId]);
 
-    // ... [Keep handleChange, handleNutritionChange, toggleTag, handleIngredientChange, handleImageUpload, add/removeIngredientRow identical to before] ...
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const parsedValue = type === 'number' ? (value === '' ? '' : Number(value)) : value;
         setFormData(prev => ({ ...prev, [name]: parsedValue }));
     };
 
-    const handleNutritionChange = (field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            nutrition: {
-                ...prev.nutrition,
-                [field]: field === 'calories' ? Number(value) : value,
-                ...(field === 'fat' ? { fat: { total: value } } : {})
+    const handleNutritionChange = (field: string, value: string, isFatSubfield: boolean = false) => {
+        setFormData(prev => {
+            if (isFatSubfield) {
+                return {
+                    ...prev,
+                    nutrition: {
+                        ...prev.nutrition,
+                        fat: {
+                            ...(prev.nutrition.fat || {}),
+                            [field]: value
+                        }
+                    }
+                };
             }
-        }));
+
+            // Standard Fields
+            return {
+                ...prev,
+                nutrition: {
+                    ...prev.nutrition,
+                    [field]: field === 'calories' ? (value === '' ? '' : Number(value)) : value,
+                }
+            };
+        });
     };
 
     const toggleTag = (tagId: string) => {
@@ -156,7 +211,6 @@ const AddRecipe = () => {
                 body: uploadData
             });
             const result = await res.json();
-            // Note: Make sure to check what your backend returns (e.g., result.imageUrl or result.url)
             if (result.status === 'success') {
                 setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
             } else {
@@ -175,19 +229,17 @@ const AddRecipe = () => {
         if (file) uploadFileToServer(file);
     };
 
-    // Listen for Paste events anywhere on the page
     useEffect(() => {
         const handlePaste = (e: ClipboardEvent) => {
             const items = e.clipboardData?.items;
             if (!items) return;
-
             for (const item of items) {
                 if (item.type.startsWith('image/')) {
                     const file = item.getAsFile();
                     if (file) {
-                        e.preventDefault(); // Stop default paste behavior
+                        e.preventDefault();
                         uploadFileToServer(file);
-                        break; // Only handle the first image found in the clipboard
+                        break;
                     }
                 }
             }
@@ -197,7 +249,23 @@ const AddRecipe = () => {
         return () => window.removeEventListener('paste', handlePaste);
     }, []);
 
-    // --- Submission ---
+    // Helper to strip empty keys before sending to DB to keep JSON clean
+    const cleanNutritionData = (nutData: any) => {
+        const cleaned: any = {};
+        for (const key in nutData) {
+            if (key === 'fat') {
+                const fatObj: any = {};
+                for (const fatKey in nutData.fat) {
+                    if (nutData.fat[fatKey] !== '') fatObj[fatKey] = nutData.fat[fatKey];
+                }
+                if (Object.keys(fatObj).length > 0) cleaned.fat = fatObj;
+            } else if (nutData[key] !== '') {
+                cleaned[key] = nutData[key];
+            }
+        }
+        return cleaned;
+    };
+
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -205,14 +273,12 @@ const AddRecipe = () => {
         try {
             const cleanedData = {
                 ...formData,
+                nutrition: cleanNutritionData(formData.nutrition),
                 ingredients: formData.ingredients.filter(ing => ing.ingredientId && ing.amount && ing.unitId)
             };
 
-            // Dynamically choose PUT (Edit) or POST (Create)
             const isEdit = !!formData.id;
-            const endpoint = isEdit 
-                ? `${API_BASE}/recipes/${formData.id}` 
-                : `${API_BASE}/recipes`;
+            const endpoint = isEdit ? `${API_BASE}/recipes/${formData.id}` : `${API_BASE}/recipes`;
             
             const response = await fetchWithAuth(endpoint, {
                 method: isEdit ? 'PUT' : 'POST',
@@ -232,7 +298,7 @@ const AddRecipe = () => {
         }
     };
 
-    if (loading || !taxonomy) return <div className="p-20 text-center text-gray-400 font-bold">Warming up the oven...</div>;
+    if (loading || !taxonomy) return <div className="p-20 text-center text-gray-400 font-bold animate-pulse">Warming up the oven...</div>;
 
     const availableSubcategories = taxonomy.categories.find(
         cat => cat.id === formData.categoryId
@@ -243,7 +309,6 @@ const AddRecipe = () => {
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 pb-32 animate-in fade-in">
             <div className="sticky top-20 z-40 bg-white/90 backdrop-blur-md pb-4 mb-8 border-b border-gray-100 flex justify-between items-end">
                 <div>
-                    {/* Dynamic Title */}
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight">
                         {isEditMode ? 'Edit Recipe' : 'Draft Recipe'}
                     </h1>
@@ -251,11 +316,7 @@ const AddRecipe = () => {
                         {isEditMode ? 'Tweak your culinary masterpiece.' : 'Create a new culinary masterpiece.'}
                     </p>
                 </div>
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95 disabled:opacity-50"
-                >
+                <button type="submit" disabled={saving} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95 disabled:opacity-50">
                     {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
                 </button>
             </div>
@@ -274,12 +335,10 @@ const AddRecipe = () => {
                         <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Image</label>
 
                         <div className="flex items-center gap-6">
-                            {/* Preview Area */}
                             <div className="w-32 h-32 shrink-0 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden relative group">
                                 {formData.imageUrl ? (
                                     <>
                                         <img src={getNetworkImageUrl(formData.imageUrl)} alt="Recipe Preview" className="w-full h-full object-cover" />
-                                        {/* Hover overlay to let them know they can replace it */}
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                             <span className="text-white text-xs font-bold uppercase tracking-widest">Replace</span>
                                         </div>
@@ -288,7 +347,6 @@ const AddRecipe = () => {
                                     <span className="text-4xl text-gray-300">📷</span>
                                 )}
 
-                                {/* Loading Overlay */}
                                 {isUploading && (
                                     <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                                         <span className="animate-spin text-2xl">⏳</span>
@@ -296,23 +354,9 @@ const AddRecipe = () => {
                                 )}
                             </div>
 
-                            {/* Upload Controls */}
                             <div className="flex-1">
-                                <input
-                                    type="file"
-                                    id="image-upload"
-                                    accept="image/jpeg, image/png, image/webp"
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                    disabled={isUploading}
-                                />
-                                <label
-                                    htmlFor="image-upload"
-                                    className={`inline-block px-6 py-3 rounded-xl font-bold cursor-pointer transition-all border-2 ${isUploading
-                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                            : 'bg-white text-gray-700 border-gray-200 hover:border-orange-400 hover:text-orange-600 shadow-sm hover:shadow-md'
-                                        }`}
-                                >
+                                <input type="file" id="image-upload" accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                                <label htmlFor="image-upload" className={`inline-block px-6 py-3 rounded-xl font-bold cursor-pointer transition-all border-2 ${isUploading ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-200 hover:border-orange-400 hover:text-orange-600 shadow-sm hover:shadow-md'}`}>
                                     {isUploading ? 'Uploading...' : formData.imageUrl ? 'Choose Different Image' : 'Select Image File'}
                                 </label>
                                 <p className="text-xs font-medium text-gray-400 mt-3">
@@ -367,15 +411,15 @@ const AddRecipe = () => {
                     <div className="grid grid-cols-3 gap-6">
                         <div>
                             <label className="block text-sm font-bold text-orange-800 mb-2">Prep Time (min)</label>
-                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none" />
+                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white" />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-orange-800 mb-2">Cook Time (min)</label>
-                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none" />
+                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white" />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-orange-800 mb-2">Servings</label>
-                            <input type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none" />
+                            <input type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white" />
                         </div>
                     </div>
                 </section>
@@ -439,35 +483,123 @@ const AddRecipe = () => {
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Chef's Notes</label>
-                        <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full p-5 rounded-2xl border-2 border-gray-200 focus:border-orange-500 outline-none resize-none bg-yellow-50/30" placeholder="Any special tips, substitute suggestions, or storage advice?" />
+                        <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full p-5 rounded-2xl border-2 border-gray-200 focus:border-orange-500 outline-none resize-none bg-yellow-50/30 border-yellow-200/50 focus:bg-white transition-colors" placeholder="Any special tips, substitute suggestions, or storage advice?" />
                     </div>
                 </section>
 
-                {/* 6. Nutrition (Optional) */}
-                <section className="bg-white p-8 rounded-3xl border-2 border-gray-100 space-y-6 shadow-sm">
-                    <div className="flex items-center justify-between border-b-2 border-gray-100 pb-2">
-                        <h2 className="text-xl font-black text-gray-800">6. Core Macros</h2>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Optional</span>
+                {/* 6. Nutrition (Optional & Expandable) */}
+                <section className="bg-white p-8 rounded-3xl border-2 border-gray-100 shadow-sm transition-all duration-300">
+                    <div className="flex items-center justify-between border-b-2 border-gray-100 pb-2 mb-6">
+                        <h2 className="text-xl font-black text-gray-800">6. Nutrition Information</h2>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-md">Optional</span>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-2xl">
+                    {/* Core Macros Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Calories</label>
                             <input type="number" value={formData.nutrition.calories} onChange={(e) => handleNutritionChange('calories', e.target.value)} placeholder="e.g. 450" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Protein</label>
                             <input type="text" value={formData.nutrition.protein} onChange={(e) => handleNutritionChange('protein', e.target.value)} placeholder="e.g. 24g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Carbs</label>
                             <input type="text" value={formData.nutrition.carbohydrates} onChange={(e) => handleNutritionChange('carbohydrates', e.target.value)} placeholder="e.g. 45g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Fat</label>
-                            <input type="text" value={formData.nutrition.fat.total} onChange={(e) => handleNutritionChange('fat', e.target.value)} placeholder="e.g. 12g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
+                            <input type="text" value={formData.nutrition.fat.total} onChange={(e) => handleNutritionChange('total', e.target.value, true)} placeholder="e.g. 12g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
                         </div>
                     </div>
+
+                    {/* Expansion Toggle */}
+                    <button 
+                        type="button" 
+                        onClick={() => setShowDetailedNutrition(!showDetailedNutrition)}
+                        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 rounded-xl transition-colors border border-transparent hover:border-orange-100"
+                    >
+                        {showDetailedNutrition ? 'Hide Detailed Nutrition' : 'Add Detailed Nutrition (Vitamins, Minerals, Fiber...)'}
+                        {showDetailedNutrition ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+
+                    {/* Detailed Breakdown */}
+                    {showDetailedNutrition && (
+                        <div className="mt-8 space-y-8 animate-in slide-in-from-top-4 fade-in duration-300">
+                            
+                            {/* Fat Breakdown & Carbs */}
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Fat Breakdown</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { label: 'Saturated Fat', key: 'saturatedFat' },
+                                            { label: 'Polyunsaturated', key: 'polyunsaturatedFat' },
+                                            { label: 'Monounsaturated', key: 'monounsaturatedFat' },
+                                            { label: 'Trans Fat', key: 'transFat' },
+                                        ].map(fat => (
+                                            <div key={fat.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
+                                                <label className="w-32 text-sm font-bold text-gray-600">{fat.label}</label>
+                                                <input type="text" value={formData.nutrition.fat[fat.key as keyof typeof formData.nutrition.fat] || ''} onChange={(e) => handleNutritionChange(fat.key, e.target.value, true)} placeholder="e.g. 5g" className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Carbs Breakdown</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { label: 'Dietary Fiber', key: 'fiber' },
+                                            { label: 'Sugar', key: 'sugar' }
+                                        ].map(carb => (
+                                            <div key={carb.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
+                                                <label className="w-32 text-sm font-bold text-gray-600">{carb.label}</label>
+                                                <input type="text" value={formData.nutrition[carb.key] || ''} onChange={(e) => handleNutritionChange(carb.key, e.target.value)} placeholder="e.g. 15g" className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Minerals & Vitamins */}
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Minerals & Sodium</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { label: 'Sodium', key: 'sodium', placeholder: 'e.g. 3635mg' },
+                                            { label: 'Potassium', key: 'potassium', placeholder: 'e.g. 1705mg' },
+                                            { label: 'Calcium', key: 'calcium', placeholder: 'e.g. 240mg' },
+                                            { label: 'Iron', key: 'iron', placeholder: 'e.g. 14mg' },
+                                        ].map(min => (
+                                            <div key={min.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
+                                                <label className="w-32 text-sm font-bold text-gray-600">{min.label}</label>
+                                                <input type="text" value={formData.nutrition[min.key] || ''} onChange={(e) => handleNutritionChange(min.key, e.target.value)} placeholder={min.placeholder} className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Vitamins</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { label: 'Vitamin A', key: 'vitaminA', placeholder: 'e.g. 1667IU' },
+                                            { label: 'Vitamin C', key: 'vitaminC', placeholder: 'e.g. 83mg' }
+                                        ].map(vit => (
+                                            <div key={vit.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
+                                                <label className="w-32 text-sm font-bold text-gray-600">{vit.label}</label>
+                                                <input type="text" value={formData.nutrition[vit.key] || ''} onChange={(e) => handleNutritionChange(vit.key, e.target.value)} placeholder={vit.placeholder} className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    )}
                 </section>
             </div>
         </form>
