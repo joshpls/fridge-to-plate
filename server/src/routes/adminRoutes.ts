@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -14,6 +14,9 @@ router.get('/stats', getSystemStats);
 
 // User Management
 router.get('/users', getAllUsers);
+router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
+router.patch('/users/:id/role', requireAuth, requireAdmin, toggleUserRole);
 
 // Recipe Management
 router.get('/recipes', requireAuth, requireAdmin, getAllRecipes);
@@ -43,7 +46,5 @@ router.delete('/units/:id', deleteUnit);
 
 // Delete Comment
 router.delete('/comments/:id', deleteComment);
-
-router.patch('/users/:id/role', requireAuth, requireAdmin, toggleUserRole);
 
 export default router;

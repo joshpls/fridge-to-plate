@@ -34,6 +34,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// --- USER CRUD ---
 export const toggleUserRole = async (req: AuthRequest, res: Response) => {
     try {
         const targetUserId = req.params.id as string;
@@ -61,6 +62,64 @@ export const toggleUserRole = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const updateUser = async (req: AuthRequest, res: Response) => {
+    const userId = req.params.id as string;
+    try {
+        const { firstName, lastName, alias, email } = req.body;
+
+        // Update the user and specifically select the fields we want to return
+        // (This ensures we never accidentally send the password hash back)
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                firstName,
+                lastName,
+                alias,
+                email: email?.toLowerCase() // Keep emails standardized
+            },
+            select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true }
+        });
+
+        return sendSuccess(res, updatedUser, "User updated successfully");
+    } catch (error: any) {
+        console.error("Error updating user:", error);
+        
+        // P2002 is Prisma's error code for a Unique Constraint violation
+        if (error.code === 'P2002') {
+            return sendError(res, "That email is already in use by another account.", 400);
+        }
+        return sendError(res, "Failed to update user", 500, error);
+    }
+};
+
+export const deleteUser = async (req: AuthRequest, res: Response) => {
+    const targetUserId = req.params.id as string;
+    const requestingUserId = req.user?.id as string;
+
+    // Server-side safety catch
+    if (targetUserId === requestingUserId) {
+        return sendError(res, "Safety catch: You cannot delete your own account.", 400);
+    }
+
+    try {
+        await prisma.user.delete({
+            where: { id: targetUserId }
+        });
+
+        return sendSuccess(res, null, "User deleted successfully");
+    } catch (error: any) {
+        console.error("Error deleting user:", error);
+        
+        // P2003 is Prisma's error code for a Foreign Key constraint failure
+        if (error.code === 'P2003') {
+            return sendError(res, "Cannot delete user because they have authored recipes or posted comments. Delete their content first.", 400);
+        }
+        return sendError(res, "Failed to delete user", 500, error);
+    }
+};
+
+
+// --- CATEGORY CRUD ---
 export const createCategory = async (req: AuthRequest, res: Response) => {
     try {
         const { name } = req.body;
@@ -105,9 +164,6 @@ export const createSubcategory = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Add to server/src/controllers/adminController.ts
-
-// --- CATEGORY CRUD ---
 export const updateCategory = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
