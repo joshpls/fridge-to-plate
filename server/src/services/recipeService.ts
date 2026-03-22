@@ -91,21 +91,21 @@ export const createRecipe = async (userId: string, data: any) => {
     });
   });
 };
-export const updateRecipe = async (recipeId: string, userId: string, data: any) => {
+export const updateRecipe = async (recipeId: string, userId: string, data: any, userRole: string) => {
   return await prisma.$transaction(async (tx) => {
     
-    // 1. Verify ownership
+    // Verify ownership
     const existingRecipe = await tx.recipe.findUnique({ where: { id: recipeId } });
-    if (!existingRecipe || existingRecipe.authorId !== userId) {
+    if (!existingRecipe || existingRecipe.authorId !== userId && userRole !== 'ADMIN') {
       throw new Error("Unauthorized or Recipe not found.");
     }
 
-    // 2. We delete existing ingredient mappings first
+    // Delete existing ingredient mappings first
     await tx.recipeIngredient.deleteMany({
       where: { recipeId }
     });
 
-    // 3. Update the recipe with new data
+    // Update the recipe with new data
     return await tx.recipe.update({
       where: { id: recipeId },
       data: {
@@ -145,9 +145,19 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any) 
   });
 };
 
-export const deleteRecipe = async (id: string) => {
+export const deleteRecipe = async (recipeId: string, userId: string, userRole: string) => {
+    const recipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { authorId: true }
+    });
+
+    // Must exist AND (must be the author OR must be an admin)
+    if (!recipe || (recipe.authorId !== userId && userRole !== 'ADMIN')) {
+        throw new Error("Unauthorized or Recipe not found.");
+    }
+
     return await prisma.recipe.delete({
-        where: { id }
+        where: { id: recipeId }
     });
 };
 

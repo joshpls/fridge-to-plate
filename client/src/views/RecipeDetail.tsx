@@ -203,16 +203,16 @@ const RecipeDetail = () => {
                 
                 <div className="absolute top-4 right-4 flex gap-2 print:hidden">
                     {(isAdmin || (isAuthenticated && user?.id === recipe?.author?.id)) && (
-                        <Link to={`/edit-recipe/${recipe.slug}`}>
-                            <button className="bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-black text-sm hover:bg-white transition-all shadow-lg">
-                                ✏️ Edit
+                        <>
+                            <Link to={`/edit-recipe/${recipe.slug}`}>
+                                <button className="bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-black text-sm hover:bg-white transition-all shadow-lg">
+                                    ✏️ Edit
+                                </button>
+                            </Link>
+                            <button onClick={handleDeleteRecipe} className="bg-red-500/90 backdrop-blur text-white px-4 py-2 rounded-xl font-black text-sm hover:bg-red-600 transition-all shadow-lg">
+                                🗑️ Delete
                             </button>
-                        </Link>
-                    )}
-                    {isAdmin && (
-                        <button onClick={handleDeleteRecipe} className="bg-red-500/90 backdrop-blur text-white px-4 py-2 rounded-xl font-black text-sm hover:bg-red-600 transition-all shadow-lg">
-                            🗑️ Delete
-                        </button>
+                        </>
                     )}
                 </div>
             </div>

@@ -139,6 +139,7 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
+    const userRole = req.user!.role;
 
     if (typeof id !== 'string') {
       return res.status(400).json({ status: 'error', message: 'Invalid recipe ID format' });
@@ -146,7 +147,7 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
 
     const recipeData = req.body;
 
-    const updatedRecipe = await recipeService.updateRecipe(id, userId, recipeData);
+    const updatedRecipe = await recipeService.updateRecipe(id, userId, recipeData, userRole);
 
     return res.status(200).json({
         status: 'success',
@@ -159,35 +160,34 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// server/src/controllers/recipeController.ts
+
 export const deleteRecipe = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = req.user!.id;
+        const userRole = req.user!.role;
 
         if (!id) {
             return res.status(400).json({ status: 'error', message: 'Recipe ID is required' });
         }
 
-      if (typeof id !== 'string') {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Invalid recipe ID format'
-        });
-      }
-
-        await recipeService.deleteRecipe(id);
+        await recipeService.deleteRecipe(id, userId, userRole);
 
         return res.status(200).json({
             status: 'success',
             message: 'Recipe deleted successfully'
         });
     } catch (error: any) {
+        // Handle the specific "Unauthorized" case with a 403
+        if (error.message === "Unauthorized or Recipe not found.") {
+            return res.status(403).json({ status: 'error', message: error.message });
+        }
+
         console.error("Error deleting recipe:", error);
-        
-        // If Prisma can't find the record, it throws a specific error code
         if (error.code === 'P2025') {
             return res.status(404).json({ status: 'error', message: 'Recipe not found' });
         }
-
         return res.status(500).json({ status: 'error', message: error.message });
     }
 };

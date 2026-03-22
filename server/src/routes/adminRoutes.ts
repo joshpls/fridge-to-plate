@@ -16,18 +16,18 @@ router.get('/stats', getSystemStats);
 router.get('/users', getAllUsers);
 router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
-router.patch('/users/:id/role', requireAuth, requireAdmin, toggleUserRole);
+router.patch('/users/:id/role', toggleUserRole);
 
 // Recipe Management
-router.get('/recipes', requireAuth, requireAdmin, getAllRecipes);
-router.delete('/recipes/:id', requireAuth, requireAdmin, deleteRecipe);
+router.get('/recipes', getAllRecipes);
+router.delete('/recipes/:id', deleteRecipe);
 
 // Categories & Subcategories
-router.post('/categories', requireAuth, requireAdmin, createCategory);
+router.post('/categories', createCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
 
-router.post('/categories/:categoryId/subcategories', requireAuth, requireAdmin, createSubcategory);
+router.post('/categories/:categoryId/subcategories', createSubcategory);
 router.put('/subcategories/:id', updateSubcategory);
 router.delete('/subcategories/:id', deleteSubcategory);
 

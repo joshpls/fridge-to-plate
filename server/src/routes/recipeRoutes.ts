@@ -22,8 +22,6 @@ router.post('/', requireAuth, createRecipe);
 router.post('/:slug/favorite', requireAuth, handleToggleFavorite);
 router.post('/:id/comments', requireAuth, createComment);
 router.put('/:id', requireAuth, updateRecipe);
-
-// ADMIN ONLY ROUTES
-router.delete('/:id', requireAuth, requireAdmin, deleteRecipe);
+router.delete('/:id', requireAuth, deleteRecipe);
 
 export default router;
