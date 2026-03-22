@@ -32,25 +32,6 @@ const setRefreshCookie = (res: Response, token: string) => {
     });
 };
 
-// Helper function to generate tokens
-const generateToken = (userId: string, role: string): string => {
-    const secret = process.env.JWT_SECRET;
-    
-    if (!secret) {
-        throw new Error('JWT_SECRET is not defined in environment variables');
-    }
-
-    const options: SignOptions = {
-        expiresIn: (process.env.JWT_EXPIRES_IN as any) || '7d'
-    };
-
-    return jwt.sign(
-        { id: userId, role },
-        secret,
-        options
-    );
-};
-
 export const register = async (req: Request, res: Response) => {
     try {
         const { email, password, firstName, lastName, alias } = req.body;
@@ -60,11 +41,14 @@ export const register = async (req: Request, res: Response) => {
         }
 
         const user = await authService.registerUser({ email, password, firstName, lastName, alias });
-        const token = generateToken(user.id, user.role);
+        const accessToken = generateAccessToken(user.id, user.role);
+        const refreshToken = generateRefreshToken(user.id, user.role);
+        
+        setRefreshCookie(res, refreshToken);
 
         return res.status(201).json({
             status: 'success',
-            token,
+            accessToken,
             data: user,
             message: 'Registration successful'
         });

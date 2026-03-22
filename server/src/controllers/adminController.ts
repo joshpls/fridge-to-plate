@@ -292,7 +292,6 @@ export const deleteRecipe = async (req: Request, res: Response) => {
 };
 
 // --- TAGS ---
-
 export const createTag = async (req: Request, res: Response) => {
     try {
         const { name, code } = req.body;
@@ -332,7 +331,6 @@ export const deleteTag = async (req: Request, res: Response) => {
 };
 
 // --- UNITS ---
-
 export const createUnit = async (req: Request, res: Response) => {
     try {
         const { name, abbreviation } = req.body;

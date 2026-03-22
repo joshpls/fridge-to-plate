@@ -194,9 +194,9 @@ export const deleteRecipe = async (req: AuthRequest, res: Response) => {
 
 export const getRecipeDetail = async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
-  const userId = req.query.userId as string;
+  const userId = req.query.userId as string | undefined;
 
-  if (!slug || !userId) {
+  if (!slug) {
     return res.status(400).json({ status: 'error', message: 'Missing slug or userId' });
   }
 
@@ -275,7 +275,25 @@ export const createComment = async (req: AuthRequest, res: Response) => {
         console.error("Comment Post Error:", error);
         res.status(500).json({ status: 'error', message: "Failed to post comment" });
     }
-}
+};
+
+export const deleteUserComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const commentId = req.params.commentId as string;
+        const userId = req.user!.id;
+        const userRole = req.user!.role;
+
+        const comment = await prisma.comment.findUnique({ where: { id: commentId }});
+        if (!comment || (comment.userId !== userId && userRole !== 'ADMIN')) {
+            return res.status(403).json({ status: 'error', message: 'Unauthorized' });
+        }
+
+        await prisma.comment.delete({ where: { id: commentId } });
+        res.status(200).json({ status: 'success', message: 'Comment deleted' });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Failed to delete comment' });
+    }
+};
 
 export const getAuthoredRecipes = async (req: AuthRequest, res: Response) => {
     try {

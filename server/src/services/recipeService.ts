@@ -96,7 +96,7 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
     
     // Verify ownership
     const existingRecipe = await tx.recipe.findUnique({ where: { id: recipeId } });
-    if (!existingRecipe || existingRecipe.authorId !== userId && userRole !== 'ADMIN') {
+    if (!existingRecipe || (existingRecipe.authorId !== userId && userRole !== 'ADMIN')) {
       throw new Error("Unauthorized or Recipe not found.");
     }
 
@@ -162,7 +162,7 @@ export const deleteRecipe = async (recipeId: string, userId: string, userRole: s
 };
 
 export const getMatches = async (
-  userId: string, 
+  userId?: string, 
   filters?: { 
     categoryId?: string; 
     subcategoryId?: string;
@@ -227,7 +227,7 @@ export const getMatches = async (
     prisma.recipe.count({
       where: finalWhere
     }),
-    prisma.pantryItem.findMany({ where: { userId } })
+    userId ? prisma.pantryItem.findMany({ where: { userId } }) : Promise.resolve([])
   ]);
 
   const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
@@ -239,7 +239,7 @@ export const getMatches = async (
   };
 };
 
-export const getRecipeBySlug = async (slug: string, userId: string) => {
+export const getRecipeBySlug = async (slug: string, userId?: string) => {
   // Fetch both in parallel for better performance
   const [recipe, pantryEntries] = await Promise.all([
     prisma.recipe.findUnique({
@@ -262,7 +262,7 @@ export const getRecipeBySlug = async (slug: string, userId: string) => {
         favorites: { where: { userId } }
       }
     }),
-    prisma.pantryItem.findMany({ where: { userId } })
+    userId ? prisma.pantryItem.findMany({ where: { userId } }) : Promise.resolve([])
   ]);
 
   if (!recipe) return null;

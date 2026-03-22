@@ -160,19 +160,27 @@ const RecipeDetail = () => {
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        if (!window.confirm("Delete this comment?")) return;
+        if (!window.confirm("Are you sure you want to delete this review?")) return;
+
         try {
-            const res = await fetchWithAuth(`${API_BASE}/admin/comments/${commentId}`, {
+            const response = await fetchWithAuth(`${API_BASE}/recipes/comments/${commentId}`, {
                 method: 'DELETE',
             });
-            if (res.ok) {
-                setRecipe({
-                    ...recipe,
-                    comments: recipe.comments.filter((c: any) => c.id !== commentId)
-                });
+
+            if (response.ok) {
+                toast.success('Review deleted successfully');
+                
+                setRecipe((prevRecipe: any) => ({
+                    ...prevRecipe,
+                    comments: prevRecipe.comments.filter((c: any) => c.id !== commentId)
+                }));
+            } else {
+                const data = await response.json();
+                toast.error(data.message || 'Failed to delete review');
             }
-        } catch (err) {
-            console.error("Failed to delete comment", err);
+        } catch (error) {
+            console.error("Error deleting comment:", error);
+            toast.error('An error occurred while deleting your review');
         }
     };
 
@@ -458,7 +466,7 @@ const RecipeDetail = () => {
                             <div className="space-y-6">
                                 {recipe.comments.map((comment: any) => (
                                     <div key={comment.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group print:p-2 print:border-0 print:border-b print:border-gray-200 print:rounded-none print:shadow-none">
-                                        {isAdmin && (
+                                        {(userId === comment.user?.id || isAdmin) && (
                                             <button 
                                                 onClick={() => handleDeleteComment(comment.id)}
                                                 className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 text-sm font-bold bg-red-50 px-2 py-1 rounded-md print:hidden"
