@@ -53,13 +53,13 @@ const generateToken = (userId: string, role: string): string => {
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, firstName, lastName, alias } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ status: 'error', message: 'Email and password are required.' });
         }
 
-        const user = await authService.registerUser({ email, password });
+        const user = await authService.registerUser({ email, password, firstName, lastName, alias });
         const token = generateToken(user.id, user.role);
 
         return res.status(201).json({
@@ -82,7 +82,6 @@ export const login = async (req: Request, res: Response) => {
         }
 
         const user = await authService.validateLogin({ email, password });
-        const token = generateToken(user.id, user.role);
         const accessToken = generateAccessToken(user.id, user.role);
         const refreshToken = generateRefreshToken(user.id, user.role);
 

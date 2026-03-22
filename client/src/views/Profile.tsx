@@ -98,7 +98,7 @@ const Profile = () => {
 
                 <div>
                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 items-center gap-2">
-                        <User size={14} /> Display Alias
+                        <User size={14} /> Display Name
                     </label>
                     <input 
                         type="text" 

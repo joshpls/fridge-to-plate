@@ -6,8 +6,16 @@ import { API_BASE } from '../utils/apiConfig';
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
+    
+    // Core Auth State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    
+    // Optional Profile State
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [alias, setAlias] = useState('');
+    
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     
@@ -20,21 +28,24 @@ const Auth = () => {
         setLoading(true);
 
         const endpoint = isLogin ? '/auth/login' : '/auth/register';
+        
+        // Dynamically build the payload based on the mode
+        const payload = isLogin 
+            ? { email, password } 
+            : { email, password, firstName, lastName, alias };
 
         try {
+            // Note: Keep using native 'fetch' here, NOT fetchWithAuth!
             const response = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
             if (data.status === 'success') {
-                // Pass the token and user data into our global context
                 login(data.token, data.data);
-                
-                // Redirect to the home/discovery page
                 navigate('/');
             } else {
                 setError(data.message || 'Authentication failed');
@@ -65,6 +76,52 @@ const Auth = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Only show profile fields during registration */}
+                    {!isLogin && (
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">
+                                        First Name <span className="text-gray-300 normal-case tracking-normal">(Optional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                        className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                        placeholder="Jane"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">
+                                        Last Name <span className="text-gray-300 normal-case tracking-normal">(Optional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                        className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                        placeholder="Doe"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">
+                                    Display Name <span className="text-gray-300 normal-case tracking-normal">(Optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={alias}
+                                    onChange={(e) => setAlias(e.target.value)}
+                                    className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                    placeholder="ChefJane99"
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    {/* Standard Auth Fields */}
                     <div>
                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 pl-1">
                             Email Address
@@ -106,8 +163,12 @@ const Auth = () => {
                     <button
                         type="button"
                         onClick={() => {
+                            // Toggle mode and reset all fields
                             setIsLogin(!isLogin);
                             setError('');
+                            setFirstName('');
+                            setLastName('');
+                            setAlias('');
                         }}
                         className="text-sm font-bold text-gray-400 hover:text-orange-500 transition-colors"
                     >

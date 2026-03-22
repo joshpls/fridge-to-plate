@@ -11,14 +11,14 @@ import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 
 const Discovery: React.FC = () => {
-    const { user, token } = useAuth();
+    const { token } = useAuth();
     
-    // 1. Data States
+    // Data States
     const [recipes, setRecipes] = useState<any[]>([]);
     const [taxonomy, setTaxonomy] = useState<any>(null);
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
 
-    // 2. Filter States
+    // Filter States
     const [searchInput, setSearchInput] = useState('');
     const [searchQuery, setSearchQuery] = useState(''); // Only updates when user hits Search
     
@@ -33,7 +33,7 @@ const Discovery: React.FC = () => {
     const [showStaples, setShowStaples] = useState(false);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-    // 3. Pagination & Loading States
+    // Pagination & Loading States
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ const Discovery: React.FC = () => {
 
     const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 });
 
-    // 4. Core Fetch Function
+    // Core Fetch Function
     const fetchRecipes = useCallback(async () => {
         if (loadingMore || (page > 1 && !hasMore)) return;
         page === 1 ? setLoading(true) : setLoadingMore(true);
@@ -82,7 +82,7 @@ const Discovery: React.FC = () => {
         favoritesOnly, sortOrder, hasMore, loadingMore, token
     ]);
 
-    // 5. Initial Taxonomy Load
+    // Initial Taxonomy Load
     useEffect(() => {
         const fetchTaxonomy = async () => {
             const data = await taxonomyService.getTaxonomy();
@@ -91,7 +91,7 @@ const Discovery: React.FC = () => {
         fetchTaxonomy();
     }, []);
 
-    // 6. Reset Watcher: Reset to page 1 whenever any filter changes
+    // Reset Watcher: Reset to page 1 whenever any filter changes
     useEffect(() => {
         setPage(1);
         setHasMore(true);
@@ -101,12 +101,12 @@ const Discovery: React.FC = () => {
         favoritesOnly, sortOrder
     ]);
 
-    // 7. Execution: Run fetch
+    // Run fetch
     useEffect(() => {
         fetchRecipes();
     }, [page, fetchRecipes]);
 
-    // 8. Infinite Scroll Watcher
+    // Infinite Scroll Watcher
     useEffect(() => {
         if (inView && hasMore && !loadingMore && !loading) {
             setPage(prev => prev + 1);

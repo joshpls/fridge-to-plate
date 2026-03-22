@@ -4,22 +4,24 @@ import { getMatches, getFavorites, handleToggleFavorite, createRecipe, updateRec
 
 const router = express.Router();
 
-// PUBLIC ROUTES (No middleware needed)
-router.get('/', createRecipe);
+// STATIC PUBLIC ROUTES (No middleware needed)
+router.get('/taxonomy', getTaxonomy);
 router.get('/categories', getCategories);
 router.get('/tags', getTags);
 router.get('/matches', getMatches);
-router.get('/taxonomy', getTaxonomy);
-router.put('/:id', updateRecipe);
-router.get('/:slug', getRecipeDetail);
 
 // PROTECTED ROUTES (Requires Login)
-router.post('/', requireAuth, createRecipe);
 router.get('/favorites', requireAuth, getFavorites);
 router.get('/authored', requireAuth, getAuthoredRecipes);
-router.post('/:slug/favorite', requireAuth, handleToggleFavorite);
 
+// PARAMETERIZED ROUTES
+router.get('/:slug', getRecipeDetail);
+
+// ACTION ROUTES
+router.post('/', requireAuth, createRecipe);
+router.post('/:slug/favorite', requireAuth, handleToggleFavorite);
 router.post('/:id/comments', requireAuth, createComment);
+router.put('/:id', requireAuth, updateRecipe);
 
 // ADMIN ONLY ROUTES
 router.delete('/:id', requireAuth, requireAdmin, deleteRecipe);

@@ -26,27 +26,30 @@ const Favorites = () => {
     useEffect(() => {
         const fetchCookbookData = async () => {
             if (!isAuthenticated || !token) return;
-            
+
+            setLoading(true);
             try {
-                // Fetch both lists in parallel for speed
+                // CLEANUP: Remove the ?userId= query string. 
+                // The backend gets the ID from the Bearer token now.
                 const [favRes, authRes] = await Promise.all([
-                    fetchWithAuth(`${API_BASE}/recipes/favorites?userId=${userId}`),
+                    fetchWithAuth(`${API_BASE}/recipes/favorites`),
                     fetchWithAuth(`${API_BASE}/recipes/authored`)
                 ]);
 
-                const favResult = await favRes.json();
-                const authResult = await authRes.json();
-
-                if (favResult.status === 'success') setFavorites(favResult.data);
-                if (authResult.status === 'success') setAuthored(authResult.data);
-            } catch (error) {
-                console.error("Error loading cookbook", error);
-                toast.error("Failed to load your cookbook");
+                if (favRes.ok && authRes.ok) {
+                    const favData = await favRes.json();
+                    const authData = await authRes.json();
+                    setFavorites(favData.data || []);
+                    setAuthored(authData.data || []);
+                }
+            } catch (err) {
+                console.error("Error fetching cookbook data:", err);
+                toast.error("Failed to load your recipes");
             } finally {
                 setLoading(false);
             }
         };
-
+        
         fetchCookbookData();
     }, [userId, token, isAuthenticated]);
 

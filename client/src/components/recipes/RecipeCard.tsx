@@ -113,7 +113,6 @@ export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardP
                 <div className="mb-4 flex-1">
                     {missingCount > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                            {/* <span className="text-[10px] text-red-600 px-2 py-0.5 font-medium">Missing:</span> */}
                             {missingIngredients.slice(0, 2).map((ing: any, idx: number) => (
                                 <span key={idx} className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-md font-medium">
                                     {ing.name}

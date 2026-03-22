@@ -135,37 +135,16 @@ export const createRecipe = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Admin Only: Add an Ingredient
-export const createIngredient = async (req: Request, res: Response) => {
-    try {
-        const { userId, name, isStaple } = req.body;
-        
-        // Verify Admin (In the future, extract this to an authMiddleware)
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (user?.role !== 'ADMIN') {
-            return res.status(403).json({ status: 'error', message: 'Forbidden: Admins only' });
-        }
-
-        const ingredient = await prisma.ingredient.create({
-            data: { name, isStaple: isStaple || false }
-        });
-        return sendSuccess(res, ingredient, "Ingredient created");
-    } catch (error) {
-        return sendError(res, "Failed to create ingredient", 500, error);
-    }
-};
-
-export const updateRecipe = async (req: Request, res: Response) => {
+export const updateRecipe = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params; // Passed via URL
+    const { id } = req.params;
+    const userId = req.user!.id;
 
     if (typeof id !== 'string') {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid recipe ID format'
-      });
+      return res.status(400).json({ status: 'error', message: 'Invalid recipe ID format' });
     }
-    const { userId, ...recipeData } = req.body;
+
+    const recipeData = req.body;
 
     const updatedRecipe = await recipeService.updateRecipe(id, userId, recipeData);
 
@@ -238,15 +217,12 @@ export const getRecipeDetail = async (req: Request, res: Response) => {
   }
 };
 
-export const handleToggleFavorite = async (req: Request, res: Response) => {
+export const handleToggleFavorite = async (req: AuthRequest, res: Response) => {
   const slug = req.params.slug as string;
-  const userId = req.body.userId as string;
+  const userId = req.user!.id;
 
-  if (!slug || !userId) {
-    return res.status(400).json({ 
-      status: 'error', 
-      message: 'Missing slug or userId' 
-    });
+  if (!slug) {
+    return res.status(400).json({ status: 'error', message: 'Missing recipe slug' });
   }
 
   try {
@@ -254,47 +230,32 @@ export const handleToggleFavorite = async (req: Request, res: Response) => {
     res.status(200).json({ status: 'success', data: result });
   } catch (error: any) {
     const statusCode = error.message === 'Recipe not found' ? 404 : 500;
-    res.status(statusCode).json({
-      status: 'error',
-      message: error.message
-    });
+    res.status(statusCode).json({ status: 'error', message: error.message });
   }
 };
 
-export const getFavorites = async (req: Request, res: Response) => {
-  const userId = req.query.userId as string;
-
-  if (!userId) {
-    return res.status(400).json({ 
-      status: 'error', 
-      message: 'userId is required to fetch favorites' 
-    });
-  }
+export const getFavorites = async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
 
   try {
     const favorites = await recipeService.getFavoriteRecipes(userId);
-    res.status(200).json({ 
-      status: 'success', 
-      data: favorites 
-    });
+    res.status(200).json({ status: 'success', data: favorites });
   } catch (error: any) {
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Failed to retrieve favorites' 
-    });
+    res.status(500).json({ status: 'error', message: 'Failed to retrieve favorites' });
   }
 };
 
-export const createComment = async (req: Request, res: Response) => {
-      try {
-        const { content, rating, userId } = req.body;
+export const createComment = async (req: AuthRequest, res: Response) => {
+    try {
+        const { content, rating } = req.body;
+        const userId = req.user!.id;
         const recipeId = req.params.id as string;
 
         const newComment = await prisma.comment.create({
             data: { 
                 content, 
                 rating: rating ? Number(rating) : null, 
-                userId, 
+                userId,
                 recipeId 
             },
             include: { 

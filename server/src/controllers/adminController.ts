@@ -161,12 +161,19 @@ export const deleteSubcategory = async (req: Request, res: Response) => {
 };
 
 // --- INGREDIENT CRUD ---
-export const createIngredient = async (req: Request, res: Response) => {
+export const createIngredient = async (req: AuthRequest, res: Response) => {
     try {
-        const { name } = req.body;
-        const ingredient = await prisma.ingredient.create({ data: { name } });
-        return sendSuccess(res, ingredient, "Ingredient created", 201);
+        const { name, isStaple } = req.body;
+        const ingredient = await prisma.ingredient.create({
+            data: { 
+                name, 
+                isStaple: isStaple || false 
+            }
+        });
+
+        return sendSuccess(res, ingredient, "Ingredient created");
     } catch (error) {
+        // This catch block handles the Prisma error if creation fails
         return sendError(res, "Failed to create ingredient", 500, error);
     }
 };
@@ -174,10 +181,14 @@ export const createIngredient = async (req: Request, res: Response) => {
 export const updateIngredient = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
-        const { name } = req.body;
+        const { name, isStaple } = req.body;
+        
         const ingredient = await prisma.ingredient.update({
             where: { id: id },
-            data: { name }
+            data: { 
+                name,
+                ...(isStaple !== undefined && { isStaple: Boolean(isStaple) })
+            }
         });
         return sendSuccess(res, ingredient, "Ingredient updated");
     } catch (error) {
@@ -299,5 +310,16 @@ export const deleteUnit = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Failed to delete unit:", error);
         res.status(500).json({ status: 'error', message: 'Failed to delete unit. It may be attached to existing ingredients.' });
+    }
+};
+
+// -- COMMENTS --
+export const deleteComment = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        await prisma.comment.delete({ where: { id } });
+        res.status(200).json({ status: 'success', message: "Comment deleted" });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: "Failed to delete comment" });
     }
 };

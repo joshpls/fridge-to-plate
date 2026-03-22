@@ -162,7 +162,7 @@ const RecipeDetail = () => {
     const handleDeleteComment = async (commentId: string) => {
         if (!window.confirm("Delete this comment?")) return;
         try {
-            const res = await fetchWithAuth(`${API_BASE}/comments/${commentId}`, {
+            const res = await fetchWithAuth(`${API_BASE}/admin/comments/${commentId}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
