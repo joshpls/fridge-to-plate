@@ -19,7 +19,7 @@ const RecipeDetail = () => {
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
     
     // Auth & User Context
-    const { user, isAdmin, isAuthenticated, token } = useAuth();
+    const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
 
     // Sidebar Controls State
@@ -202,7 +202,7 @@ const RecipeDetail = () => {
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent print:hidden" />
                 
                 <div className="absolute top-4 right-4 flex gap-2 print:hidden">
-                    {(isAdmin || (isAuthenticated && user?.id === recipe?.authorId)) && (
+                    {(isAdmin || (isAuthenticated && user?.id === recipe?.author?.id)) && (
                         <Link to={`/edit-recipe/${recipe.slug}`}>
                             <button className="bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-black text-sm hover:bg-white transition-all shadow-lg">
                                 ✏️ Edit
