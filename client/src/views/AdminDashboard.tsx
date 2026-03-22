@@ -5,13 +5,14 @@ import { IngredientsTab } from '../components/admin/IngredientsTab';
 import { RecipesTab } from '../components/admin/RecipesTab';
 import { UsersTab } from '../components/admin/UsersTab';
 import { TagsUnitsTab } from '../components/admin/TagsUnitsTab';
+import { CommentsTab } from '../components/admin/CommentsTab';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 
 const AdminDashboard = () => {
     const { token } = useAuth();
     const [stats, setStats] = useState({ users: 0, recipes: 0, ingredients: 0 });
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'recipes' | 'categories' | 'ingredients' | 'tags-units'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'recipes' | 'categories' | 'ingredients' | 'tags-units' | 'comments'>('overview');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -30,6 +31,7 @@ const AdminDashboard = () => {
         { id: 'overview', label: 'Overview' },
         { id: 'users', label: 'Users' },
         { id: 'recipes', label: 'Recipes' },
+        { id: 'comments', label: 'Comments' },
         { id: 'categories', label: 'Categories' },
         { id: 'ingredients', label: 'Ingredients' },
         { id: 'tags-units', label: 'Tags & Units' }
@@ -73,6 +75,7 @@ const AdminDashboard = () => {
 
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'recipes' && <RecipesTab />}
+                {activeTab === 'comments' && <CommentsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'ingredients' && <IngredientsTab />}
                 {activeTab === 'tags-units' && <TagsUnitsTab />}

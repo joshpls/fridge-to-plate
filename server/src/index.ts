@@ -1,6 +1,4 @@
-// src/index.ts
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { pool } from './config/db.js';
 import pantryRoutes from './routes/pantryRoutes.js';
@@ -16,7 +14,12 @@ import path from 'path';
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : [],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(cookieParser());
 

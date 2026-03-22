@@ -340,7 +340,7 @@ const RecipeDetail = () => {
                                 >
                                     <span>Units:</span>
                                     <span className="uppercase tracking-widest bg-blue-100 px-2 py-1 rounded-md text-[10px] text-blue-800">
-                                        {measurementSystem === 'original' ? 'Original' : measurementSystem === 'metric' ? 'Metric (g, ml)' : 'Imperial (oz, cup)'}
+                                        {measurementSystem === 'original' ? 'Original' : measurementSystem === 'metric' ? 'Metric (g, ml)' : 'US Customary (oz, cup)'}
                                     </span>
                                 </button>
                             </div>

@@ -22,19 +22,46 @@ export const getSystemStats = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// --- USER CRUD ---
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     try {
-        const users = await prisma.user.findMany({
-            select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true },
-            orderBy: { createdAt: 'desc' }
-        });
-        return sendSuccess(res, users, "Users fetched successfully");
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = (req.query.search as string) || '';
+        const sortBy = (req.query.sortBy as string) || 'createdAt';
+        const sortOrder = (req.query.sortOrder as string) || 'desc';
+
+        const skip = (page - 1) * limit;
+
+        const whereClause: any = search ? {
+            OR: [
+                { email: { contains: search, mode: 'insensitive' } },
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+                { alias: { contains: search, mode: 'insensitive' } }
+            ]
+        } : {};
+
+        const [users, totalCount] = await Promise.all([
+            prisma.user.findMany({
+                where: whereClause,
+                select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true },
+                orderBy: { [sortBy]: sortOrder },
+                skip,
+                take: limit
+            }),
+            prisma.user.count({ where: whereClause })
+        ]);
+
+        return sendSuccess(res, {
+            users,
+            pagination: { total: totalCount, page, limit, totalPages: Math.ceil(totalCount / limit) }
+        }, "Users fetched successfully");
     } catch (error: any) {
         return sendError(res, error.message, 500);
     }
 };
 
-// --- USER CRUD ---
 export const toggleUserRole = async (req: AuthRequest, res: Response) => {
     try {
         const targetUserId = req.params.id as string;
@@ -368,6 +395,48 @@ export const deleteUnit = async (req: Request, res: Response) => {
 };
 
 // -- COMMENTS --
+export const getAllComments = async (req: AuthRequest, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = (req.query.search as string) || '';
+        const sortBy = (req.query.sortBy as string) || 'createdAt';
+        const sortOrder = (req.query.sortOrder as string) || 'desc';
+
+        const skip = (page - 1) * limit;
+
+        const whereClause: any = search ? {
+            OR: [
+                { content: { contains: search, mode: 'insensitive' } },
+                { user: { email: { contains: search, mode: 'insensitive' } } },
+                { user: { alias: { contains: search, mode: 'insensitive' } } },
+                { recipe: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+        } : {};
+
+        const [comments, totalCount] = await Promise.all([
+            prisma.comment.findMany({
+                where: whereClause,
+                include: {
+                    user: { select: { id: true, email: true, alias: true } },
+                    recipe: { select: { id: true, name: true, slug: true } }
+                },
+                orderBy: { [sortBy]: sortOrder },
+                skip,
+                take: limit
+            }),
+            prisma.comment.count({ where: whereClause })
+        ]);
+
+        return sendSuccess(res, {
+            comments,
+            pagination: { total: totalCount, page, limit, totalPages: Math.ceil(totalCount / limit) }
+        }, "Comments fetched successfully");
+    } catch (error: any) {
+        return sendError(res, error.message, 500);
+    }
+};
+
 export const deleteComment = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string;

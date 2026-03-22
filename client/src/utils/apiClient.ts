@@ -29,7 +29,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
         if (!refreshPromise) {
             refreshPromise = fetch(`${API_BASE}/auth/refresh`, {
                 method: 'POST',
-                credentials: 'include' // 👈 CRITICAL: This sends the HttpOnly cookie to the backend!
+                credentials: 'include'
             }).then(async (res) => {
                 if (res.ok) {
                     const data = await res.json();

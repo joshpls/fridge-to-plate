@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -45,6 +45,7 @@ router.post('/units', createUnit);
 router.delete('/units/:id', deleteUnit);
 
 // Delete Comment
+router.get('/comments', getAllComments);
 router.delete('/comments/:id', deleteComment);
 
 export default router;
