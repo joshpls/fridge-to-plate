@@ -1,12 +1,29 @@
 import React, { useState, useEffect, type SubmitEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { type TaxonomyData } from '../services/storageService';
-import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomplete';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
+
+// Dnd-Kit Imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface RecipeFormData {
     id?: string;
@@ -21,7 +38,8 @@ interface RecipeFormData {
     instructions: string;
     notes: string;
     tagIds: string[];
-    ingredients: { ingredientId: string; amount: number | ''; unitId: string }[];
+    // ADDED a unique id string field to ingredients so dnd-kit can track them
+    ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string }[];
     nutrition: {
         calories: number | '';
         protein: string;
@@ -49,7 +67,8 @@ const initialFormState: RecipeFormData = {
     name: '', imageUrl: '', summary: '', categoryId: '', subcategoryId: '',
     prepTime: '', cookTime: '', servings: '', instructions: '', notes: '',
     tagIds: [],
-    ingredients: [{ ingredientId: '', amount: '', unitId: '' }],
+    // Initial id is generated
+    ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }],
     nutrition: { 
         calories: '', protein: '', carbohydrates: '', 
         fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },
@@ -69,12 +88,21 @@ const AddRecipe = () => {
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     
-    // UI State for Nutrition Expansion
     const [showDetailedNutrition, setShowDetailedNutrition] = useState(false);
 
-    // --- DRAG AND DROP STATE ---
-    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    // Set up Dnd-kit sensors (Mouse/Touch and Keyboard support)
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            // Require a tiny drag distance before starting.
+            // This prevents accidental drags when just trying to click an input.
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         const initializeForm = async () => {
@@ -107,10 +135,11 @@ const AddRecipe = () => {
                             notes: r.notes || '',
                             tagIds: r.tags?.map((t: any) => t.id) || [],
                             ingredients: r.ingredients?.map((i: any) => ({
+                                id: i.id || Math.random().toString(36).substring(7), // Ensure existing ingredients get IDs
                                 ingredientId: i.ingredientId,
                                 amount: i.amount,
                                 unitId: i.unit?.id || ''
-                            })) || [{ ingredientId: '', amount: '', unitId: '' }],
+                            })) || [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }],
                             nutrition: {
                                 calories: fetchedNutrition.calories || '',
                                 protein: fetchedNutrition.protein || '',
@@ -197,48 +226,32 @@ const AddRecipe = () => {
         setFormData(prev => ({ ...prev, ingredients: newIngredients }));
     };
 
-    const addIngredientRow = () => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, { ingredientId: '', amount: '', unitId: '' }] }));
-    const removeIngredientRow = (index: number) => setFormData(prev => ({ ...prev, ingredients: prev.ingredients.filter((_, i) => i !== index) }));
+    const addIngredientRow = () => setFormData(prev => ({ 
+        ...prev, 
+        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }] 
+    }));
+    
+    const removeIngredientRow = (index: number) => setFormData(prev => ({ 
+        ...prev, 
+        ingredients: prev.ingredients.filter((_, i) => i !== index) 
+    }));
 
-    // --- DRAG AND DROP HANDLERS ---
-    const handleDragStart = (e: React.DragEvent, index: number) => {
-        setDraggedIndex(index);
-        e.dataTransfer.effectAllowed = "move";
-    };
+    // Handles the actual re-ordering logic when a drag finishes
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
 
-    const handleDragEnter = (e: React.DragEvent, index: number) => {
-        e.preventDefault();
-        setDragOverIndex(index);
-    };
+        if (over && active.id !== over.id) {
+            setFormData((prev) => {
+                const oldIndex = prev.ingredients.findIndex((item) => item.id === active.id);
+                const newIndex = prev.ingredients.findIndex((item) => item.id === over.id);
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault(); // Necessary to allow dropping
-    };
-
-    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-        e.preventDefault();
-        if (draggedIndex === null || draggedIndex === dropIndex) {
-            setDraggedIndex(null);
-            setDragOverIndex(null);
-            return;
+                return {
+                    ...prev,
+                    // arrayMove is a dnd-kit utility to swap positions
+                    ingredients: arrayMove(prev.ingredients, oldIndex, newIndex),
+                };
+            });
         }
-
-        const newIngredients = [...formData.ingredients];
-        const draggedItem = newIngredients[draggedIndex];
-        
-        // Remove item from original position
-        newIngredients.splice(draggedIndex, 1);
-        // Insert item at new position
-        newIngredients.splice(dropIndex, 0, draggedItem);
-
-        setFormData(prev => ({ ...prev, ingredients: newIngredients }));
-        setDraggedIndex(null);
-        setDragOverIndex(null);
-    };
-
-    const handleDragEnd = () => {
-        setDraggedIndex(null);
-        setDragOverIndex(null);
     };
 
     const uploadFileToServer = async (file: File) => {
@@ -314,7 +327,10 @@ const AddRecipe = () => {
             const cleanedData = {
                 ...formData,
                 nutrition: cleanNutritionData(formData.nutrition),
-                ingredients: formData.ingredients.filter(ing => ing.ingredientId && ing.amount && ing.unitId)
+                // Strip the temporary local 'id' field before sending to the server
+                ingredients: formData.ingredients
+                                .filter(ing => ing.ingredientId && ing.amount && ing.unitId)
+                                .map(({ id, ...rest }) => rest)
             };
 
             const isEdit = !!formData.id;
@@ -464,64 +480,37 @@ const AddRecipe = () => {
                     </div>
                 </section>
 
-                {/* 4. Ingredients */}
+                {/* 4. Ingredients (DND Implementation) */}
                 <section className="bg-gray-50 p-8 rounded-3xl border-2 border-gray-100 space-y-6">
                     <div className="flex justify-between items-end border-b-2 border-gray-200 pb-2">
                         <h2 className="text-xl font-black text-gray-800">4. Ingredients *</h2>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{formData.ingredients.length} Items</span>
                     </div>
 
-                    <div className="space-y-3">
-                        {formData.ingredients.map((ing, index) => (
-                            <div 
-                                key={index} 
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragEnter={(e) => handleDragEnter(e, index)}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, index)}
-                                onDragEnd={handleDragEnd}
-                                className={`flex gap-3 items-center bg-white p-2 rounded-2xl border-2 transition-all cursor-move
-                                    ${draggedIndex === index ? 'opacity-50 border-dashed border-gray-400' : ''}
-                                    ${dragOverIndex === index ? 'border-orange-500 bg-orange-50 scale-[1.02] shadow-md z-10' : 'border-gray-100 hover:border-orange-200'}`}
-                            >
-                                {/* Drag Handle Cues */}
-                                <div className="text-gray-300 hover:text-gray-500 pl-2">
-                                    <GripVertical size={20} />
-                                </div>
-
-                                <IngredientAutocomplete
-                                    value={ing.ingredientId}
-                                    ingredients={taxonomy.ingredients}
-                                    onChange={(newId) => handleIngredientChange(index, 'ingredientId', newId)}
-                                />
-
-                                <input
-                                    required
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Qty"
-                                    value={ing.amount}
-                                    onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-                                    className="w-24 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center"
-                                />
-
-                                <select
-                                    required
-                                    value={ing.unitId}
-                                    onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-                                    className="w-32 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer"
-                                >
-                                    <option value="" disabled>Unit</option>
-                                    {taxonomy.units.map(u => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
-                                </select>
-
-                                <button type="button" onClick={() => removeIngredientRow(index)} className="p-3 text-gray-300 hover:text-red-500 transition-colors" title="Remove Ingredient">
-                                    ✕
-                                </button>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={formData.ingredients.map(ing => ing.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-3">
+                                {formData.ingredients.map((ing, index) => (
+                                    <SortableIngredientRow
+                                        key={ing.id}
+                                        id={ing.id}
+                                        index={index}
+                                        ingredient={ing}
+                                        taxonomy={taxonomy}
+                                        handleIngredientChange={handleIngredientChange}
+                                        removeIngredientRow={removeIngredientRow}
+                                    />
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </SortableContext>
+                    </DndContext>
 
                     <button type="button" onClick={addIngredientRow} className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-500 font-bold hover:bg-white hover:border-orange-300 hover:text-orange-600 transition-all">
                         + Add Another Ingredient
