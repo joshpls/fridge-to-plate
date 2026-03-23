@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { useConfirm } from '../../context/ConfirmContext';
 
 interface Ingredient {
     id: string;
@@ -11,6 +12,7 @@ interface Ingredient {
 }
 
 export const IngredientsTab = () => {
+    const { confirm } = useConfirm();
     const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     
@@ -86,7 +88,14 @@ export const IngredientsTab = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm("Delete this ingredient? It will fail if recipes use it.")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this ingredient?",
+            message: `Are you sure you want to delete this ingredient?`,
+            confirmText: "Yes",
+            variant: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/ingredients/${id}`, {

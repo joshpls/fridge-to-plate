@@ -1,9 +1,9 @@
 // src/components/admin/CategoriesTab.tsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { useConfirm } from '../../context/ConfirmContext';
 
 
 interface Subcategory {
@@ -18,7 +18,7 @@ interface Category {
 }
 
 export const CategoriesTab = () => {
-    const { token } = useAuth();
+    const { confirm, prompt } = useConfirm();
     const [categories, setCategories] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newSubcatName, setNewSubcatName] = useState('');
@@ -88,7 +88,14 @@ export const CategoriesTab = () => {
     };
 
     const handleEditCategory = async (id: string, currentName: string) => {
-        const newName = window.prompt("Edit category name:", currentName);
+        const newName = await prompt({
+            title: "Edit Category",
+            message: "Update the name for this category:",
+            defaultValue: currentName,
+            placeholder: "e.g., Breakfast",
+            confirmText: "Save Changes"
+        });
+
         if (!newName || newName === currentName) return;
 
         try {
@@ -105,7 +112,14 @@ export const CategoriesTab = () => {
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this category?",
+            message: `Are you sure you want to delete this category?`,
+            confirmText: "Yes",
+            variant: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/categories/${id}`, {
@@ -122,7 +136,14 @@ export const CategoriesTab = () => {
     };
 
     const handleEditSubcategory = async (id: string, currentName: string) => {
-        const newName = window.prompt("Edit category name:", currentName);
+        const newName = await prompt({
+            title: "Edit Subcategory",
+            message: "Update the name for this subcategory:",
+            defaultValue: currentName,
+            placeholder: "e.g., Toast",
+            confirmText: "Save Changes"
+        });
+
         if (!newName || newName === currentName) return;
 
         try {
@@ -139,7 +160,14 @@ export const CategoriesTab = () => {
     };
 
     const handleDeleteSubcategory = async (id: string) => {
-        if (!window.confirm("Delete this category? This might fail if recipes are using it.")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this subcategory?",
+            message: `Are you sure you want to delete this subcategory?`,
+            confirmText: "Yes",
+            variant: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/subcategories/${id}`, {

@@ -10,8 +10,10 @@ import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
+import { useConfirm } from '../context/ConfirmContext';
 
 const RecipeDetail = () => {
+    const { confirm } = useConfirm();
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const [recipe, setRecipe] = useState<any>(null);
@@ -113,7 +115,15 @@ const RecipeDetail = () => {
     };
 
     const handleDeleteRecipe = async () => {
-        if (!window.confirm("Are you sure you want to delete this recipe entirely?")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this recipe?",
+            message: "Are you sure you want to delete this recipe entirely?",
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
+
         try {
             await fetchWithAuth(`${API_BASE}/recipes/${recipe.id}`, {
                 method: 'DELETE'
@@ -160,7 +170,14 @@ const RecipeDetail = () => {
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        if (!window.confirm("Are you sure you want to delete this review?")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this review?",
+            message: `Are you sure you want to delete this review?`,
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const response = await fetchWithAuth(`${API_BASE}/recipes/comments/${commentId}`, {

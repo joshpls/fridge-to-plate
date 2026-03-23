@@ -8,9 +8,11 @@ import { Search, Edit3, Trash2, Heart, ChefHat } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
+import { useConfirm } from '../context/ConfirmContext';
 
 const Favorites = () => {
     const { user, token, isAuthenticated } = useAuth();
+    const { confirm } = useConfirm();
     const userId = user?.id;
 
     // View State
@@ -29,8 +31,6 @@ const Favorites = () => {
 
             setLoading(true);
             try {
-                // CLEANUP: Remove the ?userId= query string. 
-                // The backend gets the ID from the Bearer token now.
                 const [favRes, authRes] = await Promise.all([
                     fetchWithAuth(`${API_BASE}/recipes/favorites`),
                     fetchWithAuth(`${API_BASE}/recipes/authored`)
@@ -68,7 +68,14 @@ const Favorites = () => {
 
     const handleDelete = async (e: React.MouseEvent, recipeId: string, recipeName: string) => {
         e.stopPropagation();
-        if (!window.confirm(`Are you sure you want to permanently delete "${recipeName}"?`)) return;
+        const isConfirmed = await confirm({
+            title: "Delete this recipe?",
+            message: `Are you sure you want to permanently delete "${recipeName}"?`,
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetch(`${API_BASE}/recipes/${recipeId}`, {

@@ -1,12 +1,12 @@
 // src/components/admin/TagsUnitsTab.tsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export const TagsUnitsTab = () => {
-    const { token } = useAuth();
+    const { confirm } = useConfirm();
     const [tags, setTags] = useState<any[]>([]);
     const [units, setUnits] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +57,15 @@ export const TagsUnitsTab = () => {
     };
 
     const handleDeleteTag = async (id: string) => {
-        if (!window.confirm('Delete this tag? This may affect recipes using it.')) return;
+         const isConfirmed = await confirm({
+            title: "Delete this tag?",
+            message: `Are you sure you want to delete this tag?`,
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
+
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/tags/${id}`, {
                 method: 'DELETE',
@@ -93,7 +101,15 @@ export const TagsUnitsTab = () => {
     };
 
     const handleDeleteUnit = async (id: string) => {
-        if (!window.confirm('Delete this unit? Ingredients using this unit might break.')) return;
+        const isConfirmed = await confirm({
+            title: "Delete this unit?",
+            message: `Delete this unit? Ingredients using this unit might break.`,
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
+
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/units/${id}`, {
                 method: 'DELETE'

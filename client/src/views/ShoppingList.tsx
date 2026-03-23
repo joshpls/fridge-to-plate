@@ -6,8 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { X, Printer } from 'lucide-react'; // Added Printer icon
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
+import { useConfirm } from '../context/ConfirmContext';
 
 const ShoppingList = () => {
+    const { confirm } = useConfirm();
     const [items, setItems] = useState<ShoppingListItem[]>([]);
     const [isSyncing, setIsSyncing] = useState(false);
     
@@ -33,11 +35,18 @@ const ShoppingList = () => {
         toast.success("Item removed");
     };
 
-    const handleClearList = () => {
-        if (window.confirm("Are you sure you want to clear your list?")) {
-            storageService.shopping.clear();
-            toast.success("List Cleared");
-        }
+    const handleClearList = async () => {
+        const isConfirmed = await confirm({
+            title: "Clear the Shopping List?",
+            message: "Are you sure you want to clear your list?",
+            confirmText: "Yes",
+            variant: "info"
+        });
+
+        if (!isConfirmed) return;
+
+        storageService.shopping.clear();
+        toast.success("List Cleared");
     };
 
     // --- NEW: Print Function ---

@@ -6,8 +6,10 @@ import { Link } from 'react-router-dom';
 import { Search, Trash2, ExternalLink, ArrowUpDown } from 'lucide-react';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export const RecipesTab = () => {
+    const { confirm } = useConfirm();
     const { token } = useAuth();
     const [recipes, setRecipes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +39,14 @@ export const RecipesTab = () => {
     }, [token]);
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+        const isConfirmed = await confirm({
+            title: "Delete this Recipe?",
+            message: `Are you sure you want to delete "${name}?`,
+            confirmText: "Yes",
+            variant: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/recipes/${id}`, {

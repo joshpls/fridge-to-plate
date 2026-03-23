@@ -5,6 +5,7 @@ import { storageService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
 import { API_BASE } from '../utils/apiConfig';
+import { fetchWithAuth } from '../utils/apiClient';
 
 export const Navigation = () => {
     const location = useLocation();
@@ -13,17 +14,13 @@ export const Navigation = () => {
     const [shoppingCount, setShoppingCount] = useState(0);
     
     // 1. Hook into the Auth Context
-    const { user, isAuthenticated, isAdmin, logout, token } = useAuth();
+    const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
     const fetchAllCounts = async () => {
         try {
             // 2. Only fetch pantry count from DB if a user is logged in
             if (isAuthenticated && user?.id) {
-                const pantryRes = await fetch(`${API_BASE}/pantry?userId=${user.id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const pantryRes = await fetchWithAuth(`${API_BASE}/pantry?userId=${user.id}`);
                 const pResult = await pantryRes.json();
                 if (pResult.status === 'success') setPantryCount(pResult.data.length);
             } else {
@@ -49,7 +46,7 @@ export const Navigation = () => {
             window.removeEventListener('pantryUpdated', fetchAllCounts);
             window.removeEventListener('shoppingListUpdated', fetchAllCounts);
         };
-    }, [location.pathname, isAuthenticated, user?.id]); // Re-run if auth status changes
+    }, [location.pathname, isAuthenticated, user?.id]);
 
     const handleLogout = () => {
         logout();

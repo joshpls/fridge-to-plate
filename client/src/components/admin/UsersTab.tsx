@@ -1,6 +1,7 @@
 // src/components/admin/UsersTab.tsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { toast } from 'react-hot-toast';
 import { Shield, User as UserIcon, Edit2, Trash2, X, Check, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { API_BASE } from '../../utils/apiConfig';
@@ -8,6 +9,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 
 export const UsersTab = () => {
     const { token, user: currentUser } = useAuth();
+    const { confirm } = useConfirm();
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -131,7 +133,14 @@ export const UsersTab = () => {
             return;
         }
 
-        if (!window.confirm(`Are you absolutely sure you want to delete ${email}? This action cannot be undone.`)) return;
+        const isConfirmed = await confirm({
+            title: "Delete User?",
+            message: `Are you sure you want to permanently delete ${email}?`,
+            confirmText: "Yes, Delete User",
+            variant: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/users/${userId}`, {

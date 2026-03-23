@@ -5,8 +5,10 @@ import { Trash2, ExternalLink, Search, ChevronLeft, ChevronRight } from 'lucide-
 import { Link } from 'react-router-dom';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export const CommentsTab = () => {
+    const { confirm } = useConfirm();
     const { token } = useAuth();
     const [comments, setComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,12 +64,20 @@ export const CommentsTab = () => {
     };
 
     const handleDelete = async (commentId: string) => {
-        if (!window.confirm("Are you sure you want to permanently delete this comment?")) return;
+        const isConfirmed = await confirm({
+            title: "Delete this comment?",
+            message: `Are you sure you want to permanently delete this comment?`,
+            confirmText: "Yes",
+            variant: "warning"
+        });
+
+        if (!isConfirmed) return;
+
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/comments/${commentId}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success("Comment deleted");
-                fetchComments(); // Refresh the current page
+                fetchComments();
             }
         } catch (error) { toast.error("An error occurred"); }
     };
