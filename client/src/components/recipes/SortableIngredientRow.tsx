@@ -5,7 +5,7 @@ import { GripVertical } from 'lucide-react';
 import { IngredientAutocomplete } from './IngredientAutocomplete';
 
 interface Props {
-  id: string; // Required by dnd-kit
+  id: string;
   index: number;
   ingredient: { ingredientId: string; amount: number | ''; unitId: string };
   taxonomy: any;
@@ -28,7 +28,6 @@ export const SortableIngredientRow: React.FC<Props> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // Add a z-index and shadow when dragging so it pops out
     zIndex: isDragging ? 10 : 1,
     opacity: isDragging ? 0.8 : 1,
   };
@@ -40,9 +39,6 @@ export const SortableIngredientRow: React.FC<Props> = ({
       className={`flex gap-3 items-center bg-white p-2 rounded-2xl border-2 transition-all
         ${isDragging ? 'border-orange-500 bg-orange-50 scale-[1.02] shadow-md' : 'border-gray-100 hover:border-orange-200'}`}
     >
-      {/* Only the grip icon has the listeners. This is crucial for mobile! 
-        It prevents accidental drags when typing in inputs. 
-      */}
       <div 
         {...attributes} 
         {...listeners} 
