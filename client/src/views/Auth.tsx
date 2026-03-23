@@ -35,11 +35,11 @@ const Auth = () => {
             : { email, password, firstName, lastName, alias };
 
         try {
-            // Note: Keep using native 'fetch' here, NOT fetchWithAuth!
             const response = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                credentials: 'include',
             });
 
             const data = await response.json();
@@ -76,7 +76,6 @@ const Auth = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Only show profile fields during registration */}
                     {!isLogin && (
                         <>
                             <div className="grid grid-cols-2 gap-4">
@@ -163,7 +162,6 @@ const Auth = () => {
                     <button
                         type="button"
                         onClick={() => {
-                            // Toggle mode and reset all fields
                             setIsLogin(!isLogin);
                             setError('');
                             setFirstName('');
