@@ -110,8 +110,9 @@ model RecipeIngredient {
   id           String @id @default(uuid())
   recipeId     String
   ingredientId String
-  unitId       String // NEW: Link to Unit
-  amount       Float // NEW: Changed from String to Float (e.g., 1.5 instead of "1 1/2")
+  unitId       String
+  amount       Float
+  order        Int    @default(0)
 
   recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)

@@ -18,6 +18,7 @@ const recipeIncludes = (userId: string) => ({
   tags: true,
   favorites: { where: { userId } },
   ingredients: {
+    orderBy: { order: 'asc' as const },
     include: {
       ingredient: true,
       unit: true 
@@ -37,6 +38,7 @@ const fallbackIncludes = {
     subcategory: true,
     tags: true,
     ingredients: {
+        orderBy: { order: 'asc' as const },
         include: {
             ingredient: true,
             unit: true 
@@ -134,8 +136,9 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
 
         // Recreate the ingredients from scratch using the new list
         ingredients: {
-          create: data.ingredients.map((ing: any) => ({
+          create: data.ingredients.map((ing: any, index: number) => ({
             amount: Number(ing.amount),
+            order: index,
             ingredient: { connect: { id: ing.ingredientId } },
             unit: { connect: { id: ing.unitId } }
           }))
@@ -245,10 +248,11 @@ export const getRecipeBySlug = async (slug: string, userId?: string) => {
     prisma.recipe.findUnique({
       where: { slug },
       include: {
-        ingredients: { 
+        ingredients: {
+          orderBy: { order: 'asc' },
           include: { 
             ingredient: true,
-            unit: true // CRITICAL: Required for ri.unit.name in mapper
+            unit: true
           } 
         },
         category: true,

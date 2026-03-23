@@ -4,10 +4,9 @@ import { type TaxonomyData } from '../services/storageService';
 import { IngredientAutocomplete } from '../components/recipes/IngredientAutocomplete';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
-import { API_BASE } from '../utils/apiConfig';
-import { getNetworkImageUrl } from '../utils/apiConfig';
+import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 
 interface RecipeFormData {
     id?: string;
@@ -73,6 +72,10 @@ const AddRecipe = () => {
     // UI State for Nutrition Expansion
     const [showDetailedNutrition, setShowDetailedNutrition] = useState(false);
 
+    // --- DRAG AND DROP STATE ---
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
     useEffect(() => {
         const initializeForm = async () => {
             try {
@@ -130,7 +133,6 @@ const AddRecipe = () => {
                             }
                         });
 
-                        // Auto-expand detailed nutrition if existing data has it
                         const hasDetailed = ['fiber', 'sugar', 'sodium', 'potassium', 'vitaminA', 'vitaminC', 'calcium', 'iron'].some(k => fetchedNutrition[k]) 
                             || ['saturatedFat', 'polyunsaturatedFat', 'monounsaturatedFat', 'transFat'].some(k => fetchedFat[k]);
                         
@@ -167,8 +169,6 @@ const AddRecipe = () => {
                     }
                 };
             }
-
-            // Standard Fields
             return {
                 ...prev,
                 nutrition: {
@@ -199,6 +199,47 @@ const AddRecipe = () => {
 
     const addIngredientRow = () => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, { ingredientId: '', amount: '', unitId: '' }] }));
     const removeIngredientRow = (index: number) => setFormData(prev => ({ ...prev, ingredients: prev.ingredients.filter((_, i) => i !== index) }));
+
+    // --- DRAG AND DROP HANDLERS ---
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = "move";
+    };
+
+    const handleDragEnter = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        setDragOverIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Necessary to allow dropping
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            setDraggedIndex(null);
+            setDragOverIndex(null);
+            return;
+        }
+
+        const newIngredients = [...formData.ingredients];
+        const draggedItem = newIngredients[draggedIndex];
+        
+        // Remove item from original position
+        newIngredients.splice(draggedIndex, 1);
+        // Insert item at new position
+        newIngredients.splice(dropIndex, 0, draggedItem);
+
+        setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
 
     const uploadFileToServer = async (file: File) => {
         setIsUploading(true);
@@ -249,7 +290,6 @@ const AddRecipe = () => {
         return () => window.removeEventListener('paste', handlePaste);
     }, []);
 
-    // Helper to strip empty keys before sending to DB to keep JSON clean
     const cleanNutritionData = (nutData: any) => {
         const cleaned: any = {};
         for (const key in nutData) {
@@ -433,7 +473,23 @@ const AddRecipe = () => {
 
                     <div className="space-y-3">
                         {formData.ingredients.map((ing, index) => (
-                            <div key={index} className="flex gap-3 items-center bg-white p-2 rounded-2xl border-2 border-gray-100 hover:border-orange-200 transition-colors">
+                            <div 
+                                key={index} 
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragEnter={(e) => handleDragEnter(e, index)}
+                                onDragOver={handleDragOver}
+                                onDrop={(e) => handleDrop(e, index)}
+                                onDragEnd={handleDragEnd}
+                                className={`flex gap-3 items-center bg-white p-2 rounded-2xl border-2 transition-all cursor-move
+                                    ${draggedIndex === index ? 'opacity-50 border-dashed border-gray-400' : ''}
+                                    ${dragOverIndex === index ? 'border-orange-500 bg-orange-50 scale-[1.02] shadow-md z-10' : 'border-gray-100 hover:border-orange-200'}`}
+                            >
+                                {/* Drag Handle Cues */}
+                                <div className="text-gray-300 hover:text-gray-500 pl-2">
+                                    <GripVertical size={20} />
+                                </div>
+
                                 <IngredientAutocomplete
                                     value={ing.ingredientId}
                                     ingredients={taxonomy.ingredients}
