@@ -3,6 +3,8 @@
 ### A full-stack, self-hosted platform designed for seamless recipe exploration and intelligent pantry tracking. This application bridges the gap between "What should I cook?" and "What do I actually have in my kitchen?"
 ## 🚀 Overview
 
+<img src="fridge2plate_sample.png" alt="Alt text" width="400" height="200">
+
 ### This project is a TypeScript-driven ecosystem consisting of a high-performance React frontend and a robust Node.js/Express backend. It features a unique "Pantry Matching" engine that analyzes recipe requirements against a user's real-time inventory.
 ## Core Features
 
