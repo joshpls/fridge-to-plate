@@ -29,9 +29,22 @@ app.use('/api', globalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/pantry', pantryRoutes);
 app.use('/api/recipes', recipeRoutes);
-app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+
+// This serves the CSS, JS, and images compiled by Vite
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+// It sends the index.html file for any request that doesn't match an API route.
+app.get('*', (req, res, next) => {
+    // Ignore API routes so they can still 404 properly if they don't exist
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+});
+
 app.use(errorHandler);
 
 // Startup Verification

@@ -1,12 +1,15 @@
 services:
-  api:
+  app:
     image: ghcr.io/joshpls/fridge-to-plate/app:latest
     restart: always
     ports:
       - "5000:5000"
+    env_file: .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://user:password@db:5432/recipe_db?sslmode=disable
+      - NODE_ENV=production
+    volumes:
+      - ./uploads:/app/public/uploads
     depends_on:
       - db
 
@@ -14,8 +17,9 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_DB: recipe_db
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=recipe_db
     volumes:
       - pgdata:/var/lib/postgresql/data
 
