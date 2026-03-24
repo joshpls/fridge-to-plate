@@ -6,7 +6,7 @@ import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 
 const Profile = () => {
-    const { user, token, updateUserParams } = useAuth();
+    const { user, updateUserParams } = useAuth();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',

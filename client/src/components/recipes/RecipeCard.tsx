@@ -14,7 +14,7 @@ interface RecipeCardProps {
 
 export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
-    const { user, isAuthenticated, token } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const userId = user?.id;
 
     const missingIngredients = recipe.ingredients?.filter((ing: any) =>
