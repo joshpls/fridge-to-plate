@@ -17,6 +17,6 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg(pool as any);
 export const prisma = new PrismaClient({ adapter });
 export { pool };
