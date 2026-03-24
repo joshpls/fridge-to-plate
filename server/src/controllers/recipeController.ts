@@ -168,9 +168,12 @@ export const deleteRecipe = async (req: AuthRequest, res: Response) => {
         const userId = req.user!.id;
         const userRole = req.user!.role;
 
-        if (!id) {
-            return res.status(400).json({ status: 'error', message: 'Recipe ID is required' });
-        }
+      if (!id || typeof id !== 'string') {
+        return res.status(400).json({
+          status: 'error',
+          message: 'A valid Recipe ID string is required'
+        });
+      }
 
         await recipeService.deleteRecipe(id, userId, userRole);
 
