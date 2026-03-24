@@ -36,12 +36,12 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 // This serves the CSS, JS, and images compiled by Vite
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// It sends the index.html file for any request that doesn't match an API route.
-app.get('*', (req, res, next) => {
-    // Ignore API routes so they can still 404 properly if they don't exist
+app.get(/.*/, (req, res, next) => {
+    // If it's an API request that didn't match any routes above, let it 404
     if (req.path.startsWith('/api')) {
         return next();
     }
+    // Otherwise, serve the React app
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
