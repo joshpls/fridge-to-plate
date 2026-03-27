@@ -1,6 +1,5 @@
 import type { ShoppingListItem, TaxonomyData } from "../models/Recipe";
 
-
 // Keys for our storage domains
 const KEYS = {
     SHOPPING: 'f2p_shopping_list',

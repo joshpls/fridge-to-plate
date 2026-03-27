@@ -1,14 +1,14 @@
 
-const getUnitSystem = (unit: string): 'metric' | 'imperial' | 'neutral' => {
-    const u = unit.toLowerCase().trim();
+// const getUnitSystem = (unit: string): 'metric' | 'imperial' | 'neutral' => {
+//     const u = unit.toLowerCase().trim();
     
-    const metric = ['g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters'];
-    const imperial = ['tsp', 'teaspoon', 'teaspoons', 'tbsp', 'tablespoon', 'tablespoons', 'cup', 'cups', 'fl oz', 'fluid ounce', 'oz', 'ounce', 'ounces', 'lb', 'pound', 'pounds', 'pt', 'pint', 'qt', 'quart', 'gal', 'gallon'];
+//     const metric = ['g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters'];
+//     const imperial = ['tsp', 'teaspoon', 'teaspoons', 'tbsp', 'tablespoon', 'tablespoons', 'cup', 'cups', 'fl oz', 'fluid ounce', 'oz', 'ounce', 'ounces', 'lb', 'pound', 'pounds', 'pt', 'pint', 'qt', 'quart', 'gal', 'gallon'];
 
-    if (metric.includes(u)) return 'metric';
-    if (imperial.includes(u)) return 'imperial';
-    return 'neutral';
-};
+//     if (metric.includes(u)) return 'metric';
+//     if (imperial.includes(u)) return 'imperial';
+//     return 'neutral';
+// };
 
 /**
  * Converts common cooking units between Imperial and Metric.
@@ -21,7 +21,7 @@ export const convertUnit = (amount: number, unit: string, targetSystem: 'imperia
     if (!amount || !unit) return { amount, unit };
 
     let result = { amount, unit };
-    const currentSystem = getUnitSystem(unit);
+    // const currentSystem = getUnitSystem(unit);
 
     // if (currentSystem === targetSystem || currentSystem === 'neutral') {
     //     console.log("returning early...")

@@ -1,5 +1,5 @@
-// src/services/taxonomyService.ts
-import { storageService, type TaxonomyData } from './storageService';
+import { storageService } from './storageService';
+import type { TaxonomyData } from '../models/Recipe';
 import { API_BASE } from '../utils/apiConfig';
 
 export const taxonomyService = {
