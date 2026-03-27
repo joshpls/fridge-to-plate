@@ -20,11 +20,13 @@ const getUnitSystem = (unit: string): 'metric' | 'imperial' | 'neutral' => {
 export const convertUnit = (amount: number, unit: string, targetSystem: 'imperial' | 'metric'): { amount: number, unit: string } => {
     if (!amount || !unit) return { amount, unit };
 
+    let result = { amount, unit };
     const currentSystem = getUnitSystem(unit);
 
-    if (currentSystem === targetSystem || currentSystem === 'neutral') {
-        return { amount, unit };
-    }
+    // if (currentSystem === targetSystem || currentSystem === 'neutral') {
+    //     console.log("returning early...")
+    //     return { amount, unit };
+    // }
 
     const lowerUnit = unit.toLowerCase().trim();
 
@@ -59,5 +61,5 @@ export const convertUnit = (amount: number, unit: string, targetSystem: 'imperia
         }
     }
 
-    return { amount, unit };
+    return result;
 };

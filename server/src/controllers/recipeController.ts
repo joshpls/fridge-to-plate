@@ -5,6 +5,8 @@ import { mapRecipeToDto } from '../utils/helperFunctions.js';
 import { prisma } from '../config/db.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
 import jwt from 'jsonwebtoken';
+import fs from 'fs/promises';
+import path from 'path';
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
@@ -140,14 +142,21 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const userId = req.user!.id;
     const userRole = req.user!.role;
+    const recipeData = req.body;
 
     if (typeof id !== 'string') {
       return res.status(400).json({ status: 'error', message: 'Invalid recipe ID format' });
     }
 
-    const recipeData = req.body;
+    const existingRecipe = await prisma.recipe.findUnique({ 
+        where: { id }, select: { imageUrl: true } 
+    });
 
     const updatedRecipe = await recipeService.updateRecipe(id, userId, recipeData, userRole);
+
+    if (existingRecipe?.imageUrl && existingRecipe.imageUrl !== recipeData.imageUrl) {
+        await deleteLocalImage(existingRecipe.imageUrl);
+    }
 
     return res.status(200).json({
         status: 'success',
@@ -160,39 +169,44 @@ export const updateRecipe = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// server/src/controllers/recipeController.ts
-
 export const deleteRecipe = async (req: AuthRequest, res: Response) => {
-    try {
-        const { id } = req.params;
-        const userId = req.user!.id;
-        const userRole = req.user!.role;
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
 
-      if (!id || typeof id !== 'string') {
-        return res.status(400).json({
-          status: 'error',
-          message: 'A valid Recipe ID string is required'
-        });
-      }
-
-        await recipeService.deleteRecipe(id, userId, userRole);
-
-        return res.status(200).json({
-            status: 'success',
-            message: 'Recipe deleted successfully'
-        });
-    } catch (error: any) {
-        // Handle the specific "Unauthorized" case with a 403
-        if (error.message === "Unauthorized or Recipe not found.") {
-            return res.status(403).json({ status: 'error', message: error.message });
-        }
-
-        console.error("Error deleting recipe:", error);
-        if (error.code === 'P2025') {
-            return res.status(404).json({ status: 'error', message: 'Recipe not found' });
-        }
-        return res.status(500).json({ status: 'error', message: error.message });
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'A valid Recipe ID string is required'
+      });
     }
+
+    const existingRecipe = await prisma.recipe.findUnique({
+      where: { id }, select: { imageUrl: true }
+    });
+
+    await recipeService.deleteRecipe(id, userId, userRole);
+
+    if (existingRecipe?.imageUrl) {
+      await deleteLocalImage(existingRecipe.imageUrl);
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Recipe deleted successfully'
+    });
+  } catch (error: any) {
+    if (error.message === "Unauthorized or Recipe not found.") {
+      return res.status(403).json({ status: 'error', message: error.message });
+    }
+
+    console.error("Error deleting recipe:", error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ status: 'error', message: 'Recipe not found' });
+    }
+    return res.status(500).json({ status: 'error', message: error.message });
+  }
 };
 
 export const getRecipeDetail = async (req: Request, res: Response) => {
@@ -305,5 +319,16 @@ export const getAuthoredRecipes = async (req: AuthRequest, res: Response) => {
         res.status(200).json({ status: 'success', data: recipes });
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Failed to fetch authored recipes' });
+    }
+};
+
+const deleteLocalImage = async (imageUrl?: string | null) => {
+    if (!imageUrl || !imageUrl.startsWith('/uploads/')) return;
+    try {
+        const filename = path.basename(imageUrl);
+        const filePath = path.join(process.cwd(), 'public/uploads', filename);
+        await fs.unlink(filePath);
+    } catch (err: any) {
+        if (err.code !== 'ENOENT') console.error('Failed to delete old recipe image:', err);
     }
 };

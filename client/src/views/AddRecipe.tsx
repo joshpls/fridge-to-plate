@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type SubmitEvent } from 'react';
+import React, { useState, useEffect, type SubmitEvent, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { type TaxonomyData } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,6 @@ import { fetchWithAuth } from '../utils/apiClient';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
 
-// Dnd-Kit Imports
 import {
   DndContext,
   closestCenter,
@@ -38,7 +37,6 @@ interface RecipeFormData {
     instructions: string;
     notes: string;
     tagIds: string[];
-    // ADDED a unique id string field to ingredients so dnd-kit can track them
     ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string }[];
     nutrition: {
         calories: number | '';
@@ -87,14 +85,13 @@ const AddRecipe = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    
+    const originalImageUrlRef = useRef<string>('');
+    const currentImageUrlRef = useRef<string>('');
+    const isSubmittedRef = useRef<boolean>(false);
     const [showDetailedNutrition, setShowDetailedNutrition] = useState(false);
-
-    // Set up Dnd-kit sensors (Mouse/Touch and Keyboard support)
+    
     const sensors = useSensors(
         useSensor(PointerSensor, {
-            // Require a tiny drag distance before starting.
-            // This prevents accidental drags when just trying to click an input.
             activationConstraint: {
                 distance: 5,
             },
@@ -120,6 +117,8 @@ const AddRecipe = () => {
                         const r = result.data;
                         const fetchedNutrition = r.nutrition || {};
                         const fetchedFat = fetchedNutrition.fat || {};
+                        originalImageUrlRef.current = r.imageUrl || '';
+                        currentImageUrlRef.current = r.imageUrl || '';
 
                         setFormData({
                             id: r.id,
@@ -266,6 +265,14 @@ const AddRecipe = () => {
             });
             const result = await res.json();
             if (result.status === 'success') {
+                if (currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
+                    fetchWithAuth(`${API_BASE}/upload`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageUrl: currentImageUrlRef.current })
+                    }).catch(console.error);
+                }
+                currentImageUrlRef.current = result.imageUrl;
                 setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
             } else {
                 alert("Upload failed: " + result.message);
@@ -303,6 +310,23 @@ const AddRecipe = () => {
         return () => window.removeEventListener('paste', handlePaste);
     }, []);
 
+    useEffect(() => {
+        return () => {
+            if (!isSubmittedRef.current && currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
+                
+                fetch(`${API_BASE}/upload`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}` 
+                    },
+                    body: JSON.stringify({ imageUrl: currentImageUrlRef.current }),
+                    keepalive: true 
+                }).catch(() => {});
+            }
+        };
+    }, []);
+
     const cleanNutritionData = (nutData: any) => {
         const cleaned: any = {};
         for (const key in nutData) {
@@ -322,12 +346,12 @@ const AddRecipe = () => {
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault();
         setSaving(true);
+        isSubmittedRef.current = true;
 
         try {
             const cleanedData = {
                 ...formData,
                 nutrition: cleanNutritionData(formData.nutrition),
-                // Strip the temporary local 'id' field before sending to the server
                 ingredients: formData.ingredients
                                 .filter(ing => ing.ingredientId && ing.amount && ing.unitId)
                                 .map(({ id, ...rest }) => rest)

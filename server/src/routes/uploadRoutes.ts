@@ -41,14 +41,35 @@ router.post('/', upload.single('image'), async (req, res) => {
             .webp({ quality: 80 })
             .toFile(outputPath);
 
-        // 3. Return the URL
-        // Change req.file.filename to the 'filename' variable defined above
         const fileUrl = `/uploads/${filename}`; 
         return res.status(200).json({ status: 'success', imageUrl: fileUrl });
 
     } catch (error) {
         console.error('Image processing error:', error);
         return res.status(500).json({ status: 'error', message: 'Failed to process image' });
+    }
+});
+
+router.delete('/', async (req, res) => {
+    try {
+        const { imageUrl } = req.body;
+        if (!imageUrl || !imageUrl.startsWith('/uploads/')) {
+            return res.status(400).json({ status: 'error', message: 'Invalid image URL' });
+        }
+
+        // Extract just the filename to prevent directory traversal attacks
+        const filename = path.basename(imageUrl);
+        const filePath = path.join(uploadDir, filename);
+
+        await fs.unlink(filePath);
+        return res.status(200).json({ status: 'success', message: 'File deleted' });
+    } catch (error: any) {
+        // If the file is already gone (ENOENT), treat it as a success
+        if (error.code === 'ENOENT') {
+            return res.status(200).json({ status: 'success', message: 'File already deleted' });
+        }
+        console.error('File deletion error:', error);
+        return res.status(500).json({ status: 'error', message: 'Failed to delete image' });
     }
 });
 
