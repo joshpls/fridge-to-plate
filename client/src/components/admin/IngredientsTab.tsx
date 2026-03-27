@@ -4,6 +4,7 @@ import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
+import toast from 'react-hot-toast';
 
 interface Ingredient {
     id: string;
@@ -106,7 +107,7 @@ export const IngredientsTab = () => {
                 taxonomyService.invalidateCache();
                 loadData(true);
             } else {
-                alert(result.message);
+                toast.error(result.message);
             }
         } catch (err) { console.error(err); }
     };

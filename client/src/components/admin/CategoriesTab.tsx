@@ -4,6 +4,7 @@ import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
+import toast from 'react-hot-toast';
 
 
 interface Subcategory {
@@ -130,7 +131,7 @@ export const CategoriesTab = () => {
                 taxonomyService.invalidateCache();
                 loadData(true);
             } else {
-                alert(result.message); // Displays the "Cannot delete: in use" message
+                toast.error(result.message); // Displays the "Cannot delete: in use" message
             }
         } catch (err) { console.error(err); }
     };
@@ -178,7 +179,7 @@ export const CategoriesTab = () => {
                 taxonomyService.invalidateCache();
                 loadData(true);
             } else {
-                alert(result.message);
+                toast.error(result.message);
             }
         } catch (err) { console.error(err); }
     };

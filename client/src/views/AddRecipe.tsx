@@ -7,6 +7,7 @@ import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
+import toast from 'react-hot-toast';
 
 import {
   DndContext,
@@ -275,11 +276,11 @@ const AddRecipe = () => {
                 currentImageUrlRef.current = result.imageUrl;
                 setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
             } else {
-                alert("Upload failed: " + result.message);
+                toast.error("Upload failed: " + result.message);
             }
         } catch (err) {
             console.error("Failed to upload", err);
-            alert("Network error during upload.");
+            toast.error("Network Error during upload.");
         } finally {
             setIsUploading(false);
         }
@@ -369,7 +370,7 @@ const AddRecipe = () => {
             if (response.ok) {
                 navigate('/discovery'); 
             } else {
-                alert(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);
+                toast.error(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);
             }
         } catch (err) {
             console.error(err);
