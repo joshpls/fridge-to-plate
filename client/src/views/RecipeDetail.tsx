@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition';
+import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
 import { Printer } from 'lucide-react';
@@ -248,12 +249,23 @@ const RecipeDetail = () => {
                     <h1 className="text-5xl md:text-6xl font-black text-gray-900tracking-tight leading-tight print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
                         {recipe.name}
                     </h1>
-                    <button 
-                        onClick={handlePrint}
-                        className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-orange-600 transition-all shadow-lg active:scale-95 print:hidden shrink-0"
-                    >
-                        <Printer size={18} /> Print Sheet
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden">
+                        <ShareButton
+                            title={recipe.name}
+                            text={
+                                `Check out this ${recipe.name} recipe on Fridge To Plate!\n\n` +
+                                `⏱️ Total Time: ${recipe.totalTime ? recipe.totalTime + 'm' : 'N/A'}\n` +
+                                `🏷️ Tags: ${recipe.tags?.map((t: any) => t.name).join(', ') || 'None'}\n\n` +
+                                `${recipe.summary ? recipe.summary : ''}`
+                            }
+                        />
+                        <button
+                            onClick={handlePrint}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-orange-600 transition-all shadow-lg active:scale-95 shrink-0 w-full sm:w-auto"
+                        >
+                            <Printer size={18} /> Print Sheet
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-bold text-gray-500 mb-6 print:text-gray-700 print:justify-start">
