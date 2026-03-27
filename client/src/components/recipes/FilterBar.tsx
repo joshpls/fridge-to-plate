@@ -1,41 +1,7 @@
 import React, { useState } from 'react';
+import type { FilterBarProps } from '../../models/Utils';
 
-interface FilterBarProps {
-    taxonomy: any;
-    
-    // Text Search
-    searchInput: string;
-    setSearchInput: (val: string) => void;
-    onExecuteSearch: () => void; // Called when user hits Enter or Search
-
-    // Categories
-    selectedCategory: string;
-    setSelectedCategory: (val: string) => void;
-    selectedSubcategory: string;
-    setSelectedSubcategory: (val: string) => void;
-
-    // Tags
-    selectedTags: string[];
-    toggleTag: (tagId: string) => void;
-
-    // Ingredients (Arrays of IDs)
-    includeIngredients: string[];
-    setIncludeIngredients: (val: string[]) => void;
-    excludeIngredients: string[];
-    setExcludeIngredients: (val: string[]) => void;
-
-    // Toggles
-    favoritesOnly: boolean;
-    setFavoritesOnly: (val: boolean) => void;
-    sortOrder: 'asc' | 'desc';
-    setSortOrder: (val: 'asc' | 'desc') => void;
-
-    // Staples
-    showStaples: boolean;
-    setShowStaples: (val: boolean) => void;
-}
-
-export const FilterBar: React.FC<FilterBarProps> = ({
+export const FilterBar = ({
     taxonomy,
     searchInput, setSearchInput, onExecuteSearch,
     selectedCategory, setSelectedCategory,
@@ -46,7 +12,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     favoritesOnly, setFavoritesOnly,
     sortOrder, setSortOrder,
     showStaples, setShowStaples
-}) => {
+}: FilterBarProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Helpers to find the correct subcategories based on selected category
@@ -58,7 +24,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     const handleAddIngredient = (type: 'include' | 'exclude', e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
         if (!val) return;
-        
+
         if (type === 'include' && !includeIngredients.includes(val)) {
             setIncludeIngredients([...includeIngredients, val]);
         } else if (type === 'exclude' && !excludeIngredients.includes(val)) {
@@ -91,7 +57,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         onKeyDown={(e) => e.key === 'Enter' && onExecuteSearch()}
                         className="w-full pl-12 pr-4 py-4 rounded-l-2xl border-2 border-r-0 border-gray-100 focus:border-orange-500 outline-none transition-all"
                     />
-                    <button 
+                    <button
                         onClick={onExecuteSearch}
                         className="bg-orange-500 text-white px-6 font-bold rounded-r-2xl hover:bg-orange-600 transition-colors"
                     >
@@ -114,7 +80,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         ))}
                     </select>
 
-                    <button 
+                    <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={`p-4 rounded-2xl border-2 transition-all font-bold ${isExpanded ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-100 hover:border-gray-300'}`}
                     >
@@ -126,7 +92,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {/* Expanded Advanced Filters */}
             {isExpanded && (
                 <div className="pt-4 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300 space-y-6">
-                    
+
                     {/* Row 1: Subcategories & Toggles */}
                     <div className="flex flex-wrap gap-4 items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
                         {selectedCategory && (
@@ -142,7 +108,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             </select>
                         )}
 
-                        <button 
+                        <button
                             onClick={() => setFavoritesOnly(!favoritesOnly)}
                             className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${favoritesOnly ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
                         >
@@ -156,7 +122,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                             {!showStaples ? '🙈 Hiding Staples' : '👀 Showing Staples'}
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                             className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 flex items-center gap-2"
                         >
@@ -169,7 +135,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         {/* Include */}
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Must Include Ingredients</label>
-                            <select 
+                            <select
                                 onChange={(e) => handleAddIngredient('include', e)}
                                 defaultValue=""
                                 className="w-full p-2.5 rounded-xl border border-gray-200 text-sm mb-2 outline-none"
@@ -192,7 +158,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                         {/* Exclude */}
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Must Exclude Ingredients</label>
-                            <select 
+                            <select
                                 onChange={(e) => handleAddIngredient('exclude', e)}
                                 defaultValue=""
                                 className="w-full p-2.5 rounded-xl border border-gray-200 text-sm mb-2 outline-none"
@@ -222,8 +188,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                                     key={tag.id}
                                     onClick={() => toggleTag(tag.id)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedTags.includes(tag.id)
-                                            ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-                                            : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                                        ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
                                         }`}
                                 >
                                     {tag.code} {tag.name}

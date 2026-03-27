@@ -1,27 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-
-// Define the shape of our User and the Context
-interface User {
-    id: string;
-    firstName: string;
-    lastName: string;
-    alias: string;
-    email: string;
-    role: 'USER' | 'ADMIN';
-}
-
-interface AuthContextType {
-    user: User | null;
-    updateUserParams: (data: Partial<User>) => void;
-    token: string | null;
-    isAuthenticated: boolean;
-    isAdmin: boolean;
-    login: (token: string, userData: User) => void;
-    logout: () => void;
-    loading: boolean;
-}
+import type { AuthContextType, User } from '../models/Auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

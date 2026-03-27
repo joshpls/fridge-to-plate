@@ -1,21 +1,12 @@
-import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { IngredientAutocomplete } from './IngredientAutocomplete';
+import type { IngredientRow } from '../../models/Utils';
 
-interface Props {
-  id: string;
-  index: number;
-  ingredient: { ingredientId: string; amount: number | ''; unitId: string };
-  taxonomy: any;
-  handleIngredientChange: (index: number, field: string, value: string) => void;
-  removeIngredientRow: (index: number) => void;
-}
-
-export const SortableIngredientRow: React.FC<Props> = ({ 
+export const SortableIngredientRow = ({ 
   id, index, ingredient, taxonomy, handleIngredientChange, removeIngredientRow 
-}) => {
+}: IngredientRow) => {
   const {
     attributes,
     listeners,

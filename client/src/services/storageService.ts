@@ -1,27 +1,5 @@
-export interface ShoppingListItem {
-    ingredientId: string;
-    name: string;
-    amount: string;
-    bought: boolean;
-}
+import type { ShoppingListItem, TaxonomyData } from "../models/Recipe";
 
-export interface Subcategory {
-    id: string;
-    name: string;
-}
-
-export interface Category {
-    id: string;
-    name: string;
-    subcategories: Subcategory[];
-}
-
-export interface TaxonomyData {
-    categories: Category[];
-    tags: any[];
-    units: any[];
-    ingredients: any[];
-}
 
 // Keys for our storage domains
 const KEYS = {

@@ -12,7 +12,7 @@ interface RecipeCardProps {
     showStaples?: boolean;
 }
 
-export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
+const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
     const { user, isAuthenticated } = useAuth();
     const userId = user?.id;
@@ -147,3 +147,5 @@ export const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardP
         </div>
     );
 };
+
+export default RecipeCard;

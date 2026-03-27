@@ -1,7 +1,6 @@
 // src/views/Favorites.tsx
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { RecipeCard } from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
 import { useAuth } from '../context/AuthContext';
 import { Search, Edit3, Trash2, Heart, ChefHat } from 'lucide-react';
@@ -9,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
+import RecipeCard from '../components/recipes/RecipeCard';
 
 const Favorites = () => {
     const { user, token, isAuthenticated } = useAuth();

@@ -1,7 +1,7 @@
 // src/pages/Discovery.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { RecipeCard } from '../components/recipes/RecipeCard';
+import RecipeCard from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
 import FloatingAddButton from '../components/recipes/FloatingAddButton';
 import { FilterBar } from '../components/recipes/FilterBar';

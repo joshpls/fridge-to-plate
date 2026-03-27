@@ -1,13 +1,13 @@
 import React, { useState, useEffect, type SubmitEvent, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
-import { type TaxonomyData } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
 import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
-import toast from 'react-hot-toast';
+import { initialRecipe, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 
 import {
   DndContext,
@@ -25,63 +25,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-interface RecipeFormData {
-    id?: string;
-    name: string;
-    imageUrl: string;
-    summary: string;
-    categoryId: string;
-    subcategoryId: string;
-    prepTime: number | '';
-    cookTime: number | '';
-    servings: number | '';
-    instructions: string;
-    notes: string;
-    tagIds: string[];
-    ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string }[];
-    nutrition: {
-        calories: number | '';
-        protein: string;
-        carbohydrates: string;
-        fat: { 
-            total: string;
-            saturatedFat?: string;
-            polyunsaturatedFat?: string;
-            monounsaturatedFat?: string;
-            transFat?: string;
-        };
-        fiber?: string;
-        sugar?: string;
-        sodium?: string;
-        potassium?: string;
-        vitaminA?: string;
-        vitaminC?: string;
-        calcium?: string;
-        iron?: string;
-        [key: string]: any;
-    };
-}
-
-const initialFormState: RecipeFormData = {
-    name: '', imageUrl: '', summary: '', categoryId: '', subcategoryId: '',
-    prepTime: '', cookTime: '', servings: '', instructions: '', notes: '',
-    tagIds: [],
-    // Initial id is generated
-    ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }],
-    nutrition: { 
-        calories: '', protein: '', carbohydrates: '', 
-        fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },
-        fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminC: '', calcium: '', iron: ''
-    }
-};
-
 const AddRecipe = () => {
     const navigate = useNavigate();
     const { slug } = useParams<{ slug: string }>(); 
     const { user } = useAuth();
     const userId = user?.id;
     
-    const [formData, setFormData] = useState<RecipeFormData>(initialFormState);
+    const [formData, setFormData] = useState<RecipeFormData>(initialRecipe);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

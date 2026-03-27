@@ -1,9 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-
-interface Ingredient {
-    id: string;
-    name: string;
-}
+import { useState, useRef, useEffect, useMemo } from 'react';
+import type { Ingredient } from '../../models/Recipe';
 
 interface Props {
     value: string; // The ingredientId
@@ -11,7 +7,7 @@ interface Props {
     onChange: (id: string) => void;
 }
 
-export const IngredientAutocomplete: React.FC<Props> = ({ value, ingredients, onChange }) => {
+export const IngredientAutocomplete = ({ value, ingredients, onChange }: Props) => {
     const [isOpen, setIsOpen] = useState(false);
     // Find initial name if editing an existing recipe
     const initialName = ingredients.find(i => i.id === value)?.name || '';
@@ -40,7 +36,7 @@ export const IngredientAutocomplete: React.FC<Props> = ({ value, ingredients, on
         const lowerTerm = searchTerm.toLowerCase();
         return ingredients
             .filter(i => i.name.toLowerCase().includes(lowerTerm))
-            .slice(0, 50); // This .slice() is the secret to zero lag
+            .slice(0, 50);
     }, [searchTerm, ingredients]);
 
     return (

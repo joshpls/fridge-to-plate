@@ -1,16 +1,10 @@
-import React from 'react';
+import type { NutritionProps } from '../../models/Utils';
 
-interface NutritionProps {
-    nutrition: any;
-}
-
-export const CompactNutritionDisplay: React.FC<NutritionProps> = ({ nutrition }) => {
+export const CompactNutritionDisplay = ({ nutrition }: NutritionProps) => {
     if (!nutrition || Object.keys(nutrition).length === 0) return null;
 
-    // 1. Define the "Big Four" macros to highlight at the top
     const primaryKeys = ['calories', 'protein', 'carbohydrates', 'fat'];
 
-    // 2. Separate remaining keys (filtering out the primary ones and nested objects for the top row)
     const secondaryKeys = Object.keys(nutrition).filter(
         key => !primaryKeys.includes(key.toLowerCase())
     );
@@ -51,8 +45,6 @@ export const CompactNutritionDisplay: React.FC<NutritionProps> = ({ nutrition })
                     {secondaryKeys.map((key) => {
                         const val = nutrition[key];
 
-                        // Skip rendering if it's a nested object (like vitamins) to keep it compact,
-                        // or render it as a simple string if possible.
                         if (typeof val === 'object' && val !== null) {
                             return Object.entries(val).map(([subKey, subVal]) => (
                                 <div key={subKey} className="flex justify-between text-[11px] border-b border-gray-50 pb-1">

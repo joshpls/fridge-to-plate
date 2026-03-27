@@ -10,15 +10,13 @@ import { fetchWithAuth } from '../utils/apiClient';
 export const Navigation = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { user, isAuthenticated, isAdmin, logout } = useAuth();
+
     const [pantryCount, setPantryCount] = useState(0);
     const [shoppingCount, setShoppingCount] = useState(0);
-    
-    // 1. Hook into the Auth Context
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
     const fetchAllCounts = async () => {
         try {
-            // 2. Only fetch pantry count from DB if a user is logged in
             if (isAuthenticated && user?.id) {
                 const pantryRes = await fetchWithAuth(`${API_BASE}/pantry?userId=${user.id}`);
                 const pResult = await pantryRes.json();
@@ -27,7 +25,6 @@ export const Navigation = () => {
                 setPantryCount(0);
             }
 
-            // 3. Shopping List still comes from LocalStorage
             const localItems = storageService.shopping.get();
             setShoppingCount(localItems.length);
 

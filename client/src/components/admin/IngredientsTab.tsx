@@ -5,12 +5,7 @@ import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
 import toast from 'react-hot-toast';
-
-interface Ingredient {
-    id: string;
-    name: string;
-    isStaple: boolean;
-}
+import type { Ingredient } from '../../models/Recipe';
 
 export const IngredientsTab = () => {
     const { confirm } = useConfirm();

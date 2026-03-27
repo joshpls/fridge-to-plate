@@ -1,28 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { PromptModal } from '../components/ui/PromptModal'; // <-- Import new modal
-
-interface ConfirmOptions {
-    title?: string;
-    message: string;
-    confirmText?: string;
-    cancelText?: string;
-    variant?: 'danger' | 'warning' | 'info';
-}
-
-interface PromptOptions {
-    title: string;
-    message?: string;
-    defaultValue?: string;
-    placeholder?: string;
-    confirmText?: string;
-    cancelText?: string;
-}
-
-interface ConfirmContextType {
-    confirm: (options: ConfirmOptions) => Promise<boolean>;
-    prompt: (options: PromptOptions) => Promise<string | null>; // <-- Add prompt type
-}
+import { PromptModal } from '../components/ui/PromptModal';
+import type { ConfirmContextType, ConfirmOptions, PromptOptions } from '../models/Utils';
 
 const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 

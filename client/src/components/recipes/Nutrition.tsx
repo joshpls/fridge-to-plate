@@ -1,10 +1,8 @@
-import React from 'react';
-
 interface NutritionProps {
   nutrition: any;
 }
 
-export const Nutrition: React.FC<NutritionProps> = ({ nutrition }) => {
+const Nutrition = ({ nutrition }: NutritionProps) => {
   if (!nutrition || Object.keys(nutrition).length === 0) return null;
 
   const renderValue = (value: any) => {
@@ -73,3 +71,5 @@ export const Nutrition: React.FC<NutritionProps> = ({ nutrition }) => {
     </section>
   );
 };
+
+export default Nutrition;

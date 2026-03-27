@@ -1,6 +1,7 @@
 // src/views/ShoppingList.tsx
 import { useEffect, useState } from 'react';
-import { storageService, type ShoppingListItem } from '../services/storageService';
+import { storageService } from '../services/storageService';
+import type { ShoppingListItem } from '../models/Recipe';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { X, Printer } from 'lucide-react'; // Added Printer icon
