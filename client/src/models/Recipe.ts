@@ -29,6 +29,28 @@ export interface Ingredient {
     isStaple: boolean;
 }
 
+export interface Nutrition {
+    calories: number | '';
+    protein: string;
+    carbohydrates: string;
+    fat: {
+        total: string;
+        saturatedFat?: string;
+        polyunsaturatedFat?: string;
+        monounsaturatedFat?: string;
+        transFat?: string;
+    };
+    fiber?: string;
+    sugar?: string;
+    sodium?: string;
+    potassium?: string;
+    vitaminA?: string;
+    vitaminC?: string;
+    calcium?: string;
+    iron?: string;
+    [key: string]: any;
+};
+
 export interface RecipeFormData {
     id?: string;
     name: string;
@@ -43,27 +65,7 @@ export interface RecipeFormData {
     notes: string;
     tagIds: string[];
     ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string }[];
-    nutrition: {
-        calories: number | '';
-        protein: string;
-        carbohydrates: string;
-        fat: { 
-            total: string;
-            saturatedFat?: string;
-            polyunsaturatedFat?: string;
-            monounsaturatedFat?: string;
-            transFat?: string;
-        };
-        fiber?: string;
-        sugar?: string;
-        sodium?: string;
-        potassium?: string;
-        vitaminA?: string;
-        vitaminC?: string;
-        calcium?: string;
-        iron?: string;
-        [key: string]: any;
-    };
+    nutrition: Nutrition;
 }
 
 export const initialRecipe: RecipeFormData = {

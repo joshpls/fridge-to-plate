@@ -432,7 +432,9 @@ const RecipeDetail = () => {
                     {recipe.notes && (
                         <section className="bg-yellow-50 p-6 rounded-3xl border-2 border-yellow-100 print:p-4 print:rounded-none print:border-0 print:border-b print:border-gray-200 print:bg-transparent">
                             <h2 className="text-lg font-black text-yellow-900 mb-2 print:text-base print:text-black">Chef's Notes</h2>
-                            <p className="text-yellow-800/80 leading-relaxed font-medium print:text-black print:text-sm print:italic">{recipe.notes}</p>
+                            <p className="text-yellow-800/80 leading-relaxed font-medium whitespace-pre-wrap print:text-black print:text-sm print:italic">
+                                {recipe.notes}
+                            </p>
                         </section>
                     )}
 
