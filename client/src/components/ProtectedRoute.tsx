@@ -1,8 +1,8 @@
 // src/components/ProtectedRoute.tsx
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
+export const ProtectedRoute = ({ children, adminOnly = false }: { children?: React.ReactNode, adminOnly?: boolean }) => {
     const { isAuthenticated, isAdmin, loading } = useAuth();
 
     if (loading) return null; // Or a loading spinner
@@ -15,5 +15,5 @@ export const ProtectedRoute = ({ children, adminOnly = false }: { children: Reac
         return <Navigate to="/" />;
     }
 
-    return <>{children}</>;
+    return children ? <>{children}</> : <Outlet />;
 };

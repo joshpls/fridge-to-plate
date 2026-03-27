@@ -23,13 +23,16 @@ function App() {
           <Routes>
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/recipe/:slug" element={<RecipeDetail />} />
-            <Route path="/shopping-list" element={<ShoppingList />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/pantry" element={<Pantry />} />
-            <Route path="/recipe/add" element={<AddRecipe />} />
-            <Route path="/edit-recipe/:slug" element={<AddRecipe />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/shopping-list" element={<ShoppingList />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/pantry" element={<Pantry />} />
+              <Route path="/recipe/add" element={<AddRecipe />} />
+              <Route path="/edit-recipe/:slug" element={<AddRecipe />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
             <Route
               path="/admin"
@@ -39,7 +42,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
+
             {/* Redirect root to discovery */}
             <Route path="/" element={<Navigate to="/discovery" replace />} />
           </Routes>
