@@ -73,21 +73,24 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                     ))}
                 </div>
 
-                {/* Favorite Button */}
-                {isAuthenticated &&
-                    <button
-                        onClick={toggleFavorite}
-                        className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'}`}
-                    >
-                        {isFavorite ? '❤️' : '🤍'}
-                    </button>
-                }
 
-                {/* Match Badge */}
-                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Match</p>
-                    <p className="text-sm font-black text-orange-600 leading-none">{recipe.matchPercentage}%</p>
-                </div>
+                {isAuthenticated &&
+                    <>
+                        {/* Favorite Button */}
+                        <button
+                            onClick={toggleFavorite}
+                            className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'}`}
+                        >
+                            {isFavorite ? '❤️' : '🤍'}
+                        </button>
+
+                        {/* Match Badge */}
+                        <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Match</p>
+                            <p className="text-sm font-black text-orange-600 leading-none">{recipe.matchPercentage}%</p>
+                        </div>
+                    </>
+                }
             </div>
 
             {/* Content Section */}
@@ -109,40 +112,44 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                 </h3>
                 <p className="text-xs font-medium text-gray-400 mt-1 mb-1">👨‍🍳 By {authorName}</p>
 
-                {/* Ingredients Preview */}
-                <div className="mb-4 flex-1">
-                    {missingCount > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                            {missingIngredients.slice(0, 2).map((ing: any, idx: number) => (
-                                <span key={idx} className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-md font-medium">
-                                    {ing.name}
-                                </span>
-                            ))}
-                            {missingCount > 2 && (
-                                <span className="text-[10px] text-gray-400 font-bold bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-                                    +{missingCount - 2} more
-                                </span>
+                {isAuthenticated &&
+                    <>
+                        {/* Ingredients Preview */}
+                        <div className="mb-4 flex-1">
+                            {missingCount > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                    {missingIngredients.slice(0, 2).map((ing: any, idx: number) => (
+                                        <span key={idx} className="text-[10px] bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-md font-medium">
+                                            {ing.name}
+                                        </span>
+                                    ))}
+                                    {missingCount > 2 && (
+                                        <span className="text-[10px] text-gray-400 font-bold bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                                            +{missingCount - 2} more
+                                        </span>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1.5 text-green-600 bg-green-50 w-max px-2 py-1 rounded-md border border-green-100">
+                                    <span className="text-xs">✨</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Fully Stocked</span>
+                                </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="flex items-center gap-1.5 text-green-600 bg-green-50 w-max px-2 py-1 rounded-md border border-green-100">
-                            <span className="text-xs">✨</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest">Fully Stocked</span>
-                        </div>
-                    )}
-                </div>
 
-                {/* Actions */}
-                <div className="mt-auto">
-                    {missingCount > 0 && (
-                        <button
-                            onClick={handleAddMissingToCart}
-                            className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"
-                        >
-                            🛒 Add Missing
-                        </button>
-                    )}
-                </div>
+                        {/* Actions */}
+                        <div className="mt-auto">
+                            {missingCount > 0 && (
+                                <button
+                                    onClick={handleAddMissingToCart}
+                                    className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                                >
+                                    🛒 Add Missing
+                                </button>
+                            )}
+                        </div>
+                    </>
+                }
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { FilterBarProps } from '../../models/Utils';
+import { useAuth } from '../../context/AuthContext';
 
 export const FilterBar = ({
     taxonomy,
@@ -15,6 +16,7 @@ export const FilterBar = ({
     onClearFilters
 }: FilterBarProps & { onClearFilters?: () => void }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const { isAuthenticated } = useAuth();
 
     const availableSubcategories = taxonomy?.categories?.find(
         (cat: any) => cat.id === selectedCategory
@@ -114,23 +116,25 @@ export const FilterBar = ({
                             </select>
                         )}
 
-                        <button
-                            onClick={() => setFavoritesOnly(!favoritesOnly)}
-                            className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${
-                                favoritesOnly ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                            }`}
-                        >
-                            {favoritesOnly ? '❤️ Favorites' : '🤍 Show All'}
-                        </button>
+                        {isAuthenticated &&
+                            <>
+                                <button
+                                    onClick={() => setFavoritesOnly(!favoritesOnly)}
+                                    className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${favoritesOnly ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {favoritesOnly ? '❤️ Favorites' : '🤍 Show All'}
+                                </button>
 
-                        <button
-                            onClick={() => setShowStaples(!showStaples)}
-                            className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${
-                                !showStaples ? 'bg-gray-800 text-white shadow-md border-transparent' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                            }`}
-                        >
-                            {!showStaples ? '🙈 No Staples' : '👀 Staples'}
-                        </button>
+                                <button
+                                    onClick={() => setShowStaples(!showStaples)}
+                                    className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${!showStaples ? 'bg-gray-800 text-white shadow-md border-transparent' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {!showStaples ? '🙈 No Staples' : '👀 Staples'}
+                                </button>
+                            </>
+                        }
 
                         <button
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}

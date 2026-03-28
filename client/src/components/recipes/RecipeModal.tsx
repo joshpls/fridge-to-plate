@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDisplayName } from '../../utils/userUtils';
 import { getNetworkImageUrl } from '../../utils/apiConfig';
+import { useAuth } from '../../context/AuthContext';
 
 interface RecipeModalProps {
     recipe: any;
@@ -11,6 +12,7 @@ interface RecipeModalProps {
 
 export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) onClose();
@@ -59,11 +61,11 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                     {avgRating && <span className="text-yellow-400 font-bold">⭐ {avgRating} ({ratings.length})</span>}
                                 </p>
                             </div>
-                            <div className="text-right">
+                            {isAuthenticated && <div className="text-right">
                                 <span className="bg-orange-500 text-white text-sm px-3 py-1.5 rounded-xl font-black shadow-lg block mb-2">
                                     {recipe.matchPercentage}% Match
                                 </span>
-                            </div>
+                            </div>}
                         </div>
 
                         {/* Tags */}
@@ -96,7 +98,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                     <li key={item.id} className="flex justify-between items-center pb-2">
                                         <div className="flex items-center gap-2">
                                             {/* Green checkmark if in pantry, Red dot if missing */}
-                                            <span className={`w-2 h-2 rounded-full ${item.inPantry || item.isStaple ? 'bg-green-500' : 'bg-red-400'}`}></span>
+                                            {isAuthenticated && <span className={`w-2 h-2 rounded-full ${item.inPantry || item.isStaple ? 'bg-green-500' : 'bg-red-400'}`}></span>}
                                             <span className={`font-medium ${item.inPantry || item.isStaple ? 'text-gray-900' : 'text-gray-500'}`}>
                                                 {item.name}
                                             </span>

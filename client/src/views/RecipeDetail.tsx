@@ -100,7 +100,7 @@ const RecipeDetail = () => {
     };
 
     useEffect(() => {
-        if (recipe) {
+        if (recipe && isAuthenticated) {
             if (showStaples){
                 const ingredients = recipe.ingredients.filter((item: any) => !item.inPantry);
                 setMissingIngredients(ingredients);
@@ -109,7 +109,7 @@ const RecipeDetail = () => {
                 setMissingIngredients(ingredients);
             }
         }
-    }, [recipe, showStaples]);
+    }, [recipe, showStaples, isAuthenticated]);
 
     const handlePrint = () => {
         window.print();
@@ -353,15 +353,17 @@ const RecipeDetail = () => {
                                         </button>
                                     ))}
                                 </div>
-                                <button
-                                    onClick={() => setShowStaples(!showStaples)}
-                                    className={`w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${showStaples
-                                            ? 'bg-gray-800 text-white shadow-md'
-                                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
-                                </button>
+                                {isAuthenticated && 
+                                    <button
+                                        onClick={() => setShowStaples(!showStaples)}
+                                        className={`w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${showStaples
+                                                ? 'bg-gray-800 text-white shadow-md'
+                                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
+                                    </button>
+                                }
                                 <button
                                     onClick={() => {
                                         setMeasurementSystem(prev => {
@@ -399,7 +401,7 @@ const RecipeDetail = () => {
                                 return (
                                     <li key={item.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
                                         <div className="flex items-center gap-3 w-full pr-2">
-                                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />
+                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-bold text-gray-800 text-sm print:text-black print:text-sm truncate sm:whitespace-normal">
                                                     {item.name}
@@ -409,9 +411,11 @@ const RecipeDetail = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50' : 'hidden'}`}>
-                                            {item.inPantry ? 'In Pantry' : 'Missing'}
-                                        </span>
+                                        {isAuthenticated &&
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50' : 'hidden'}`}>
+                                                {item.inPantry ? 'In Pantry' : 'Missing'}
+                                            </span>
+                                        }
                                     </li>
                                 )
                             })}
