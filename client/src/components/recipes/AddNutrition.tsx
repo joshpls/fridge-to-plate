@@ -34,14 +34,14 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
     }, [nutrition]);
 
     return (
-        <section className="bg-white p-8 rounded-3xl border-2 border-gray-100 shadow-sm transition-all duration-300">
+        <section className="bg-white p-5 sm:p-8 rounded-3xl border-2 border-gray-100 shadow-sm transition-all duration-300">
             <div className="flex items-center justify-between border-b-2 border-gray-100 pb-2 mb-6">
-                <h2 className="text-xl font-black text-gray-800">6. Nutrition Information</h2>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-md">Optional</span>
+                <h2 className="text-lg sm:text-xl font-black text-gray-800">6. Nutrition Information</h2>
+                <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-2 sm:px-3 py-1 rounded-md">Optional</span>
             </div>
 
             {/* Core Macros Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Calories</label>
                     <input type="number" value={nutrition.calories} onChange={(e) => handleNutritionChange('calories', e.target.value)} placeholder="e.g. 450" className="w-full bg-transparent outline-none font-black text-xl text-gray-900" />
@@ -64,10 +64,10 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
             <button
                 type="button"
                 onClick={() => setShowDetailed(!showDetailed)}
-                className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 rounded-xl transition-colors border border-transparent hover:border-orange-100"
+                className="flex items-center justify-center gap-2 w-full py-3 px-2 text-xs sm:text-sm font-bold text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 rounded-xl transition-colors border border-transparent hover:border-orange-100 text-center"
             >
-                {showDetailed ? 'Hide Detailed Nutrition' : 'Add Detailed Nutrition (Vitamins, Minerals, Fiber...)'}
-                {showDetailed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span>{showDetailed ? 'Hide Detailed Nutrition' : 'Add Detailed Nutrition (Vitamins, Minerals...)'}</span>
+                {showDetailed ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0" />}
             </button>
 
             {/* Detailed Breakdown */}
@@ -75,7 +75,7 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                 <div className="mt-8 space-y-8 animate-in slide-in-from-top-4 fade-in duration-300">
 
                     {/* Fat Breakdown & Carbs */}
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Fat Breakdown</h3>
                             <div className="space-y-3">
@@ -85,9 +85,9 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                                     { label: 'Monounsaturated', key: 'monounsaturatedFat' },
                                     { label: 'Trans Fat', key: 'transFat' },
                                 ].map(fat => (
-                                    <div key={fat.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
-                                        <label className="w-32 text-sm font-bold text-gray-600">{fat.label}</label>
-                                        <input type="text" value={nutrition.fat[fat.key as keyof typeof nutrition.fat] || ''} onChange={(e) => handleNutritionChange(fat.key, e.target.value, true)} placeholder="e.g. 5g" className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                    <div key={fat.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50/50 p-3 sm:p-2 rounded-lg">
+                                        <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{fat.label}</label>
+                                        <input type="text" value={nutrition.fat[fat.key as keyof typeof nutrition.fat] || ''} onChange={(e) => handleNutritionChange(fat.key, e.target.value, true)} placeholder="e.g. 5g" className="w-full sm:flex-1 bg-white p-2.5 sm:p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
                                     </div>
                                 ))}
                             </div>
@@ -100,9 +100,9 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                                     { label: 'Dietary Fiber', key: 'fiber' },
                                     { label: 'Sugar', key: 'sugar' }
                                 ].map(carb => (
-                                    <div key={carb.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
-                                        <label className="w-32 text-sm font-bold text-gray-600">{carb.label}</label>
-                                        <input type="text" value={nutrition[carb.key] || ''} onChange={(e) => handleNutritionChange(carb.key, e.target.value)} placeholder="e.g. 15g" className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                    <div key={carb.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50/50 p-3 sm:p-2 rounded-lg">
+                                        <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{carb.label}</label>
+                                        <input type="text" value={nutrition[carb.key] || ''} onChange={(e) => handleNutritionChange(carb.key, e.target.value)} placeholder="e.g. 15g" className="w-full sm:flex-1 bg-white p-2.5 sm:p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
                                     </div>
                                 ))}
                             </div>
@@ -110,7 +110,7 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                     </div>
 
                     {/* Minerals & Vitamins */}
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-100 pb-2">Minerals & Sodium</h3>
                             <div className="space-y-3">
@@ -120,9 +120,9 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                                     { label: 'Calcium', key: 'calcium', placeholder: 'e.g. 240mg' },
                                     { label: 'Iron', key: 'iron', placeholder: 'e.g. 14mg' },
                                 ].map(min => (
-                                    <div key={min.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
-                                        <label className="w-32 text-sm font-bold text-gray-600">{min.label}</label>
-                                        <input type="text" value={nutrition[min.key] || ''} onChange={(e) => handleNutritionChange(min.key, e.target.value)} placeholder={min.placeholder} className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                    <div key={min.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50/50 p-3 sm:p-2 rounded-lg">
+                                        <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{min.label}</label>
+                                        <input type="text" value={nutrition[min.key] || ''} onChange={(e) => handleNutritionChange(min.key, e.target.value)} placeholder={min.placeholder} className="w-full sm:flex-1 bg-white p-2.5 sm:p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
                                     </div>
                                 ))}
                             </div>
@@ -135,9 +135,9 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                                     { label: 'Vitamin A', key: 'vitaminA', placeholder: 'e.g. 1667IU' },
                                     { label: 'Vitamin C', key: 'vitaminC', placeholder: 'e.g. 83mg' }
                                 ].map(vit => (
-                                    <div key={vit.key} className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-lg">
-                                        <label className="w-32 text-sm font-bold text-gray-600">{vit.label}</label>
-                                        <input type="text" value={nutrition[vit.key] || ''} onChange={(e) => handleNutritionChange(vit.key, e.target.value)} placeholder={vit.placeholder} className="flex-1 bg-white p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
+                                    <div key={vit.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50/50 p-3 sm:p-2 rounded-lg">
+                                        <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{vit.label}</label>
+                                        <input type="text" value={nutrition[vit.key] || ''} onChange={(e) => handleNutritionChange(vit.key, e.target.value)} placeholder={vit.placeholder} className="w-full sm:flex-1 bg-white p-2.5 sm:p-2 border border-gray-200 rounded-lg outline-none focus:border-orange-400 text-sm font-bold" />
                                     </div>
                                 ))}
                             </div>
