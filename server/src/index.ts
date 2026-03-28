@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = 5000;
 
 app.use(cors({
@@ -37,8 +38,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.get(/.*/, (req, res, next) => {
-    // If it's an API request that didn't match any routes above, let it 404
-    if (req.path.startsWith('/api')) {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
         return next();
     }
     // Otherwise, serve the React app

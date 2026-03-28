@@ -135,7 +135,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                 <div className="p-6 bg-white border-t flex gap-4">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-3.5 text-gray-500 font-bold hover:bg-gray-100 rounded-2xl transition-colors tracking-widest uppercase text-sm"
+                        className="flex-1 px-4 py-3.5 text-gray-500 font-bold border-2 border-gray-500 hover:bg-gray-100 rounded-2xl transition-colors tracking-widest uppercase text-sm"
                     >
                         Keep Browsing
                     </button>
