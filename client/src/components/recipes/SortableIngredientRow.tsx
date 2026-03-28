@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 import { IngredientAutocomplete } from './IngredientAutocomplete';
 import type { IngredientRow } from '../../models/Utils';
 
@@ -27,46 +27,69 @@ export const SortableIngredientRow = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex gap-3 items-center bg-white p-2 rounded-2xl border-2 transition-all
+      className={`flex flex-col sm:flex-row gap-2 sm:gap-3 p-3 sm:p-2 bg-white rounded-2xl border-2 transition-all
         ${isDragging ? 'border-orange-500 bg-orange-50 scale-[1.02] shadow-md' : 'border-gray-100 hover:border-orange-200'}`}
     >
-      <div 
-        {...attributes} 
-        {...listeners} 
-        className="text-gray-300 hover:text-gray-500 pl-2 cursor-grab active:cursor-grabbing touch-none"
-      >
-        <GripVertical size={20} />
+      {/* Top Row on Mobile / Left Side on Desktop */}
+      <div className="flex items-center gap-2 w-full sm:flex-1">
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none shrink-0"
+        >
+          <GripVertical size={20} />
+        </div>
+
+        <div className="flex-1 min-w-0 z-50">
+          <IngredientAutocomplete
+              value={ingredient.ingredientId}
+              ingredients={taxonomy.ingredients}
+              onChange={(newId) => handleIngredientChange(index, 'ingredientId', newId)}
+          />
+        </div>
+
+        {/* Mobile Delete Button */}
+        <button 
+            type="button" 
+            onClick={() => removeIngredientRow(index)} 
+            className="sm:hidden p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0"
+        >
+            <X size={20} />
+        </button>
       </div>
 
-      <IngredientAutocomplete
-          value={ingredient.ingredientId}
-          ingredients={taxonomy.ingredients}
-          onChange={(newId) => handleIngredientChange(index, 'ingredientId', newId)}
-      />
+      {/* Bottom Row on Mobile / Right Side on Desktop */}
+      <div className="flex items-center gap-2 pl-7 sm:pl-0 w-full sm:w-auto">
+        <input
+            required
+            type="number"
+            step="0.01"
+            placeholder="Qty"
+            value={ingredient.amount}
+            onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
+            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center min-w-[60px]"
+        />
 
-      <input
-          required
-          type="number"
-          step="0.01"
-          placeholder="Qty"
-          value={ingredient.amount}
-          onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-          className="w-24 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center"
-      />
+        <select
+            required
+            value={ingredient.unitId}
+            onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
+            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[80px]"
+        >
+            <option value="" disabled>Unit</option>
+            {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
+        </select>
 
-      <select
-          required
-          value={ingredient.unitId}
-          onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-          className="w-32 p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer"
-      >
-          <option value="" disabled>Unit</option>
-          {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
-      </select>
-
-      <button type="button" onClick={() => removeIngredientRow(index)} className="p-3 text-gray-300 hover:text-red-500 transition-colors" title="Remove Ingredient">
-          ✕
-      </button>
+        {/* Desktop Delete Button */}
+        <button 
+            type="button" 
+            onClick={() => removeIngredientRow(index)} 
+            className="hidden sm:block p-2 md:p-3 text-gray-300 hover:text-red-500 transition-colors shrink-0" 
+            title="Remove Ingredient"
+        >
+            ✕
+        </button>
+      </div>
     </div>
   );
 };
