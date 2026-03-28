@@ -124,6 +124,19 @@ const Discovery: React.FC = () => {
         );
     };
 
+    const handleClearFilters = () => {
+        setSearchInput('');
+        setSearchQuery('');
+        setSelectedCategory('');
+        setSelectedSubcategory('');
+        setSelectedTags([]);
+        setIncludeIngredients([]);
+        setExcludeIngredients([]);
+        setFavoritesOnly(false);
+        setShowStaples(false);
+        setSortOrder('asc');
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto pb-20">
             <header className="mb-6">
@@ -160,6 +173,8 @@ const Discovery: React.FC = () => {
 
                 showStaples={showStaples}
                 setShowStaples={setShowStaples}
+
+                onClearFilters={handleClearFilters}
             />
 
             {/* Grid */}
