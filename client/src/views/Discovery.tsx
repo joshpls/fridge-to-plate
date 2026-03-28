@@ -237,7 +237,9 @@ const Discovery: React.FC = () => {
                 />
             )}
 
-            <FloatingAddButton />
+            {!selectedRecipe && (
+                <FloatingAddButton />
+            )}
         </div>
     );
 };
