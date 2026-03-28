@@ -332,7 +332,7 @@ const AddRecipe = () => {
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4 sm:p-6 pb-32 animate-in fade-in">
             
-            <div className="sticky top-16 pt-4 pb-4 mb-6 sm:mb-8 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="sticky top-16 pt-4 pb-4 mb-6 sm:mb-8 z-60 bg-white/95 backdrop-blur-md border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
                         {isEditMode ? 'Edit Recipe' : 'Draft Recipe'}
