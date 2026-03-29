@@ -83,8 +83,9 @@ export const createRecipe = async (userId: string, data: any) => {
         tags: { connect: data.tagIds?.map((id: string) => ({ id })) || [] },
         
         ingredients: {
-          create: data.ingredients.map((ing: any) => ({
+          create: data.ingredients.map((ing: any, index: number) => ({
             amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
+            order: index,
             ingredient: { connect: { id: ing.ingredientId } },
             unit: { connect: { id: ing.unitId } }
           }))
