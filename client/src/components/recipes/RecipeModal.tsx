@@ -34,7 +34,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
         : null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleOverlayClick}>
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleOverlayClick}>
             <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 
                 {/* Header Image & Close */}

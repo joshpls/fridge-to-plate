@@ -59,7 +59,7 @@ export const Navigation = () => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-90 shadow-sm">
+        <nav className="bg-white border-b border-gray-200 sticky top-0 z-60 shadow-sm">
             <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 
                 <div className="flex items-center">
