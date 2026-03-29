@@ -394,6 +394,50 @@ export const deleteUnit = async (req: Request, res: Response) => {
     }
 };
 
+// --- MODIFIERS ---
+export const createModifier = async (req: Request, res: Response) => {
+    try {
+        const { name } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ status: 'error', message: 'Modifier name is required.' });
+        }
+
+        const newModifier = await prisma.modifier.create({
+            data: { 
+                // Capitalize the first letter for consistency (e.g., "chopped" -> "Chopped")
+                name: name.trim().charAt(0).toUpperCase() + name.trim().slice(1)
+            }
+        });
+
+        res.status(201).json({ status: 'success', data: newModifier });
+    } catch (error: any) {
+        console.error("Failed to create modifier:", error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ status: 'error', message: 'A modifier with this name already exists.' });
+        }
+        res.status(500).json({ status: 'error', message: 'Failed to create modifier' });
+    }
+};
+
+export const deleteModifier = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+
+        await prisma.modifier.delete({
+            where: { id }
+        });
+
+        res.status(200).json({ status: 'success', message: 'Modifier deleted successfully' });
+    } catch (error: any) {
+        console.error("Failed to delete modifier:", error);
+        if (error.code === 'P2003') {
+            return res.status(400).json({ status: 'error', message: 'Failed to delete modifier. It is currently in use by existing recipes.' });
+        }
+        res.status(500).json({ status: 'error', message: 'Failed to delete modifier.' });
+    }
+};
+
 // -- COMMENTS --
 export const getAllComments = async (req: AuthRequest, res: Response) => {
     try {

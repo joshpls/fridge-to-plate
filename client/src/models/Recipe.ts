@@ -21,6 +21,7 @@ export interface TaxonomyData {
     tags: any[];
     units: any[];
     ingredients: any[];
+    modifiers: any[];
 }
 
 export interface Ingredient {
@@ -64,7 +65,7 @@ export interface RecipeFormData {
     instructions: string;
     notes: string;
     tagIds: string[];
-    ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string }[];
+    ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string, modifierId?: string;}[];
     nutrition: Nutrition;
 }
 
@@ -73,7 +74,7 @@ export const initialRecipe: RecipeFormData = {
     prepTime: '', cookTime: '', servings: '', instructions: '', notes: '',
     tagIds: [],
     // Initial id is generated
-    ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }],
+    ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' }],
     nutrition: { 
         calories: '', protein: '', carbohydrates: '', 
         fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },

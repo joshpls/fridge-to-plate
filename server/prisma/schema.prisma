@@ -114,6 +114,9 @@ model RecipeIngredient {
   amount       Float
   order        Int    @default(0)
 
+  modifierId   String?  
+  modifier     Modifier? @relation(fields: [modifierId], references: [id], onDelete: SetNull)
+
   recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   unit       Unit       @relation(fields: [unitId], references: [id])
@@ -137,4 +140,10 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model Modifier {
+  id                String             @id @default(uuid())
+  name              String             @unique // e.g., "Minced", "Chopped", "Diced"
+  recipeIngredients RecipeIngredient[]
 }

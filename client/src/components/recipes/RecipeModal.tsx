@@ -101,6 +101,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                             {isAuthenticated && <span className={`w-2 h-2 rounded-full ${item.inPantry || item.isStaple ? 'bg-green-500' : 'bg-red-400'}`}></span>}
                                             <span className={`font-medium ${item.inPantry || item.isStaple ? 'text-gray-900' : 'text-gray-500'}`}>
                                                 {item.name}
+                                                {item.modifier && <span className="text-gray-400 font-normal">, {item.modifier.toLowerCase()}</span>}
                                             </span>
                                         </div>
                                         <span className="text-gray-400 font-bold text-xs uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md">

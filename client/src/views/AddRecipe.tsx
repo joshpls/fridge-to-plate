@@ -87,8 +87,9 @@ const AddRecipe = () => {
                                 id: i.id || Math.random().toString(36).substring(7), // Ensure existing ingredients get IDs
                                 ingredientId: i.ingredientId,
                                 amount: i.amount,
-                                unitId: i.unit?.id || ''
-                            })) || [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }],
+                                unitId: i.unit?.id || '',
+                                modifierId: i.modifierId || ''
+                            })) || [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' }],
                             nutrition: {
                                 calories: fetchedNutrition.calories || '',
                                 protein: fetchedNutrition.protein || '',
@@ -172,7 +173,7 @@ const AddRecipe = () => {
 
     const addIngredientRow = () => setFormData(prev => ({ 
         ...prev, 
-        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '' }] 
+        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' }]
     }));
     
     const removeIngredientRow = (index: number) => setFormData(prev => ({ 

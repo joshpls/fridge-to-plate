@@ -405,6 +405,9 @@ const RecipeDetail = () => {
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-bold text-gray-800 text-sm print:text-black print:text-sm truncate sm:whitespace-normal">
                                                     {item.name}
+                                                    {item.modifier && (
+                                                        <span className="text-gray-500 font-medium">, {item.modifier.toLowerCase()}</span>
+                                                    )}
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
                                                     {amount} {unit}

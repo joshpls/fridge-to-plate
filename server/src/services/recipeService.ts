@@ -21,7 +21,8 @@ const recipeIncludes = (userId: string) => ({
     orderBy: { order: 'asc' as const },
     include: {
       ingredient: true,
-      unit: true 
+      unit: true,
+      modifier: true
     }
   },
   comments: {
@@ -41,7 +42,8 @@ const fallbackIncludes = {
         orderBy: { order: 'asc' as const },
         include: {
             ingredient: true,
-            unit: true 
+            unit: true,
+            modifier: true
         }
     },
     comments: {
@@ -87,7 +89,8 @@ export const createRecipe = async (userId: string, data: any) => {
             amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
             order: index,
             ingredient: { connect: { id: ing.ingredientId } },
-            unit: { connect: { id: ing.unitId } }
+            unit: { connect: { id: ing.unitId } },
+            ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})
           }))
         }
       }
@@ -141,7 +144,8 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
             amount: Number(ing.amount),
             order: index,
             ingredient: { connect: { id: ing.ingredientId } },
-            unit: { connect: { id: ing.unitId } }
+            unit: { connect: { id: ing.unitId } },
+            ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})
           }))
         }
       }
@@ -253,7 +257,8 @@ export const getRecipeBySlug = async (slug: string, userId?: string) => {
           orderBy: { order: 'asc' },
           include: { 
             ingredient: true,
-            unit: true
+            unit: true,
+            modifier: true
           } 
         },
         category: true,

@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments, createModifier, deleteModifier } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -43,6 +43,10 @@ router.delete('/tags/:id', deleteTag);
 // Unit Management
 router.post('/units', createUnit);
 router.delete('/units/:id', deleteUnit);
+
+// Modifier Management
+router.post('/modifiers', createModifier);
+router.delete('/modifiers/:id', deleteModifier);
 
 // Delete Comment
 router.get('/comments', getAllComments);

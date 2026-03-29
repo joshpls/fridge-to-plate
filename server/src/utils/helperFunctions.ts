@@ -46,6 +46,8 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) 
       name: ri.unit.name,
       abbreviation: ri.unit.abbreviation
     } : null,
+    modifierId: ri.modifierId,
+    modifier: ri.modifier ? ri.modifier.name : null,
     inPantry: pantryIds.has(ri.ingredientId)
   })) || [];
 

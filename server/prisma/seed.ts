@@ -5,6 +5,7 @@ import { categoryNames, subCategories, tagsData } from './taxonomy.js';
 import { ingredientsToSeed } from './ingredients.js';
 import { recipes } from './recipes.js';
 import bcrypt from 'bcrypt';
+import { modifiersToSeed } from './modifiers.js';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -93,6 +94,24 @@ async function main() {
       acc[ing.name] = ing.id;
       return acc;
     }, {} as Record<string, string>);
+
+    console.log('🌿 Syncing Modifiers...');
+    const modifierData = modifiersToSeed();
+    const seededModifiers = await Promise.all(
+      modifierData.map(item =>
+        tx.ingredient.upsert({
+          where: { name: item.name },
+          update: { },
+          create: { name: item.name }
+        })
+      )
+    );
+
+    const modMap = seededModifiers.reduce((acc, ing) => {
+      acc[ing.name] = ing.id;
+      return acc;
+    }, {} as Record<string, string>);
+  
 
     console.log('👨‍🍳 Creating Recipes with Slugs...');
 

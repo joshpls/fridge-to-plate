@@ -80,6 +80,15 @@ export const SortableIngredientRow = ({
             {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
         </select>
 
+        <select
+            value={ingredient.modifierId || ''}
+            onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
+            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[100px]"
+        >
+            <option value="">(None)</option>
+            {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+
         {/* Desktop Delete Button */}
         <button 
             type="button" 

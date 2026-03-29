@@ -42,7 +42,7 @@ export interface NutritionProps {
 export interface IngredientRow {
   id: string;
   index: number;
-  ingredient: { ingredientId: string; amount: number | ''; unitId: string };
+  ingredient: { ingredientId: string; amount: number | ''; unitId: string, modifierId?: string };
   taxonomy: TaxonomyData;
   handleIngredientChange: (index: number, field: string, value: string) => void;
   removeIngredientRow: (index: number) => void;

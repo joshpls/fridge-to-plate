@@ -82,7 +82,7 @@ export const getTags = async (req: Request, res: Response) => {
 
 export const getTaxonomy = async (req: Request, res: Response) => {
     try {
-        const [categories, tags, units, ingredients] = await Promise.all([
+        const [categories, tags, units, ingredients, modifiers] = await Promise.all([
             // Nest subcategories directly inside categories
             prisma.category.findMany({ 
                 orderBy: { name: 'asc' },
@@ -94,10 +94,11 @@ export const getTaxonomy = async (req: Request, res: Response) => {
             }),
             prisma.tag.findMany({ orderBy: { name: 'asc' } }),
             prisma.unit.findMany({ orderBy: { name: 'asc' } }),
-            prisma.ingredient.findMany({ orderBy: { name: 'asc' } })
+            prisma.ingredient.findMany({ orderBy: { name: 'asc' } }),
+            prisma.modifier.findMany({ orderBy: { name: 'asc' } })
         ]);
         
-        return sendSuccess(res, { categories, tags, units, ingredients }, "Taxonomy retrieved");
+        return sendSuccess(res, { categories, tags, units, ingredients, modifiers }, "Taxonomy retrieved");
     } catch (error) {
         return sendError(res, "Could not fetch taxonomy", 500, error);
     }

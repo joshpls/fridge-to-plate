@@ -34,7 +34,7 @@ const AdminDashboard = () => {
         { id: 'comments', label: 'Comments' },
         { id: 'categories', label: 'Categories' },
         { id: 'ingredients', label: 'Ingredients' },
-        { id: 'tags-units', label: 'Tags & Units' }
+        { id: 'tags-units', label: 'Tags, Units & Modifiers' }
     ];
 
     return (
