@@ -6,12 +6,13 @@ import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition'
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer } from 'lucide-react';
+import { Printer, Flame } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
+import { useWakeLock } from '../hooks/useWakeLock';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -24,6 +25,8 @@ const RecipeDetail = () => {
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
+
+    const { isLocked } = useWakeLock(true);
 
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
@@ -88,7 +91,6 @@ const RecipeDetail = () => {
     };
 
     const addToShoppingList = async () => {
-
         const itemsToAdd = missingIngredients.map((item: any) => {
             const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
             return {
@@ -250,7 +252,15 @@ const RecipeDetail = () => {
                         {recipe.name}
                     </h1>
                     
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center">
+                        
+                        {isLocked && (
+                            <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
+                                <Flame size={16} className="animate-pulse" />
+                                <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
+                            </div>
+                        )}
+
                         <div className="w-full sm:w-auto">
                             <ShareButton
                                 title={recipe.name}
