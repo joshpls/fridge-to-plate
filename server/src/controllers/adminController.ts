@@ -292,16 +292,72 @@ export const deleteIngredient = async (req: Request, res: Response) => {
 
 export const getAllRecipes = async (req: Request, res: Response) => {
     try {
-        const recipes = await prisma.recipe.findMany({
-            include: {
-                author: { select: { email: true } },
-                category: { select: { name: true } },
-                subcategory: { select: { name: true } }
-            },
-            orderBy: { createdAt: 'desc' }
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = (req.query.search as string) || '';
+        const category = (req.query.category as string) || '';
+        const sortBy = (req.query.sortBy as string) || 'createdAt';
+        const sortOrder = (req.query.sortOrder as string) || 'desc';
+
+        const skip = (page - 1) * limit;
+
+        // Build the dynamic WHERE clause
+        const whereClause: any = { AND: [] };
+
+        if (search) {
+            whereClause.AND.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { author: { email: { contains: search, mode: 'insensitive' } } },
+                    { subcategory: { name: { contains: search, mode: 'insensitive' } } }
+                ]
+            });
+        }
+
+        if (category) {
+            whereClause.AND.push({ category: { name: category } });
+        }
+
+        const finalWhere = whereClause.AND.length > 0 ? whereClause : {};
+
+        // Handle relational sorting dynamically
+        let orderByClause: any = { [sortBy]: sortOrder };
+        if (sortBy === 'author') {
+            orderByClause = { author: { email: sortOrder } };
+        } else if (sortBy === 'category') {
+            orderByClause = { category: { name: sortOrder } };
+        }
+
+        // Fetch data and total count concurrently
+        const [recipes, totalCount] = await Promise.all([
+            prisma.recipe.findMany({
+                where: finalWhere,
+                include: {
+                    author: { select: { email: true } },
+                    category: { select: { name: true } },
+                    subcategory: { select: { name: true } }
+                },
+                orderBy: orderByClause,
+                skip,
+                take: limit
+            }),
+            prisma.recipe.count({ where: finalWhere })
+        ]);
+
+        res.status(200).json({ 
+            status: 'success', 
+            data: {
+                recipes,
+                pagination: { 
+                    total: totalCount, 
+                    page, 
+                    limit, 
+                    totalPages: Math.ceil(totalCount / limit) 
+                }
+            } 
         });
-        res.status(200).json({ status: 'success', data: recipes });
     } catch (error) {
+        console.error("Failed to fetch recipes:", error);
         res.status(500).json({ status: 'error', message: 'Failed to fetch recipes' });
     }
 }
