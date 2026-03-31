@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { addIngredientsToShoppingList } from '../utils/shoppingUtils';
 import { CompactNutritionDisplay } from '../components/recipes/CompactNutrition';
+import { CookMode } from '../components/recipes/CookMode';
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer, Flame } from 'lucide-react';
+import { Printer, Flame, Play } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
@@ -21,6 +22,7 @@ const RecipeDetail = () => {
     const [recipe, setRecipe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+    const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
     
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
@@ -42,6 +44,8 @@ const RecipeDetail = () => {
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [measurementSystem, setMeasurementSystem] = useState<'original' | 'metric' | 'imperial'>('original');
 
+    const [isCookModeOpen, setIsCookModeOpen] = useState(false);
+
     useEffect(() => {
         const fetchDetail = async () => {
             try {
@@ -53,6 +57,7 @@ const RecipeDetail = () => {
 
                 if (recipeResult.status === 'success') {
                     setRecipe(recipeResult.data);
+                    setCheckedIngredients(new Set());
                 }
             } catch (error) {
                 console.error("Failed to load recipe detail:", error);
@@ -212,6 +217,17 @@ const RecipeDetail = () => {
 
     const steps = recipe.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
 
+    // Pre-format ingredients for Cook Mode
+    const formattedIngredients = recipe.ingredients?.map((item: any) => {
+        const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
+        return {
+            id: item.id,
+            name: item.name,
+            modifier: item.modifier,
+            displayAmount: `${amount} ${unit}`.trim()
+        };
+    }) || [];
+
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white">
             <nav className="flex items-center gap-2 text-sm font-bold text-gray-400 dark:text-gray-200 mb-6 uppercase tracking-wider print:hidden">
@@ -263,6 +279,13 @@ const RecipeDetail = () => {
                                 <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
                             </div>
                         )}
+
+                        <button
+                            onClick={() => setIsCookModeOpen(true)}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/30 active:scale-95 shrink-0"
+                        >
+                            <Play size={18} className="fill-current" /> Start Cooking
+                        </button>
 
                         <div className="w-full sm:w-auto">
                             <ShareButton
@@ -553,6 +576,18 @@ const RecipeDetail = () => {
                     </section>
                 </main>
             </div>
+
+            {/* Render Cook Mode Overlay */}
+            {isCookModeOpen && (
+                <CookMode 
+                    recipeName={recipe.name}
+                    instructions={steps}
+                    ingredients={formattedIngredients}
+                    onClose={() => setIsCookModeOpen(false)}
+                    checkedIngredients={checkedIngredients}
+                    setCheckedIngredients={setCheckedIngredients}
+                />
+            )}
         </div>
     );
 };
