@@ -117,48 +117,48 @@ const Profile = () => {
         <button 
             type="button" 
             onClick={() => onChange(!checked)}
-            className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 shrink-0 ${checked ? 'bg-orange-500' : 'bg-gray-300'}`}
+            className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 shrink-0 ${checked ? 'bg-orange-50 dark:bg-orange-500/150' : 'bg-gray-300'}`}
         >
-            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
+            <div className={`w-4 h-4 rounded-full bg-white dark:bg-gray-900 shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
         </button>
     );
 
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-6 pb-24">
-            <header className="mb-10 border-b border-gray-100 pb-8">
-                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
-                <p className="text-gray-500 mt-2 font-medium">Manage your identity, preferences, and security.</p>
+            <header className="mb-10 border-b border-gray-100 dark:border-gray-800/50 pb-8">
+                <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Settings</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Manage your identity, preferences, and security.</p>
             </header>
 
             <div className="space-y-8">
                 
                 {/* 1. IDENTITY CARD */}
-                <section className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-sm">
+                <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-blue-50 text-blue-600 p-2 rounded-xl"><User size={20} /></div>
-                        <h2 className="text-xl font-black text-gray-900">Public Profile</h2>
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white">Public Profile</h2>
                     </div>
 
                     <form onSubmit={handleProfileSubmit} className="space-y-6">
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Account Email</label>
-                            <input type="text" disabled value={user?.email || ''} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-500 font-medium cursor-not-allowed" />
+                            <input type="text" disabled value={user?.email || ''} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800/50 rounded-xl text-gray-500 dark:text-gray-400 font-medium cursor-not-allowed" />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">First Name</label>
-                                <input type="text" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
+                                <input type="text" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
                             </div>
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Last Name</label>
-                                <input type="text" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
+                                <input type="text" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Display Name (Alias)</label>
-                            <input type="text" placeholder="Overrides your real name publicly" value={profileData.alias} onChange={e => setProfileData({...profileData, alias: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
+                            <input type="text" placeholder="Overrides your real name publicly" value={profileData.alias} onChange={e => setProfileData({...profileData, alias: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-orange-500 outline-none transition-all font-medium" />
                             <p className="text-xs text-gray-400 mt-2 font-medium">If set, this is what other users will see on your comments and authored recipes.</p>
                         </div>
 
@@ -171,26 +171,26 @@ const Profile = () => {
                 </section>
 
                 {/* 2. PREFERENCES CARD */}
-                <section className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-sm">
+                <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-purple-50 text-purple-600 p-2 rounded-xl"><Moon size={20} /></div>
-                        <h2 className="text-xl font-black text-gray-900">App Preferences</h2>
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white">App Preferences</h2>
                     </div>
 
                     <form onSubmit={handlePrefsSubmit} className="space-y-6">
                         
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                             <div>
-                                <h3 className="font-bold text-gray-900 flex items-center gap-2"><Moon size={16} className="text-gray-400"/> Dark Mode</h3>
-                                <p className="text-sm text-gray-500 font-medium mt-1">Easier on the eyes for late-night meal prep.</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><Moon size={16} className="text-gray-400"/> Dark Mode</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Easier on the eyes for late-night meal prep.</p>
                             </div>
                             <Toggle checked={prefsData.darkMode} onChange={(val) => setPrefsData({...prefsData, darkMode: val})} />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                             <div>
-                                <h3 className="font-bold text-gray-900 flex items-center gap-2"><Flame size={16} className="text-orange-500"/> Cook Mode (Wake Lock)</h3>
-                                <p className="text-sm text-gray-500 font-medium mt-1">Automatically prevents your screen from sleeping while viewing a recipe.</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><Flame size={16} className="text-orange-500"/> Cook Mode (Wake Lock)</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Automatically prevents your screen from sleeping while viewing a recipe.</p>
                             </div>
                             <Toggle checked={prefsData.cookMode} onChange={(val) => setPrefsData({...prefsData, cookMode: val})} />
                         </div>
@@ -204,26 +204,26 @@ const Profile = () => {
                 </section>
 
                 {/* 3. SECURITY CARD */}
-                <section className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 shadow-sm">
+                <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-green-50 text-green-600 p-2 rounded-xl"><KeyRound size={20} /></div>
-                        <h2 className="text-xl font-black text-gray-900">Security</h2>
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white">Security</h2>
                     </div>
 
                     <form onSubmit={handleSecuritySubmit} className="space-y-6">
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Current Password</label>
-                            <input type="password" required value={securityData.currentPassword} onChange={e => setSecurityData({...securityData, currentPassword: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
+                            <input type="password" required value={securityData.currentPassword} onChange={e => setSecurityData({...securityData, currentPassword: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">New Password</label>
-                                <input type="password" required minLength={6} value={securityData.newPassword} onChange={e => setSecurityData({...securityData, newPassword: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
+                                <input type="password" required minLength={6} value={securityData.newPassword} onChange={e => setSecurityData({...securityData, newPassword: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
                             </div>
                             <div>
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Confirm New Password</label>
-                                <input type="password" required minLength={6} value={securityData.confirmPassword} onChange={e => setSecurityData({...securityData, confirmPassword: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
+                                <input type="password" required minLength={6} value={securityData.confirmPassword} onChange={e => setSecurityData({...securityData, confirmPassword: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl focus:border-green-500 outline-none transition-all font-medium" />
                             </div>
                         </div>
 

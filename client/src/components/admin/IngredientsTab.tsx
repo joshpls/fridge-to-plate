@@ -107,13 +107,13 @@ export const IngredientsTab = () => {
         } catch (err) { console.error(err); }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading ingredients...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Loading ingredients...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex gap-4">
                 {/* Add Form */}
-                <form onSubmit={handleAdd} className="flex-1 flex gap-3 bg-white p-4 rounded-xl shadow-sm border border-gray-200 items-center">
+                <form onSubmit={handleAdd} className="flex-1 flex gap-3 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 items-center">
                     <input 
                         type="text" 
                         placeholder="New Ingredient Name..." 
@@ -130,13 +130,13 @@ export const IngredientsTab = () => {
                         />
                         Pantry Staple
                     </label>
-                    <button type="submit" className="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-700 text-sm transition-colors">
+                    <button type="submit" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-bold text-sm transition-colors">
                         Add
                     </button>
                 </form>
 
                 {/* Search Bar */}
-                <div className="flex-1 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex-1 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
                     <input 
                         type="text" 
                         placeholder="🔍 Search ingredients..." 
@@ -148,10 +148,10 @@ export const IngredientsTab = () => {
             </div>
 
             {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
                 <div className="max-h-[600px] overflow-y-auto p-2">
                     {filteredIngredients.map(ing => (
-                        <div key={ing.id} className="group flex justify-between items-center p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0">
+                        <div key={ing.id} className="group flex justify-between items-center p-3 hover:bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800/50 last:border-0">
                             
                             {/* IF EDITING */}
                             {editingId === ing.id ? (
@@ -197,7 +197,7 @@ export const IngredientsTab = () => {
                         </div>
                     ))}
                     {filteredIngredients.length === 0 && (
-                        <div className="p-4 text-center text-gray-500">No ingredients found.</div>
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-400">No ingredients found.</div>
                     )}
                 </div>
             </div>

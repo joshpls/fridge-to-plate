@@ -58,10 +58,10 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white p-4">
-            <div className="w-full max-w-md bg-white p-8 rounded-3xl border-2 border-gray-100 shadow-2xl shadow-orange-100/50">
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 p-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 shadow-2xl shadow-orange-100/50">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black text-gray-900 mb-2">
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
                         {isLogin ? 'Welcome Back' : 'Create Account'}
                     </h1>
                     <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
@@ -87,7 +87,7 @@ const Auth = () => {
                                         type="text"
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
-                                        className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                        className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 dark:text-white transition-colors"
                                         placeholder="Jane"
                                     />
                                 </div>
@@ -99,7 +99,7 @@ const Auth = () => {
                                         type="text"
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
-                                        className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                        className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 dark:text-white transition-colors"
                                         placeholder="Doe"
                                     />
                                 </div>
@@ -113,7 +113,7 @@ const Auth = () => {
                                     type="text"
                                     value={alias}
                                     onChange={(e) => setAlias(e.target.value)}
-                                    className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 dark:text-white transition-colors"
                                     placeholder="ChefJane99"
                                 />
                             </div>
@@ -130,7 +130,7 @@ const Auth = () => {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                            className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 dark:text-white transition-colors"
                             placeholder="chef@example.com"
                         />
                     </div>
@@ -144,7 +144,7 @@ const Auth = () => {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 transition-colors"
+                            className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border-2 border-transparent focus:border-orange-300 font-bold text-gray-900 dark:text-white transition-colors"
                             placeholder="••••••••"
                         />
                     </div>
@@ -152,7 +152,7 @@ const Auth = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full mt-6 py-4 bg-gray-900 hover:bg-orange-500 text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full mt-6 py-4 bg-gray-900 hover:bg-orange-50 dark:bg-orange-500/150 text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
                     </button>

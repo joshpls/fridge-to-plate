@@ -94,11 +94,11 @@ const ShoppingList = () => {
         // Added print:p-0 to remove padding on printed page
         <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24 print:p-0 print:m-0 print:space-y-4">
             
-            <header className="flex items-center justify-between border-b border-gray-100 pb-4 print:border-b-2 print:border-black">
+            <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800/50 pb-4 print:border-b-2 print:border-black">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight print:text-4xl">Shopping List</h1>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight print:text-4xl">Shopping List</h1>
                     {/* Only show the date on the printed version */}
-                    <p className="hidden print:block text-gray-500 font-bold mt-1">
+                    <p className="hidden print:block text-gray-500 dark:text-gray-400 font-bold mt-1">
                         {new Date().toLocaleDateString()}
                     </p>
                 </div>
@@ -109,7 +109,7 @@ const ShoppingList = () => {
                         <>
                             <button 
                                 onClick={handlePrint}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
                             >
                                 <Printer size={16} /> Print
                             </button>
@@ -125,7 +125,7 @@ const ShoppingList = () => {
             </header>
 
             {items.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 print:hidden">
+                <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 print:hidden">
                     <span className="text-4xl mb-3 block">🛒</span>
                     <p className="text-gray-400 font-medium">Your cart is empty.</p>
                     <p className="text-sm text-gray-400 mt-2">Find a recipe and tap "Add Missing" to start shopping!</p>
@@ -137,14 +137,14 @@ const ShoppingList = () => {
                             key={item.ingredientId}
                             onClick={() => handleToggleBought(item.ingredientId)}
                             // Print styles: Remove background/shadows, add simple bottom border
-                            className={`flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm cursor-pointer transition-all print:border-0 print:border-b print:border-gray-300 print:rounded-none print:shadow-none print:p-2 ${
-                                item.bought ? 'border-gray-100 opacity-50 bg-gray-50 print:opacity-100 print:bg-transparent' : 'border-gray-200 hover:border-orange-300'
+                            className={`flex items-center justify-between p-4 bg-white dark:bg-gray-900 border rounded-2xl shadow-sm cursor-pointer transition-all print:border-0 print:border-b print:border-gray-300 print:rounded-none print:shadow-none print:p-2 ${
+                                item.bought ? 'border-gray-100 dark:border-gray-800/50 opacity-50 bg-gray-50 dark:bg-gray-800 print:opacity-100 print:bg-transparent' : 'border-gray-200 dark:border-gray-800 hover:border-orange-300'
                             }`}
                         >
                             <div className="flex items-center gap-4">
                                 {/* Visual Checkbox (For web and print) */}
                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors print:w-5 print:h-5 print:rounded-sm print:border-black ${
-                                    item.bought ? 'border-orange-500 bg-orange-500 print:bg-white' : 'border-gray-300'
+                                    item.bought ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/150 print:bg-white' : 'border-gray-300'
                                 }`}>
                                     {/* Show checkmark if bought online, or leave empty box for printing */}
                                     <span className={`text-white text-xs font-bold ${item.bought ? 'block print:hidden' : 'hidden'}`}>✓</span>
@@ -153,7 +153,7 @@ const ShoppingList = () => {
                                 {/* Item Name & Amount */}
                                 <div className={`${item.bought ? 'line-through text-gray-400 print:no-underline print:text-black' : 'print:text-black'}`}>
                                     <p className="font-bold text-gray-800 print:text-black print:text-lg">{item.name}</p>
-                                    <p className="text-xs text-gray-500 print:text-gray-600 print:text-sm">{item.amount}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 print:text-gray-600 print:text-sm">{item.amount}</p>
                                 </div>
                             </div>
 
@@ -174,7 +174,7 @@ const ShoppingList = () => {
                             disabled={isSyncing}
                             className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-xl active:scale-95 ${
                                 isSyncing 
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                    ? 'bg-gray-300 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
                                     : 'bg-gray-900 text-white hover:bg-orange-600'
                             }`}
                         >

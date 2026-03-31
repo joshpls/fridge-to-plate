@@ -59,7 +59,7 @@ export const Navigation = () => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-60 shadow-sm">
+        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-60 shadow-sm">
             <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 
                 <div className="flex items-center">
@@ -69,17 +69,17 @@ export const Navigation = () => {
                 </div>
 
                 <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-                    <Link to="/discovery" className={`text-sm font-bold transition-colors ${isActive('/discovery') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                    <Link to="/discovery" className={`text-sm font-bold transition-colors ${isActive('/discovery') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                         Discovery
                     </Link>
                     
                     {isAuthenticated && (
                         <>
-                            <Link to="/favorites" className={`text-sm font-bold transition-colors ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Link to="/favorites" className={`text-sm font-bold transition-colors ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                 My Cookbook
                             </Link>
                             
-                            <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                 Pantry
                                 {pantryCount > 0 && (
                                     <span className="absolute -top-2 -right-4 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">
@@ -88,12 +88,12 @@ export const Navigation = () => {
                                 )}
                             </Link>
                             
-                            <Link to="/recipe/add" className={`text-sm font-bold transition-colors ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                            <Link to="/recipe/add" className={`text-sm font-bold transition-colors ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                 Add Recipe
                             </Link>
 
                             {isAdmin && (
-                                <Link to="/admin" className={`text-sm font-bold transition-colors ${isActive('/admin') ? 'text-orange-600' : 'text-gray-500 hover:text-gray-900'}`}>
+                                <Link to="/admin" className={`text-sm font-bold transition-colors ${isActive('/admin') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                     Admin
                                 </Link>
                             )}
@@ -105,17 +105,17 @@ export const Navigation = () => {
 
                     {isAuthenticated ? (
                         <div className="flex items-center gap-5">
-                            <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 text-gray-900 px-3 py-2 rounded-xl font-bold hover:bg-gray-100 transition-all border border-gray-100">
+                            <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold hover:bg-gray-100 transition-all border border-gray-100 dark:border-gray-800/50">
                                 <span className="text-lg leading-none">🛒</span>
                                 {shoppingCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                                    <span className="absolute -top-2 -right-2 bg-orange-600 dark:bg-orange-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
                                         {shoppingCount}
                                     </span>
                                 )}
                             </Link>
 
-                            <div className="flex flex-col items-end border-l pl-5 border-gray-100">
-                                <Link to="/profile" className="text-xs font-black text-gray-900 leading-none hover:text-orange-600 transition-colors">
+                            <div className="flex flex-col items-end border-l pl-5 border-gray-100 dark:border-gray-800/50">
+                                <Link to="/profile" className="text-xs font-black text-gray-900 dark:text-white leading-none hover:text-orange-600 transition-colors">
                                     {getDisplayName(user)}
                                 </Link>
                                 {isAdmin && (
@@ -130,7 +130,7 @@ export const Navigation = () => {
                             </button>
                         </div>
                     ) : (
-                        <Link to="/auth" className="bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-md shadow-orange-100">
+                        <Link to="/auth" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100">
                             Sign In
                         </Link>
                     )}
@@ -142,7 +142,7 @@ export const Navigation = () => {
                         <Link to="/shopping-list" className="relative p-1">
                             <span className="text-xl">🛒</span>
                             {shoppingCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full border border-white">
+                                <span className="absolute -top-1 -right-1 bg-orange-600 dark:bg-orange-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full border border-white">
                                     {shoppingCount}
                                 </span>
                             )}
@@ -151,7 +151,7 @@ export const Navigation = () => {
                     
                     <button 
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-gray-900 hover:text-orange-600 focus:outline-none p-1"
+                        className="text-gray-900 dark:text-white hover:text-orange-600 hover:dark:bg-orange-500 focus:outline-none p-1"
                     >
                         {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
@@ -160,42 +160,42 @@ export const Navigation = () => {
 
             {/* MOBILE DROPDOWN MENU */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl flex flex-col px-6 py-4 z-40">
+                <div className="lg:hidden absolute top-16 left-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-xl flex flex-col px-6 py-4 z-40">
                     <div className="flex flex-col gap-4">
-                        <Link to="/discovery" className={`text-base font-bold ${isActive('/discovery') ? 'text-orange-600' : 'text-gray-800'}`}>
+                        <Link to="/discovery" className={`text-base font-bold ${isActive('/discovery') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                             Discovery
                         </Link>
                         
                         {isAuthenticated && (
                             <>
-                                <Link to="/favorites" className={`text-base font-bold ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-800'}`}>
+                                <Link to="/favorites" className={`text-base font-bold ${isActive('/favorites') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                                     My Cookbook
                                 </Link>
                                 
-                                <Link to="/pantry" className={`flex justify-between items-center text-base font-bold ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-800'}`}>
+                                <Link to="/pantry" className={`flex justify-between items-center text-base font-bold ${isActive('/pantry') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                                     <span>Pantry</span>
                                     {pantryCount > 0 && (
-                                        <span className="bg-gray-900 text-white text-xs px-2 py-0.5 rounded-full">
+                                        <span className="bg-gray-900 text-white dark:bg-orange-500 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
                                             {pantryCount} items
                                         </span>
                                     )}
                                 </Link>
                                 
-                                <Link to="/recipe/add" className={`text-base font-bold ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-800'}`}>
+                                <Link to="/recipe/add" className={`text-base font-bold ${isActive('/recipe/add') ? 'text-orange-600 dark:-text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                                     Add Recipe
                                 </Link>
 
-                                <Link to="/shopping-list" className={`flex justify-between items-center text-base font-bold ${isActive('/shopping-list') ? 'text-orange-600' : 'text-gray-800'}`}>
+                                <Link to="/shopping-list" className={`flex justify-between items-center text-base font-bold ${isActive('/shopping-list') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                                     <span>Shopping List</span>
                                     {shoppingCount > 0 && (
-                                        <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full">
+                                        <span className="bg-orange-600 dark:bg-orange-500 text-white dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
                                             {shoppingCount} items
                                         </span>
                                     )}
                                 </Link>
 
                                 {isAdmin && (
-                                    <Link to="/admin" className={`text-base font-bold ${isActive('/admin') ? 'text-orange-600' : 'text-gray-800'}`}>
+                                    <Link to="/admin" className={`text-base font-bold ${isActive('/admin') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
                                         Admin Dashboard
                                     </Link>
                                 )}
@@ -206,19 +206,19 @@ export const Navigation = () => {
                     <div className="h-px w-full bg-gray-100 my-5"></div>
 
                     {isAuthenticated ? (
-                        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-800/50">
                             <div className="flex flex-col">
-                                <Link to="/profile" className="text-sm font-black text-gray-900 hover:text-orange-600">
+                                <Link to="/profile" className="text-sm font-black text-gray-900 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-500">
                                     {getDisplayName(user)}
                                 </Link>
-                                <span className="text-xs text-gray-500">Manage Account</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Manage Account</span>
                             </div>
-                            <button onClick={handleLogout} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600 hover:text-white transition-colors">
+                            <button onClick={handleLogout} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600 dark:hover-red-500 hover:text-white transition-colors">
                                 Logout
                             </button>
                         </div>
                     ) : (
-                        <Link to="/auth" className="block text-center bg-orange-600 text-white px-6 py-3 rounded-xl font-bold text-base shadow-md shadow-orange-100">
+                        <Link to="/auth" className="block text-center bg-orange-600 text-white dark:bg-orange-500 dark:text-gray-200 px-6 py-3 rounded-xl font-bold text-base shadow-md shadow-orange-100">
                             Sign In
                         </Link>
                     )}

@@ -33,8 +33,8 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
         : null;
 
     return (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={handleOverlayClick}>
-            <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm" onClick={handleOverlayClick}>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 
                 {/* Header Image & Close */}
                 <div className="relative h-48 sm:h-72 bg-gray-200 shrink-0">
@@ -62,7 +62,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                             </div>
                             {isAuthenticated && (
                                 <div className="text-right shrink-0">
-                                    <span className="bg-orange-500 text-white text-[10px] sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-black shadow-lg block mb-1 sm:mb-2 whitespace-nowrap">
+                                    <span className="bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-[10px] sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-black shadow-lg block mb-1 sm:mb-2 whitespace-nowrap">
                                         {recipe.matchPercentage}% Match
                                     </span>
                                 </div>
@@ -72,7 +72,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                         {/* Tags */}
                         <div className="flex gap-1.5 sm:gap-2 mt-3 sm:mt-4 flex-wrap">
                             {recipe.category && (
-                                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] sm:text-xs px-2 py-1 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/30 font-bold">
+                                <span className="bg-white dark:bg-gray-900/20 backdrop-blur-md text-white text-[10px] sm:text-xs px-2 py-1 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/30 font-bold">
                                     {recipe.category.name}
                                 </span>
                             )}
@@ -88,12 +88,12 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-4 sm:p-8 overflow-y-auto bg-gray-50 flex-1">
+                <div className="p-4 sm:p-8 overflow-y-auto bg-gray-50 dark:bg-gray-800 flex-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
                         
                         {/* Left: Ingredients Snapshot */}
-                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <h3 className="font-black text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg border-b pb-2 flex justify-between items-center">
+                        <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50">
+                            <h3 className="font-black text-gray-900 dark:text-white mb-3 sm:mb-4 text-base sm:text-lg border-b pb-2 flex justify-between items-center">
                                 <span>Ingredients</span>
                                 <span className="text-xs sm:text-sm font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg">{recipe.ingredients?.length || 0} items</span>
                             </h3>
@@ -105,12 +105,12 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                             {isAuthenticated && (
                                                 <span className={`w-2 h-2 rounded-full mt-1.5 sm:mt-0 shrink-0 ${item.inPantry || item.isStaple ? 'bg-green-500' : 'bg-red-400'}`}></span>
                                             )}
-                                            <span className={`font-medium text-sm sm:text-base leading-snug ${item.inPantry || item.isStaple ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            <span className={`font-medium text-sm sm:text-base leading-snug ${item.inPantry || item.isStaple ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 {item.name}
                                                 {item.modifier && <span className="text-gray-400 font-normal">, {item.modifier.toLowerCase()}</span>}
                                             </span>
                                         </div>
-                                        <span className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md shrink-0 mt-0.5 sm:mt-0">
+                                        <span className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md shrink-0 mt-0.5 sm:mt-0">
                                             {item.amount} {item.unit?.abbreviation || ''}
                                         </span>
                                     </li>
@@ -119,8 +119,8 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                         </div>
 
                         {/* Right: Quick Instructions */}
-                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 h-fit">
-                            <h3 className="font-black text-gray-900 mb-3 sm:mb-4 text-base sm:text-lg border-b pb-2 flex justify-between items-center">
+                        <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 h-fit">
+                            <h3 className="font-black text-gray-900 dark:text-white mb-3 sm:mb-4 text-base sm:text-lg border-b pb-2 flex justify-between items-center">
                                 <span>Quick Summary</span>
                                 <span className="text-xs sm:text-sm font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg">
                                     ⏱️ {recipe.totalTime || recipe.prepTime || 0} mins
@@ -128,12 +128,12 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                             </h3>
                             
                             {recipe.summary && (
-                                <p className="text-xs sm:text-sm text-gray-600 italic mb-4 p-3 bg-orange-50 rounded-xl border border-orange-100 leading-relaxed">
+                                <p className="text-xs sm:text-sm text-gray-600 italic mb-4 p-3 bg-orange-50 dark:bg-orange-500/15 rounded-xl border border-orange-100 leading-relaxed">
                                     "{recipe.summary}"
                                 </p>
                             )}
 
-                            <div className="text-xs sm:text-sm text-gray-700 line-clamp-6 sm:line-clamp-10 leading-relaxed whitespace-pre-wrap">
+                            <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 line-clamp-6 sm:line-clamp-10 leading-relaxed whitespace-pre-wrap">
                                 {recipe.instructions || "No instructions provided."}
                             </div>
                         </div>
@@ -141,17 +141,17 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-3 sm:p-6 bg-white border-t flex flex-row gap-2 sm:gap-4 shrink-0">
+                <div className="p-3 sm:p-6 bg-white dark:bg-gray-900 border-t flex flex-row gap-2 sm:gap-4 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-2 py-2.5 sm:px-4 sm:py-3.5 text-gray-500 font-bold border-2 border-gray-400 sm:border-gray-500 hover:bg-gray-100 rounded-xl sm:rounded-2xl transition-colors tracking-widest uppercase text-[10px] sm:text-sm"
+                        className="flex-1 px-2 py-2.5 sm:px-4 sm:py-3.5 text-gray-500 dark:text-gray-400 font-bold border-2 border-gray-400 sm:border-gray-500 hover:bg-gray-100 rounded-xl sm:rounded-2xl transition-colors tracking-widest uppercase text-[10px] sm:text-sm"
                     >
                         <span className="sm:hidden">Close</span>
                         <span className="hidden sm:inline">Keep Browsing</span>
                     </button>
                     <button
                         onClick={() => navigate(`/recipe/${recipe.slug}`)}
-                        className="flex-2 px-2 py-2.5 sm:px-4 sm:py-3.5 bg-orange-600 text-white font-black hover:bg-orange-700 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl shadow-orange-200 transition-all tracking-widest uppercase text-[10px] sm:text-sm transform sm:hover:-translate-y-0.5"
+                        className="flex-2 px-2 py-2.5 sm:px-4 sm:py-3.5 bg-orange-600 dark:bg-orange-500 text-white font-black hover:bg-orange-700 dark:hover:bg-orange-600 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl shadow-orange-200 transition-all tracking-widest uppercase text-[10px] sm:text-sm transform sm:hover:-translate-y-0.5"
                     >
                         <span className="sm:hidden">View Recipe</span>
                         <span className="hidden sm:inline">View Full Recipe & Cook</span>

@@ -20,7 +20,7 @@ export const addIngredientsToShoppingList = async (
                         toast.dismiss(t.id);
                         toast.error("Add undone", { duration: 2000 });
                     }}
-                    className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-[10px] font-bold uppercase"
+                    className="bg-white dark:bg-gray-900/20 hover:bg-white hover:dark:bg-gray-900/30 px-2 py-1 rounded text-[10px] font-bold uppercase"
                 >
                     Undo
                 </button>

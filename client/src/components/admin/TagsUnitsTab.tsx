@@ -180,16 +180,16 @@ export const TagsUnitsTab = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* TAGS SECTION */}
-            <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-full">
-                <h2 className="text-xl font-black text-gray-900 mb-6">Dietary Tags</h2>
+            <section className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col h-full">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6">Dietary Tags</h2>
                 
-                <form onSubmit={handleAddTag} className="flex gap-2 mb-6 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <form onSubmit={handleAddTag} className="flex gap-2 mb-6 bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                     <input 
                         type="text" 
                         placeholder="Name (e.g. Vegan)" 
                         value={newTag.name}
                         onChange={e => setNewTag({...newTag, name: e.target.value})}
-                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 outline-none focus:border-orange-400 text-sm font-bold text-gray-700"
+                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 dark:border-gray-800 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 dark:text-gray-300"
                         required 
                     />
                     <input 
@@ -197,7 +197,7 @@ export const TagsUnitsTab = () => {
                         placeholder="Code" 
                         value={newTag.code}
                         onChange={e => setNewTag({...newTag, code: e.target.value})}
-                        className="w-16 p-3 rounded-xl border border-gray-200 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 uppercase text-center"
+                        className="w-16 p-3 rounded-xl border border-gray-200 dark:border-gray-800 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase text-center"
                         required 
                     />
                     <button type="submit" className="bg-gray-900 text-white px-4 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors">
@@ -207,14 +207,14 @@ export const TagsUnitsTab = () => {
 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 flex-1">
                     {tags.map(tag => (
-                        <div key={tag.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-orange-200 transition-colors group">
+                        <div key={tag.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-orange-200 transition-colors group">
                             <div className="flex items-center gap-3">
                                 <span className="bg-gray-900 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">{tag.code}</span>
-                                <span className="font-bold text-gray-700">{tag.name}</span>
+                                <span className="font-bold text-gray-700 dark:text-gray-300">{tag.name}</span>
                             </div>
                             <button 
                                 onClick={() => handleDeleteTag(tag.id)}
-                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white rounded-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-all"
+                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-all"
                             >
                                 Delete
                             </button>
@@ -224,16 +224,16 @@ export const TagsUnitsTab = () => {
             </section>
 
             {/* UNITS SECTION */}
-            <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-full">
-                <h2 className="text-xl font-black text-gray-900 mb-6">Measurement Units</h2>
+            <section className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col h-full">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6">Measurement Units</h2>
                 
-                <form onSubmit={handleAddUnit} className="flex gap-2 mb-6 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <form onSubmit={handleAddUnit} className="flex gap-2 mb-6 bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                     <input 
                         type="text" 
                         placeholder="Name (e.g. Ounce)" 
                         value={newUnit.name}
                         onChange={e => setNewUnit({...newUnit, name: e.target.value})}
-                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 outline-none focus:border-orange-400 text-sm font-bold text-gray-700"
+                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 dark:border-gray-800 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 dark:text-gray-300"
                         required 
                     />
                     <input 
@@ -241,7 +241,7 @@ export const TagsUnitsTab = () => {
                         placeholder="Abbr" 
                         value={newUnit.abbreviation}
                         onChange={e => setNewUnit({...newUnit, abbreviation: e.target.value})}
-                        className="w-16 p-3 rounded-xl border border-gray-200 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 text-center"
+                        className="w-16 p-3 rounded-xl border border-gray-200 dark:border-gray-800 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 dark:text-gray-300 text-center"
                         required 
                     />
                     <button type="submit" className="bg-gray-900 text-white px-4 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors">
@@ -251,14 +251,14 @@ export const TagsUnitsTab = () => {
 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 flex-1">
                     {units.map(unit => (
-                        <div key={unit.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-orange-200 transition-colors group">
+                        <div key={unit.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-orange-200 transition-colors group">
                             <div className="flex items-center gap-3">
-                                <span className="font-bold text-gray-700">{unit.name}</span>
+                                <span className="font-bold text-gray-700 dark:text-gray-300">{unit.name}</span>
                                 <span className="text-gray-400 text-xs font-bold uppercase tracking-widest bg-gray-200/50 px-2 py-1 rounded-md">{unit.abbreviation}</span>
                             </div>
                             <button 
                                 onClick={() => handleDeleteUnit(unit.id)}
-                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white rounded-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-all"
+                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-all"
                             >
                                 Delete
                             </button>
@@ -268,16 +268,16 @@ export const TagsUnitsTab = () => {
             </section>
 
             {/* MODIFIERS SECTION */}
-            <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-full">
-                <h2 className="text-xl font-black text-gray-900 mb-6">Prep Modifiers</h2>
+            <section className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm flex flex-col h-full">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6">Prep Modifiers</h2>
                 
-                <form onSubmit={handleAddModifier} className="flex gap-2 mb-6 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <form onSubmit={handleAddModifier} className="flex gap-2 mb-6 bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50">
                     <input 
                         type="text" 
                         placeholder="Name (e.g. Minced)" 
                         value={newModifier.name}
                         onChange={e => setNewModifier({ name: e.target.value })}
-                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 outline-none focus:border-orange-400 text-sm font-bold text-gray-700"
+                        className="flex-1 min-w-0 p-3 rounded-xl border border-gray-200 dark:border-gray-800 outline-none focus:border-orange-400 text-sm font-bold text-gray-700 dark:text-gray-300"
                         required 
                     />
                     <button type="submit" className="bg-gray-900 text-white px-4 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors">
@@ -287,11 +287,11 @@ export const TagsUnitsTab = () => {
 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 flex-1">
                     {modifiers.map(modifier => (
-                        <div key={modifier.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-orange-200 transition-colors group">
-                            <span className="font-bold text-gray-700">{modifier.name}</span>
+                        <div key={modifier.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-orange-200 transition-colors group">
+                            <span className="font-bold text-gray-700 dark:text-gray-300">{modifier.name}</span>
                             <button 
                                 onClick={() => handleDeleteModifier(modifier.id)}
-                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white rounded-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-all"
+                                className="text-gray-300 hover:text-red-500 font-bold text-sm px-3 py-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-all"
                             >
                                 Delete
                             </button>

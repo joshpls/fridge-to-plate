@@ -214,10 +214,10 @@ const RecipeDetail = () => {
 
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white">
-            <nav className="flex items-center gap-2 text-sm font-bold text-gray-400 mb-6 uppercase tracking-wider print:hidden">
+            <nav className="flex items-center gap-2 text-sm font-bold text-gray-400 dark:text-gray-200 mb-6 uppercase tracking-wider print:hidden">
                 <Link to="/discovery" className="hover:text-orange-600 transition-colors">Discovery</Link>
                 <span>/</span>
-                {recipe.category && <span className="text-gray-600 truncate max-w-[100px] sm:max-w-none">{recipe.category.name}</span>}
+                {recipe.category && <span className="text-gray-600 dark:text-gray-400 truncate max-w-[100px] sm:max-w-none">{recipe.category.name}</span>}
                 {recipe.subcategory && <><span>/</span><span className="text-orange-600 truncate max-w-[100px] sm:max-w-none">{recipe.subcategory.name}</span></>}
             </nav>
 
@@ -236,7 +236,7 @@ const RecipeDetail = () => {
                     {(isAdmin || (isAuthenticated && user?.id === recipe?.author?.id)) && (
                         <>
                             <Link to={`/edit-recipe/${recipe.slug}`}>
-                                <button className="bg-white/90 backdrop-blur text-gray-800 px-4 py-2 rounded-xl font-black text-sm hover:bg-white transition-all shadow-lg">
+                                <button className="bg-white dark:bg-gray-900/90 backdrop-blur text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl font-black text-sm hover:bg-white dark:hover:bg-orange-500 transition-all shadow-lg">
                                     ✏️ Edit
                                 </button>
                             </Link>
@@ -251,14 +251,14 @@ const RecipeDetail = () => {
             {/* Main Header Info */}
             <header className="mb-10 text-center md:text-left print:text-left print:mb-6">                
                 <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-6 mb-6">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 tracking-tight leading-tight print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
                         {recipe.name}
                     </h1>
                     
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center">
                         
                         {isLocked && (
-                            <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
+                            <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 dark:bg-orange-500/15 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
                                 <Flame size={16} className="animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
                             </div>
@@ -277,40 +277,40 @@ const RecipeDetail = () => {
                         </div>
                         <button
                             onClick={handlePrint}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-orange-600 transition-all shadow-lg active:scale-95 shrink-0"
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
                         >
                             <Printer size={18} /> Print Sheet
                         </button>
                     </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-bold text-gray-500 mb-6 print:text-gray-700 print:justify-start">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 print:text-gray-700 print:justify-start">
                     <span className="flex items-center gap-2">
-                        👨‍🍳 By <span className="text-gray-900 print:text-black">{authorName}</span>
+                        👨‍🍳 By <span className="text-gray-90 dark:text-gray-200 print:text-black">{authorName}</span>
                     </span>
                     <span>•</span>
                     {avgRating ? (
-                        <span className="text-yellow-500 flex items-center gap-1 text-base print:text-black">
-                            ★ <span className="font-bold">{avgRating}</span> <span className="text-gray-400 text-sm print:text-gray-600">({ratings.length} reviews)</span>
+                        <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:text-black">
+                            ★ <span className="font-bold">{avgRating}</span> <span className="text-gray-400 dark:text-gray-200 text-sm print:text-gray-600">({ratings.length} reviews)</span>
                         </span>
                     ) : (
                         <span>No ratings yet</span>
                     )}
                 </div>
 
-                <p className="text-base sm:text-lg text-gray-600 mb-6 font-medium leading-relaxed max-w-3xl mx-auto md:mx-0 print:max-w-full print:text-black print:text-base print:leading-relaxed print:italic px-4 md:px-0">
+                <p className="text-base sm:text-lg text-gray-600 dark:text-gray-200 mb-6 font-medium leading-relaxed max-w-3xl mx-auto md:mx-0 print:max-w-full print:text-black print:text-base print:leading-relaxed print:italic px-4 md:px-0">
                     {recipe.summary || "A delicious recipe ready to be cooked."}
                 </p>
 
                 {/* Badges & Tags*/}
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start">
                     {recipe && (
-                        <span className="bg-orange-500 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:bg-white print:text-black print:border print:border-black print:shadow-none print:px-3 print:py-1">
+                        <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:bg-white print:text-black print:border print:border-black print:shadow-none print:px-3 print:py-1">
                             {recipe?.matchPercentage}% Match
                         </span>
                     )}
                     {recipe.tags?.map((tag: any) => (
-                        <span key={tag.id} className="bg-gray-100 text-gray-600 border border-gray-200 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest print:bg-white print:text-black print:border-gray-400 print:px-3 print:py-1">
+                        <span key={tag.id} className="bg-gray-100 text-gray-600 dark:text-gray-200 dark:bg-gray-900 border border-gray-200 dark:border-gray-200 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest print:bg-white print:text-black print:border-gray-400 print:px-3 print:py-1">
                             {tag.name}
                         </span>
                     ))}
@@ -318,22 +318,22 @@ const RecipeDetail = () => {
             </header>
 
             {/* Metadata Hero Bar*/}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10 bg-orange-50/50 border border-orange-100 rounded-3xl p-4 sm:p-6 print:bg-transparent print:border-gray-200 print:rounded-none print:grid-cols-4 print:p-4 print:mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-3xl p-4 sm:p-6 print:bg-transparent print:border-gray-200 print:rounded-none print:grid-cols-4 print:p-4 print:mb-6">
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 mb-1 print:text-gray-600">Prep Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 print:text-black print:text-xl">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Prep Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 mb-1 print:text-gray-600">Cook Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 print:text-black print:text-xl">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Cook Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 mb-1 print:text-gray-600">Total Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 print:text-black print:text-xl">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Total Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 mb-1 print:text-gray-600">Yields</span>
-                    <span className="text-lg sm:text-xl md:text-2xl font-black text-orange-900 print:text-black print:text-xl leading-tight">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Yields</span>
+                    <span className="text-lg sm:text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">
                         {recipe.servings ? `${recipe.servings * multiplier} servings` : '--'}
                     </span>
                 </div>
@@ -347,18 +347,18 @@ const RecipeDetail = () => {
                     <section>
                         <div className="flex flex-col gap-4 mb-6 print:mb-3">
                             <h2 className="text-2xl font-black flex items-center gap-2 print:text-xl">
-                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded-full print:border print:border-gray-200 print:text-black print:bg-white">{recipe.ingredients?.length} Items</span>
+                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 px-3 py-1 rounded-full print:border print:border-gray-200 print:text-black print:bg-white ">{recipe.ingredients?.length} Items</span>
                             </h2>
                             
                             {/* Multiplier & Toggle Staples */}
-                            <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 flex flex-col gap-3 print:hidden">
-                                <div className="flex bg-white p-1 rounded-xl border border-gray-200">
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex flex-col gap-3 print:hidden">
+                                <div className="flex bg-white dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800">
                                     {[1, 2, 3].map((val) => (
                                         <button
                                             key={val}
                                             onClick={() => setMultiplier(val)}
                                             className={`flex-1 py-1.5 rounded-lg text-sm font-black transition-all ${multiplier === val
-                                                ? 'bg-orange-50 text-orange-600 shadow-sm'
+                                                ? 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 shadow-sm'
                                                 : 'text-gray-400 hover:text-gray-600'
                                                 }`}
                                         >
@@ -370,8 +370,8 @@ const RecipeDetail = () => {
                                     <button
                                         onClick={() => setShowStaples(!showStaples)}
                                         className={`w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${showStaples
-                                                ? 'bg-gray-800 text-white shadow-md'
-                                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+                                                ? 'bg-gray-800 text-white dark:bg-gray-700 dark:text-white shadow-md'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-white border border-gray-200 dark:border-gray-800 hover:bg-gray-100'
                                             }`}
                                     >
                                         {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
@@ -385,7 +385,7 @@ const RecipeDetail = () => {
                                             return 'original';
                                         });
                                     }}
-                                    className="w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm flex items-center justify-between"
+                                    className="w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all bg-white dark:bg-gray-900 text-blue-600 border border-blue-200 hover:bg-blue-50 shadow-sm flex items-center justify-between"
                                 >
                                     <span>Units:</span>
                                     <span className="uppercase tracking-widest bg-blue-100 px-2 py-1 rounded-md text-[10px] text-blue-800">
@@ -397,11 +397,11 @@ const RecipeDetail = () => {
 
                         {/* Missing Ingredients Alert*/}
                         {missingIngredients.length > 0 && (
-                            <div className="mb-4 bg-orange-50 border border-orange-100 p-4 rounded-2xl shadow-sm print:hidden">
+                            <div className="mb-4 bg-orange-50 dark:bg-orange-500/15 border border-orange-100 p-4 rounded-2xl shadow-sm print:hidden">
                                 <p className="text-orange-800 font-bold text-sm mb-3">You're missing {missingIngredients.length} items.</p>
                                 <button 
                                     onClick={addToShoppingList} 
-                                    className="w-full bg-orange-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md"
+                                    className="w-full bg-orange-50 dark:bg-orange-500/150 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md"
                                 >
                                     🛒 Add Missing to Cart
                                 </button>
@@ -412,14 +412,14 @@ const RecipeDetail = () => {
                             {recipe.ingredients.map((item: any) => {
                                 const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
                                 return (
-                                    <li key={item.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
+                                    <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
                                         <div className="flex items-center gap-3 w-full pr-2">
                                             {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-gray-800 text-sm print:text-black print:text-sm truncate sm:whitespace-normal">
+                                                <p className="font-bold text-gray-800 dark:text-white text-sm print:text-black print:text-sm truncate sm:whitespace-normal">
                                                     {item.name}
                                                     {item.modifier && (
-                                                        <span className="text-gray-500 font-medium">, {item.modifier.toLowerCase()}</span>
+                                                        <span className="text-gray-500 dark:text-gray-400 font-medium">, {item.modifier.toLowerCase()}</span>
                                                     )}
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
@@ -428,7 +428,7 @@ const RecipeDetail = () => {
                                             </div>
                                         </div>
                                         {isAuthenticated &&
-                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50' : 'hidden'}`}>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50 dark:bg-orange-500/15' : 'hidden'}`}>
                                                 {item.inPantry ? 'In Pantry' : 'Missing'}
                                             </span>
                                         }
@@ -449,16 +449,16 @@ const RecipeDetail = () => {
                             {steps.map((step: string, index: number) => (
                                 <div key={index}
                                     onClick={() => setCompletedSteps(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])}
-                                    className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:rounded-none print:shadow-none print:p-2 print:gap-3 print:bg-transparent print:border-0 print:border-b print:border-gray-200 ${completedSteps.includes(index)
-                                            ? 'bg-gray-50 border-transparent opacity-60'
-                                            : 'bg-white border-gray-100 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:hover:border-transparent'
+                                    className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:rounded-none print:shadow-none print:p-2 print:gap-3 print:bg-transparent print:border-0 print:border-b print:border-gray-200 dark:border-gray-800 ${completedSteps.includes(index)
+                                            ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60'
+                                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:hover:border-transparent'
                                         }`}
                                 >
                                     <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-6 print:h-6 print:border-gray-300 ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-gray-100' : 'border-gray-300 group-hover:border-orange-400'
                                         }`}>
                                         {completedSteps.includes(index) ? <span className="text-white text-sm font-bold print:text-black">✓</span> : <span className="text-xs font-bold text-gray-400 print:text-black">{index + 1}</span>}
                                     </div>
-                                    <p className={`text-base sm:text-lg leading-relaxed ${completedSteps.includes(index) ? 'line-through text-gray-500' : 'text-gray-800 font-medium'} print:no-underline print:text-black print:text-sm`}>
+                                    <p className={`text-base sm:text-lg leading-relaxed ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-white font-medium'} print:no-underline print:text-black print:text-sm`}>
                                         {step}
                                     </p>
                                 </div>
@@ -467,20 +467,20 @@ const RecipeDetail = () => {
                     </section>
 
                     {recipe.notes && (
-                        <section className="bg-yellow-50 p-6 rounded-3xl border-2 border-yellow-100 print:p-4 print:rounded-none print:border-0 print:border-b print:border-gray-200 print:bg-transparent">
-                            <h2 className="text-lg font-black text-yellow-900 mb-2 print:text-base print:text-black">Chef's Notes</h2>
-                            <p className="text-yellow-800/80 leading-relaxed font-medium whitespace-pre-wrap print:text-black print:text-sm print:italic">
+                        <section className="bg-yellow-50 dark:bg-yellow-500/10 p-6 rounded-3xl border-2 border-yellow-100 dark:border-yellow-500/20 print:p-4 print:rounded-none print:border-0 print:border-b print:border-gray-200 print:bg-transparent">
+                            <h2 className="text-lg font-black text-yellow-900 dark:text-yellow-500 mb-2 print:text-base print:text-black">Chef's Notes</h2>
+                            <p className="text-yellow-800/80 dark:text-yellow-200/80 leading-relaxed font-medium whitespace-pre-wrap print:text-black print:text-sm print:italic">
                                 {recipe.notes}
                             </p>
                         </section>
                     )}
 
                     {/* Comments & Reviews Section */}
-                    <section className="pt-8 border-t-2 border-gray-100 print:hidden">
+                    <section className="pt-8 border-t-2 border-gray-100 dark:border-gray-800/50 print:hidden">
                         <h2 className="text-2xl font-black mb-6 print:text-xl print:mb-3">Community Reviews ({recipe.comments?.length || 0})</h2>
                         
                         {isAuthenticated ? (
-                            <form onSubmit={handleAddComment} className="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm mb-8 print:hidden">
+                            <form onSubmit={handleAddComment} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm mb-8 print:hidden">
                                 <div className="mb-4">
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Your Rating</label>
                                     <div className="flex gap-2">
@@ -500,7 +500,7 @@ const RecipeDetail = () => {
                                     value={newComment}
                                     onChange={(e) => setNewComment(e.target.value)}
                                     placeholder="What did you think of this recipe?"
-                                    className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 outline-none focus:border-orange-400 focus:bg-white transition-all min-h-[120px] resize-none mb-4"
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-900 outline-none focus:border-orange-400 focus:bg-white dark:focus:bg-gray-700 transition-all min-h-[120px] resize-none mb-4"
                                     required
                                 />
                                 <button
@@ -512,8 +512,8 @@ const RecipeDetail = () => {
                                 </button>
                             </form>
                         ) : (
-                            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8 text-center print:hidden">
-                                <p className="text-gray-500 font-medium">Please <Link to="/auth" className="text-orange-600 font-bold hover:underline">log in</Link> to leave a review.</p>
+                            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 mb-8 text-center print:hidden">
+                                <p className="text-gray-500 dark:text-gray-400 font-medium">Please <Link to="/auth" className="text-orange-600 font-bold hover:underline">log in</Link> to leave a review.</p>
                             </div>
                         )}
 
@@ -521,7 +521,7 @@ const RecipeDetail = () => {
                         {recipe.comments && recipe.comments.length > 0 ? (
                             <div className="space-y-6">
                                 {recipe.comments.map((comment: any) => (
-                                    <div key={comment.id} className="bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm relative group print:p-2 print:border-0 print:border-b print:border-gray-200 print:rounded-none print:shadow-none">
+                                    <div key={comment.id} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm relative group print:p-2 print:border-0 print:border-b print:border-gray-200 print:rounded-none print:shadow-none">
                                         {(userId === comment.user?.id || isAdmin) && (
                                             <button 
                                                 onClick={() => handleDeleteComment(comment.id)}
@@ -532,7 +532,7 @@ const RecipeDetail = () => {
                                         )}
                                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 print:mb-1 gap-1">
                                             <div>
-                                                <span className="font-black text-gray-900 block print:text-black print:font-bold">{getDisplayName(comment.user) ?? 'Anonymous'}</span>
+                                                <span className="font-black text-gray-900 dark:text-white block print:text-black print:font-bold">{getDisplayName(comment.user) ?? 'Anonymous'}</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider print:text-gray-600">
                                                     {new Date(comment.createdAt).toLocaleDateString()}
                                                 </span>
@@ -543,7 +543,7 @@ const RecipeDetail = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-gray-700 leading-relaxed font-medium print:text-black print:text-xs">{comment.content}</p>
+                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium print:text-black print:text-xs">{comment.content}</p>
                                     </div>
                                 ))}
                             </div>

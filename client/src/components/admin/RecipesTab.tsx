@@ -126,10 +126,10 @@ export const RecipesTab = () => {
     };
 
     return (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-800/50">
             {/* Header & Controls */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-                <h2 className="text-xl font-black text-gray-900 shrink-0">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white shrink-0">
                     Recipes {totalItems > 0 && <span className="text-gray-400 text-sm ml-2">({totalItems})</span>}
                 </h2>
                 
@@ -141,14 +141,14 @@ export const RecipesTab = () => {
                             placeholder="Search name, author..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 outline-none"
                         />
                     </div>
                     
                     <select 
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="w-full sm:w-auto py-2 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+                        className="w-full sm:w-auto py-2 px-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-sm outline-none cursor-pointer"
                     >
                         <option value="">All Categories</option>
                         {categories.map(cat => (
@@ -161,24 +161,24 @@ export const RecipesTab = () => {
             {loading && recipes.length === 0 ? (
                 <div className="p-12 text-center text-gray-400 font-bold animate-pulse">Loading recipes...</div>
             ) : recipes.length === 0 ? (
-                <div className="p-12 text-center text-gray-400 italic bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <div className="p-12 text-center text-gray-400 italic bg-gray-50 dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
                     No recipes found matching your filters.
                 </div>
             ) : (
                 <>
                     {/* DESKTOP VIEW (Table) */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100">
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800/50">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+                            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px]">
                                 <tr>
-                                    <th className="p-4 cursor-pointer hover:text-gray-900" onClick={() => toggleSort('name')}>
+                                    <th className="p-4 cursor-pointer hover:text-gray-900 dark:text-white" onClick={() => toggleSort('name')}>
                                         <div className="flex items-center gap-1">Recipe <ArrowUpDown size={12} /></div>
                                     </th>
-                                    <th className="p-4 cursor-pointer hover:text-gray-900" onClick={() => toggleSort('author')}>
+                                    <th className="p-4 cursor-pointer hover:text-gray-900 dark:text-white" onClick={() => toggleSort('author')}>
                                         <div className="flex items-center gap-1">Author <ArrowUpDown size={12} /></div>
                                     </th>
                                     <th className="p-4">Category</th>
-                                    <th className="p-4 cursor-pointer hover:text-gray-900" onClick={() => toggleSort('createdAt')}>
+                                    <th className="p-4 cursor-pointer hover:text-gray-900 dark:text-white" onClick={() => toggleSort('createdAt')}>
                                         <div className="flex items-center gap-1">Created <ArrowUpDown size={12} /></div>
                                     </th>
                                     <th className="p-4 text-right">Actions</th>
@@ -186,9 +186,9 @@ export const RecipesTab = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {recipes.map(recipe => (
-                                    <tr key={recipe.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <tr key={recipe.id} className="hover:bg-gray-50 dark:bg-gray-800/50 transition-colors">
                                         <td className="p-4">
-                                            <div className="font-bold text-gray-900 flex items-center gap-2">
+                                            <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                                 {recipe.name}
                                                 <Link to={`/recipe/${recipe.slug}`} target="_blank" className="text-gray-400 hover:text-orange-500">
                                                     <ExternalLink size={14} />
@@ -198,11 +198,11 @@ export const RecipesTab = () => {
                                         <td className="p-4 text-gray-600 truncate max-w-[150px]">{recipe.author?.email}</td>
                                         <td className="p-4">
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-gray-700">{recipe.category?.name || 'N/A'}</span>
+                                                <span className="font-bold text-gray-700 dark:text-gray-300">{recipe.category?.name || 'N/A'}</span>
                                                 <span className="text-[10px] text-gray-400 uppercase">{recipe.subcategory?.name || ''}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-gray-500 whitespace-nowrap">
+                                        <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                             {new Date(recipe.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="p-4 text-right">
@@ -222,17 +222,17 @@ export const RecipesTab = () => {
                     {/* MOBILE VIEW (Cards) */}
                     <div className="md:hidden space-y-4">
                         {recipes.map(recipe => (
-                            <div key={recipe.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col gap-3 relative">
+                            <div key={recipe.id} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex flex-col gap-3 relative">
                                 <div className="pr-8">
-                                    <Link to={`/recipe/${recipe.slug}`} target="_blank" className="font-black text-gray-900 text-base hover:text-orange-600 transition-colors line-clamp-2">
+                                    <Link to={`/recipe/${recipe.slug}`} target="_blank" className="font-black text-gray-900 dark:text-white text-base hover:text-orange-600 transition-colors line-clamp-2">
                                         {recipe.name}
                                     </Link>
-                                    <p className="text-xs font-medium text-gray-500 mt-1 truncate">{recipe.author?.email}</p>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 truncate">{recipe.author?.email}</p>
                                 </div>
                                 
                                 <div className="flex justify-between items-end">
                                     <div className="flex flex-col gap-1">
-                                        <span className="text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-1 rounded-md inline-block w-max">
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-2 py-1 rounded-md inline-block w-max">
                                             {recipe.category?.name || 'Uncategorized'}
                                         </span>
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
@@ -242,7 +242,7 @@ export const RecipesTab = () => {
                                     
                                     <button 
                                         onClick={() => handleDelete(recipe.id, recipe.name)}
-                                        className="text-gray-400 hover:text-red-500 p-2 bg-white rounded-xl border border-gray-200 shadow-sm transition-colors absolute top-4 right-4"
+                                        className="text-gray-400 hover:text-red-500 p-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors absolute top-4 right-4"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -253,23 +253,23 @@ export const RecipesTab = () => {
 
                     {/* PAGINATION CONTROLS */}
                     {totalPages > 1 && (
-                        <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <span className="text-sm font-bold text-gray-500">
-                                Page <span className="text-gray-900">{page}</span> of <span className="text-gray-900">{totalPages}</span>
+                        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                Page <span className="text-gray-900 dark:text-white">{page}</span> of <span className="text-gray-900 dark:text-white">{totalPages}</span>
                             </span>
                             
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    className="flex items-center gap-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >
                                     <ChevronLeft size={16} /> Prev
                                 </button>
                                 <button
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     disabled={page === totalPages}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    className="flex items-center gap-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >
                                     Next <ChevronRight size={16} />
                                 </button>

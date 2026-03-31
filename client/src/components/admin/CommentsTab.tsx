@@ -85,7 +85,7 @@ export const CommentsTab = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
-                <h2 className="text-2xl font-black text-gray-900">Comment Moderation</h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white">Comment Moderation</h2>
                 
                 {/* Search Bar */}
                 <div className="relative w-72">
@@ -95,16 +95,16 @@ export const CommentsTab = () => {
                         placeholder="Search comments or users..."
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                        className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-orange-500 outline-none"
+                        className="w-full pl-9 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:border-orange-500 outline-none"
                     />
                 </div>
             </div>
             
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
                 <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-[10px] uppercase tracking-widest font-black cursor-pointer">
+                            <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800/50 text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-widest font-black cursor-pointer">
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('createdAt')}>
                                     Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                                 </th>
@@ -121,11 +121,11 @@ export const CommentsTab = () => {
                                 <tr><td colSpan={5} className="p-8 text-center text-gray-400 font-bold animate-pulse">Loading comments...</td></tr>
                             ) : comments.length > 0 ? (
                                 comments.map((comment) => (
-                                    <tr key={comment.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                                        <td className="p-4 text-gray-500 whitespace-nowrap">
+                                    <tr key={comment.id} className="border-b border-gray-50 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors">
+                                        <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                             {new Date(comment.createdAt).toLocaleDateString()}
                                         </td>
-                                        <td className="p-4 font-medium text-gray-900">
+                                        <td className="p-4 font-medium text-gray-900 dark:text-white">
                                             {comment.user?.alias || comment.user?.email}
                                         </td>
                                         <td className="p-4">
@@ -145,29 +145,29 @@ export const CommentsTab = () => {
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan={5} className="p-8 text-center text-gray-500 font-medium">No comments found.</td></tr>
+                                <tr><td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">No comments found.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <div className="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-800/50">
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                         Page {page} of {totalPages || 1}
                     </span>
                     <div className="flex gap-2">
                         <button 
                             disabled={page === 1}
                             onClick={() => setPage(p => Math.max(1, p - 1))}
-                            className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronLeft size={16} />
                         </button>
                         <button 
                             disabled={page >= totalPages}
                             onClick={() => setPage(p => p + 1)}
-                            className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronRight size={16} />
                         </button>

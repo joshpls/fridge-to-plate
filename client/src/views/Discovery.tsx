@@ -140,7 +140,7 @@ const Discovery: React.FC = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto pb-20">
             <header className="mb-6">
-                <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
+                <h1 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
                     Discover <span className="text-orange-600">Recipes</span>
                 </h1>
             </header>
@@ -194,10 +194,10 @@ const Discovery: React.FC = () => {
 
             {/* Empty State */}
             {recipes.length === 0 && !loading && (
-                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
                     <span className="text-4xl mb-4 block">🍳</span>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">No recipes found</h3>
-                    <p className="text-gray-500 font-medium max-w-md mx-auto">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md mx-auto">
                         Try adjusting your filters, removing excluded ingredients, or clearing your search term to find what you're looking for.
                     </p>
                     <button 

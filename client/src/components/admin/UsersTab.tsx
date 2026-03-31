@@ -162,7 +162,7 @@ export const UsersTab = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-                <h2 className="text-2xl font-black text-gray-900">User Management</h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white">User Management</h2>
                 
                 {/* Search Bar */}
                 <div className="relative w-full sm:w-72">
@@ -172,15 +172,15 @@ export const UsersTab = () => {
                         placeholder="Search users..."
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                        className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-orange-500 outline-none"
+                        className="w-full pl-9 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:border-orange-500 outline-none"
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
                 <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] cursor-pointer">
+                        <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px] cursor-pointer">
                             <tr>
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('email')}>
                                     Email / ID {sortBy === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -207,7 +207,7 @@ export const UsersTab = () => {
                                 </tr>
                             ) : users.length > 0 ? (
                                 users.map(u => (
-                                    <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <tr key={u.id} className="hover:bg-gray-50 dark:bg-gray-800/50 transition-colors">
                                         
                                         {/* IF EDITING */}
                                         {editingId === u.id ? (
@@ -245,7 +245,7 @@ export const UsersTab = () => {
                                                     />
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-md text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
+                                                    <span className="px-2 py-1 bg-gray-100 text-gray-500 dark:text-gray-400 rounded-md text-[10px] font-black uppercase tracking-widest cursor-not-allowed">
                                                         {u.role}
                                                     </span>
                                                 </td>
@@ -270,18 +270,18 @@ export const UsersTab = () => {
                                                             <UserIcon size={14} />
                                                         </div>
                                                         <div className="truncate max-w-[150px]">
-                                                            <p className="font-bold text-gray-900 truncate" title={u.email}>{u.email}</p>
+                                                            <p className="font-bold text-gray-900 dark:text-white truncate" title={u.email}>{u.email}</p>
                                                             <p className="text-[10px] text-gray-400 font-mono truncate">{u.id}</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <p className="font-bold text-gray-900 truncate max-w-[120px]">
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-[120px]">
                                                         {u.lastName || u.firstName ? `${u.lastName || ''}${u.lastName && u.firstName ? ', ' : ''}${u.firstName || ''}` : <span className="text-gray-300 italic">No Name</span>}
                                                     </p>
                                                 </td>
                                                 <td className="p-4">
-                                                    <p className="font-bold text-gray-900 truncate max-w-[100px]">{u.alias || <span className="text-gray-300 italic">-</span>}</p>
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-[100px]">{u.alias || <span className="text-gray-300 italic">-</span>}</p>
                                                 </td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
@@ -290,14 +290,14 @@ export const UsersTab = () => {
                                                         {u.role}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-gray-500 whitespace-nowrap">
+                                                <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                     {new Date(u.createdAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button 
                                                             onClick={() => handleToggleRole(u.id, u.role)}
-                                                            className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+                                                            className="p-2 text-orange-500 hover:bg-orange-50 dark:bg-orange-500/15 rounded-lg transition-colors"
                                                             title="Toggle Role"
                                                         >
                                                             <Shield size={16} />
@@ -324,7 +324,7 @@ export const UsersTab = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-gray-500 font-medium">No users found.</td>
+                                    <td colSpan={6} className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">No users found.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -332,22 +332,22 @@ export const UsersTab = () => {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <div className="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-800/50">
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                         Page {page} of {totalPages || 1}
                     </span>
                     <div className="flex gap-2">
                         <button 
                             disabled={page === 1}
                             onClick={() => setPage(p => Math.max(1, p - 1))}
-                            className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronLeft size={16} />
                         </button>
                         <button 
                             disabled={page >= totalPages}
                             onClick={() => setPage(p => p + 1)}
-                            className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronRight size={16} />
                         </button>

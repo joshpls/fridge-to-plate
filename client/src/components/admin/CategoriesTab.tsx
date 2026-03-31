@@ -5,18 +5,7 @@ import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
 import toast from 'react-hot-toast';
-
-
-interface Subcategory {
-    id: string;
-    name: string;
-}
-
-interface Category {
-    id: string;
-    name: string;
-    subcategories: Subcategory[];
-}
+import type { Category } from '../../models/Recipe';
 
 export const CategoriesTab = () => {
     const { confirm, prompt } = useConfirm();
@@ -184,12 +173,12 @@ export const CategoriesTab = () => {
         } catch (err) { console.error(err); }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500 font-medium">Loading taxonomy...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">Loading taxonomy...</div>;
 
     return (
         <div className="space-y-6">
             {/* Add Category Form */}
-            <form onSubmit={handleAddCategory} className="flex gap-2 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <form onSubmit={handleAddCategory} className="flex gap-2 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
                 <input 
                     type="text" 
                     placeholder="New Category Name..." 
@@ -197,7 +186,7 @@ export const CategoriesTab = () => {
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:border-orange-500 text-sm"
                 />
-                <button type="submit" className="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm text-sm">
+                <button type="submit" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-bold  transition-colors shadow-sm text-sm">
                     Add Category
                 </button>
             </form>
@@ -205,7 +194,7 @@ export const CategoriesTab = () => {
             {/* Categories List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categories.map(category => (
-                    <div key={category.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col">
+                    <div key={category.id} className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
                         <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-50">
                             <h3 className="font-bold text-gray-800">{category.name}</h3>
                             <div className="flex gap-2">
@@ -216,7 +205,7 @@ export const CategoriesTab = () => {
                         
                         <div className="flex-1 space-y-2 mb-6">
                             {category.subcategories.map(sub => (
-                                <div key={sub.id} className="group flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+                                <div key={sub.id} className="group flex justify-between items-center bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-800/50">
                                     <span className="text-sm text-gray-600">{sub.name}</span>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => handleEditSubcategory(sub.id, sub.name)} className="text-xs text-blue-500 hover:text-blue-700">Edit</button>

@@ -27,15 +27,15 @@ export const SortableIngredientRow = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col sm:flex-row gap-2 sm:gap-3 p-3 sm:p-2 bg-white rounded-2xl border-2 transition-all
-        ${isDragging ? 'border-orange-500 bg-orange-50 scale-[1.02] shadow-md' : 'border-gray-100 hover:border-orange-200'}`}
+      className={`flex flex-col sm:flex-row gap-2 sm:gap-3 p-3 sm:p-2 bg-white dark:bg-gray-900 rounded-2xl border-2 transition-all
+        ${isDragging ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/15 scale-[1.02] shadow-md' : 'border-gray-100 dark:border-gray-800/50 hover:border-orange-200'}`}
     >
       {/* Top Row on Mobile / Left Side on Desktop */}
       <div className="flex items-center gap-2 w-full sm:flex-1">
         <div 
           {...attributes} 
           {...listeners} 
-          className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none shrink-0"
+          className="text-gray-300 hover:text-gray-500 dark:text-gray-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
         >
           <GripVertical size={20} />
         </div>
@@ -67,14 +67,14 @@ export const SortableIngredientRow = ({
             placeholder="Qty"
             value={ingredient.amount}
             onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center min-w-[60px]"
+            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center min-w-[60px]"
         />
 
         <select
             required
             value={ingredient.unitId}
             onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[80px]"
+            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[80px]"
         >
             <option value="" disabled>Unit</option>
             {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
@@ -83,7 +83,7 @@ export const SortableIngredientRow = ({
         <select
             value={ingredient.modifierId || ''}
             onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
-            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[100px]"
+            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[100px]"
         >
             <option value="">(None)</option>
             {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}

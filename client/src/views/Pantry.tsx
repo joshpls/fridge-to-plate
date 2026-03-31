@@ -115,10 +115,10 @@ const Pantry = () => {
 
     return (
         <div className="max-w-3xl mx-auto p-6 space-y-8 pb-24">
-            <header className="flex items-center justify-between border-b border-gray-100 pb-4">
+            <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800/50 pb-4">
                 <div className="flex items-center gap-3">
                     <Refrigerator className="text-orange-500" size={32} />
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Virtual Fridge</h1>
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">My Virtual Fridge</h1>
                 </div>
                 <div className="text-sm font-bold text-gray-400">
                     {isSyncing ? 'Syncing...' : 'All changes saved ✓'}
@@ -132,7 +132,7 @@ const Pantry = () => {
                 </div>
                 <input
                     type="text"
-                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-100 rounded-2xl leading-5 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-0 focus:border-orange-500 transition-colors text-lg font-medium shadow-sm"
+                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-100 dark:border-gray-800/50 rounded-2xl leading-5 bg-white dark:bg-gray-900 placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-0 focus:border-orange-500 transition-colors text-lg font-medium shadow-sm"
                     placeholder="Search for eggs, spinach, pasta..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -140,14 +140,14 @@ const Pantry = () => {
 
                 {/* Autocomplete Dropdown */}
                 {searchTerm && filteredResults.length > 0 && (
-                    <ul className="absolute mt-2 w-full bg-white border border-gray-100 shadow-2xl max-h-72 rounded-2xl py-2 overflow-auto focus:outline-none">
+                    <ul className="absolute mt-2 w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 shadow-2xl max-h-72 rounded-2xl py-2 overflow-auto focus:outline-none">
                         {filteredResults.slice(0, 10).map((ing) => (
                             <li
                                 key={ing.id}
                                 onClick={() => addToPantry(ing)}
-                                className="cursor-pointer select-none relative py-3 px-5 hover:bg-orange-50 flex justify-between items-center transition-colors group border-b border-gray-50 last:border-0"
+                                className="cursor-pointer select-none relative py-3 px-5 hover:bg-orange-50 dark:bg-orange-500/15 flex justify-between items-center transition-colors group border-b border-gray-50 last:border-0"
                             >
-                                <span className="text-gray-700 font-bold group-hover:text-orange-700">
+                                <span className="text-gray-700 dark:text-gray-300 font-bold group-hover:text-orange-700">
                                     {ing.name}
                                 </span>
                                 <Plus size={18} className="text-gray-300 group-hover:text-orange-500" />
@@ -158,7 +158,7 @@ const Pantry = () => {
             </div>
 
             {/* Current Pantry Display */}
-            <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <section className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm">
                 <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex justify-between items-center">
                     <span>Currently in Stock</span>
                     <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{myPantry.length} items</span>
@@ -174,7 +174,7 @@ const Pantry = () => {
                         myPantry.map((ing) => (
                             <span
                                 key={ing.id}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 text-orange-900 border border-orange-100 font-bold text-sm animate-in fade-in zoom-in duration-200 group"
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 dark:bg-orange-500/15 text-orange-900 border border-orange-100 font-bold text-sm animate-in fade-in zoom-in duration-200 group"
                             >
                                 {ing.name}
                                 <button

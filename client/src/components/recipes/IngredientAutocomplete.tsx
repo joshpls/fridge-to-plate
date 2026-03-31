@@ -53,12 +53,12 @@ export const IngredientAutocomplete = ({ value, ingredients, onChange }: Props) 
                 }}
                 onFocus={() => setIsOpen(true)}
                 placeholder="Search ingredient..."
-                className="w-full p-3 bg-transparent outline-none font-bold text-gray-700 placeholder-gray-400"
+                className="w-full p-3 bg-transparent outline-none font-bold text-gray-700 dark:text-gray-300 placeholder-gray-400"
             />
             
             {/* The Dropdown Menu */}
             {isOpen && (
-                <ul className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2">
+                <ul className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800/50 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2">
                     {filteredIngredients.length > 0 ? (
                         filteredIngredients.map(ing => (
                             <li
@@ -68,7 +68,7 @@ export const IngredientAutocomplete = ({ value, ingredients, onChange }: Props) 
                                     setSearchTerm(ing.name);
                                     setIsOpen(false);
                                 }}
-                                className="px-4 py-3 hover:bg-orange-50 cursor-pointer text-sm font-bold text-gray-700 transition-colors border-b border-gray-50 last:border-0"
+                                className="px-4 py-3 hover:bg-orange-50 dark:bg-orange-500/15 cursor-pointer text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors border-b border-gray-50 last:border-0"
                             >
                                 {ing.name}
                             </li>

@@ -16,7 +16,7 @@ function App() {
   return (
     <Router>
       <Toaster />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Navigation />
 
         <main className="container mx-auto py-8">

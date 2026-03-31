@@ -63,11 +63,11 @@ export const ShareButton = ({
             toast.error('Failed to copy link. Please copy the URL from your browser.');
         }
     };
-    
+
     return (
         <button 
             onClick={handleShare}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-800 border-2 border-gray-200 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
             aria-label="Share recipe"
         >
             <Share2 size={18} /> Share

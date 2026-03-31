@@ -8,19 +8,19 @@ const Nutrition = ({ nutrition }: NutritionProps) => {
   const renderValue = (value: any) => {
     if (typeof value === 'object' && value !== null) {
       return (
-        <div className="ml-4 mt-2 space-y-2 border-l-2 border-gray-100 pl-4">
+        <div className="ml-4 mt-2 space-y-2 border-l-2 border-gray-100 dark:border-gray-800/50 pl-4">
           {Object.entries(value).map(([subKey, subValue]) => (
             <div key={subKey} className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 capitalize">
+              <span className="text-gray-500 dark:text-gray-400 capitalize">
                 {subKey.replace(/([A-Z])/g, ' $1')}
               </span>
-              <span className="font-bold text-gray-700">{subValue as string}</span>
+              <span className="font-bold text-gray-700 dark:text-gray-300">{subValue as string}</span>
             </div>
           ))}
         </div>
       );
     }
-    return <span className="font-black text-gray-900">{value}</span>;
+    return <span className="font-black text-gray-900 dark:text-white">{value}</span>;
   };
 
   // Define a priority order for the main stats you want at the top
@@ -36,10 +36,10 @@ const Nutrition = ({ nutrition }: NutritionProps) => {
   });
 
   return (
-    <section className="bg-gray-50 p-6 rounded-3xl border-2 border-gray-100">
+    <section className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-black tracking-tight">Nutrition</h2>
-        <span className="text-[10px] font-black uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-200">
+        <span className="text-[10px] font-black uppercase tracking-widest bg-white dark:bg-gray-900 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-800">
           Per Serving
         </span>
       </div>
@@ -52,7 +52,7 @@ const Nutrition = ({ nutrition }: NutritionProps) => {
           return (
             <div 
               key={key} 
-              className={`pb-4 border-b border-gray-200 last:border-0 last:pb-0`}
+              className={`pb-4 border-b border-gray-200 dark:border-gray-800 last:border-0 last:pb-0`}
             >
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 capitalize font-bold">
@@ -60,7 +60,7 @@ const Nutrition = ({ nutrition }: NutritionProps) => {
                 </span>
                 {!isObject && renderValue(value)}
                 {isObject && value.total && (
-                  <span className="font-black text-gray-900">{value.total}</span>
+                  <span className="font-black text-gray-900 dark:text-white">{value.total}</span>
                 )}
               </div>
               {isObject && renderValue(value)}

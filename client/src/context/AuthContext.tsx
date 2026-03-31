@@ -52,6 +52,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verifySession();
     }, [token]);
 
+    useEffect(() => {
+        let isDark = false;
+
+        if (user?.preferences) {
+            console.log("User preferences changes: ", user?.preferences);
+            const prefs = typeof user.preferences === 'string' 
+                ? JSON.parse(user.preferences) 
+                : user.preferences;
+            isDark = prefs.darkMode;
+        } else {
+            // Fallback to OS preference if logged out
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        const root = window.document.documentElement;
+        if (isDark) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+    }, [user]);
+
     const login = (userToken: string, userData: User) => {
         localStorage.setItem('token', userToken);
         localStorage.setItem('user', JSON.stringify(userData));

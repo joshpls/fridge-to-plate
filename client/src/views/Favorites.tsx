@@ -103,16 +103,16 @@ const Favorites = () => {
         <div className="max-w-7xl mx-auto p-6 pb-24">
             
             {/* Header & Controls */}
-            <header className="mb-10 space-y-6 md:space-y-0 md:flex md:items-end md:justify-between border-b border-gray-100 pb-8">
+            <header className="mb-10 space-y-6 md:space-y-0 md:flex md:items-end md:justify-between border-b border-gray-100 dark:border-gray-800/50 pb-8">
                 <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-6">My Cookbook</h1>
+                    <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-6">My Cookbook</h1>
                     
                     {/* FANG-Style Segmented Control */}
                     <div className="flex bg-gray-100 p-1 rounded-2xl w-full max-w-sm">
                         <button 
                             onClick={() => setActiveTab('favorites')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                                activeTab === 'favorites' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                activeTab === 'favorites' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                             }`}
                         >
                             <Heart size={16} className={activeTab === 'favorites' ? 'fill-red-500 text-red-500' : ''} />
@@ -121,7 +121,7 @@ const Favorites = () => {
                         <button 
                             onClick={() => setActiveTab('authored')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                                activeTab === 'authored' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                                activeTab === 'authored' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                             }`}
                         >
                             <ChefHat size={16} className={activeTab === 'authored' ? 'text-orange-500' : ''} />
@@ -138,7 +138,7 @@ const Favorites = () => {
                         placeholder={`Search ${activeTab === 'favorites' ? 'favorites' : 'my recipes'}...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-orange-500 outline-none transition-all font-medium text-sm"
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800/50 rounded-2xl focus:bg-white dark:bg-gray-900 focus:border-orange-500 outline-none transition-all font-medium text-sm"
                     />
                 </div>
             </header>
@@ -163,14 +163,14 @@ const Favorites = () => {
                                     <Link 
                                         to={`/edit-recipe/${recipe.slug}`}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="bg-white/95 backdrop-blur text-gray-700 p-2.5 rounded-xl shadow-xl border border-gray-100 hover:text-blue-600 hover:scale-110 transition-all"
+                                        className="bg-white dark:bg-gray-900/95 backdrop-blur text-gray-700 dark:text-gray-300 p-2.5 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800/50 hover:text-blue-600 hover:scale-110 transition-all"
                                         title="Edit Recipe"
                                     >
                                         <Edit3 size={18} />
                                     </Link>
                                     <button 
                                         onClick={(e) => handleDelete(e, recipe.id, recipe.name)}
-                                        className="bg-white/95 backdrop-blur text-gray-700 p-2.5 rounded-xl shadow-xl border border-gray-100 hover:text-red-600 hover:scale-110 transition-all"
+                                        className="bg-white dark:bg-gray-900/95 backdrop-blur text-gray-700 dark:text-gray-300 p-2.5 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800/50 hover:text-red-600 hover:scale-110 transition-all"
                                         title="Delete Recipe"
                                     >
                                         <Trash2 size={18} />
@@ -182,19 +182,19 @@ const Favorites = () => {
                 </div>
             ) : (
                 /* Empty States */
-                <div className="text-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="text-center py-24 bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
                     {searchQuery ? (
-                        <p className="text-gray-500 font-medium">No recipes found matching "{searchQuery}"</p>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">No recipes found matching "{searchQuery}"</p>
                     ) : activeTab === 'favorites' ? (
                         <>
-                            <p className="text-gray-500 font-medium mb-4">You haven't saved any recipes yet.</p>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium mb-4">You haven't saved any recipes yet.</p>
                             <Link to="/discovery" className="bg-orange-100 text-orange-700 px-6 py-2 rounded-xl font-bold hover:bg-orange-200 transition-colors">
                                 Discover Recipes
                             </Link>
                         </>
                     ) : (
                         <>
-                            <p className="text-gray-500 font-medium mb-4">You haven't created any recipes yet.</p>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium mb-4">You haven't created any recipes yet.</p>
                             <Link to="/recipe/add" className="bg-orange-100 text-orange-700 px-6 py-2 rounded-xl font-bold hover:bg-orange-200 transition-colors">
                                 Create a Recipe
                             </Link>

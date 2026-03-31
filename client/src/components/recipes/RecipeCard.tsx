@@ -55,7 +55,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
     };
 
     return (
-        <div className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 flex flex-col h-full cursor-pointer">
+        <div className="group bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800/50 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 flex flex-col h-full cursor-pointer">
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden">
                 <img
@@ -67,7 +67,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                 {/* Tags overlay */}
                 <div className="absolute top-3 left-3 flex gap-1 flex-wrap max-w-[70%]">
                     {recipe.tags?.map((tag: any) => (
-                        <span key={tag.id} title={tag.name} className="bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter border border-white/10">
+                        <span key={tag.id} title={tag.name} className="bg-black/60 dark:bg-black/80 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter border border-white/10">
                             {tag.code}
                         </span>
                     ))}
@@ -79,13 +79,13 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                         {/* Favorite Button */}
                         <button
                             onClick={toggleFavorite}
-                            className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-500 text-white' : 'bg-white/90 text-gray-400 hover:text-orange-500'}`}
+                            className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-gray-900/90 text-gray-400 hover:text-orange-500'}`}
                         >
                             {isFavorite ? '❤️' : '🤍'}
                         </button>
 
                         {/* Match Badge */}
-                        <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
+                        <div className="absolute bottom-3 left-3 bg-white dark:bg-gray-900/95 backdrop-blur shadow-sm px-3 py-1.5 rounded-xl">
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Match</p>
                             <p className="text-sm font-black text-orange-600 leading-none">{recipe.matchPercentage}%</p>
                         </div>
@@ -97,17 +97,17 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
             <div className="p-5 flex flex-col flex-1">
                 {/* Meta Header */}
                 <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest bg-orange-50 px-2 py-1 rounded-md">
+                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-500/15 px-2 py-1 rounded-md">
                         {recipe.category?.name || "General"} 
                     </span>
                     {avgRating && (
-                        <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                             ⭐ {avgRating}
                         </span>
                     )}
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-orange-600 transition-colors">
                     {recipe.name}
                 </h3>
                 <p className="text-xs font-medium text-gray-400 mt-1 mb-1">👨‍🍳 By {authorName}</p>
@@ -124,7 +124,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                                         </span>
                                     ))}
                                     {missingCount > 2 && (
-                                        <span className="text-[10px] text-gray-400 font-bold bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                                        <span className="text-[10px] text-gray-400 font-bold bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md border border-gray-100 dark:border-gray-800/50">
                                             +{missingCount - 2} more
                                         </span>
                                     )}
@@ -142,7 +142,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                             {missingCount > 0 && (
                                 <button
                                     onClick={handleAddMissingToCart}
-                                    className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                                    className="w-full py-3 rounded-xl border-2 border-orange-50 hover:bg-orange-50 dark:bg-orange-500/15 text-orange-600 text-xs font-black uppercase tracking-widest transition-all active:scale-95"
                                 >
                                     🛒 Add Missing
                                 </button>
