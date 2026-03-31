@@ -4,6 +4,7 @@ export interface User {
     lastName: string;
     alias: string;
     email: string;
+    preferences: any;
     role: 'USER' | 'ADMIN';
 }
 

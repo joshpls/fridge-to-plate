@@ -16,6 +16,7 @@ model User {
   lastName       String?
   alias          String?
   pantry         PantryItem[]
+  preferences    Json?        @default("{\"darkMode\": false, \"cookMode\": true}")
   favorites      Favorite[]
   comments       Comment[]
   createdRecipes Recipe[]     @relation("UserRecipes")
@@ -47,7 +48,7 @@ model Recipe {
   id           String  @id @default(uuid())
   name         String
   slug         String  @unique
-  summary      String? @db.Text // NEW: Short description
+  summary      String? @db.Text
   instructions String  @db.Text
   imageUrl     String?
 

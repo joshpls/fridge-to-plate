@@ -25,8 +25,11 @@ const RecipeDetail = () => {
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
+    const prefs = user?.preferences
+        ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences)
+        : { cookMode: true };
 
-    const { isLocked } = useWakeLock(true);
+    const { isLocked } = useWakeLock(prefs.cookMode);
 
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
@@ -301,9 +304,9 @@ const RecipeDetail = () => {
 
                 {/* Badges & Tags*/}
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start">
-                    {recipe.matchPercentage && (
+                    {recipe && (
                         <span className="bg-orange-500 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:bg-white print:text-black print:border print:border-black print:shadow-none print:px-3 print:py-1">
-                            {recipe.matchPercentage}% Match
+                            {recipe?.matchPercentage}% Match
                         </span>
                     )}
                     {recipe.tags?.map((tag: any) => (

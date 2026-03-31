@@ -85,12 +85,17 @@ export const login = async (req: Request, res: Response) => {
 export const updateProfile = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const { firstName, lastName, alias } = req.body;
+        const { firstName, lastName, alias, preferences } = req.body;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: { firstName, lastName, alias },
-            select: { id: true, email: true, role: true, firstName: true, lastName: true, alias: true }
+            data: { 
+                firstName, 
+                lastName, 
+                alias,
+                ...(preferences && { preferences })
+            },
+            select: { id: true, email: true, role: true, firstName: true, lastName: true, alias: true, preferences: true }
         });
 
         res.status(200).json({ status: 'success', data: updatedUser });
@@ -129,21 +134,42 @@ export const logout = async (req: Request, res: Response) => {
 
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
-    const id = req?.user?.id as string;
-    // req.user is populated by the requireAuth middleware
+        const id = req?.user?.id as string;
         const user = await prisma.user.findUnique({
             where: { id: id },
             select: { 
-                id: true, 
-                email: true, 
-                role: true,
-                firstName: true,
-                lastName: true,
-                alias: true
+                id: true, email: true, role: true,
+                firstName: true, lastName: true, alias: true,
+                preferences: true
             }
         });
         res.json({ status: 'success', data: user });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user!.id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ status: 'error', message: 'Both current and new passwords are required.' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ status: 'error', message: 'New password must be at least 6 characters.' });
+        }
+
+        await authService.updatePassword(userId, currentPassword, newPassword);
+
+        res.status(200).json({ status: 'success', message: 'Password updated successfully.' });
+    } catch (error: any) {
+        // Return 400 for incorrect password so the frontend knows it was a validation error
+        if (error.message === 'Incorrect current password') {
+            return res.status(400).json({ status: 'error', message: error.message });
+        }
+        res.status(500).json({ status: 'error', message: 'Failed to change password.' });
+    }
 };
