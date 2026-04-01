@@ -266,21 +266,19 @@ const RecipeDetail = () => {
             </div>
 
             {/* Main Header Info */}
-            <header className="mb-10 text-center md:text-left print:text-left print:mb-6">                
+            <header className="mb-10 text-center md:text-left print:text-left print:mb-6">
                 <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-6 mb-6">
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
                         {recipe.name}
                     </h1>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center">
-                        
                         {/* {isLocked && (
                             <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 dark:bg-orange-500/15 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
                                 <Flame size={16} className="animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
                             </div>
                         )} */}
-
                         <button
                             onClick={() => setIsCookModeOpen(true)}
                             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/30 active:scale-95 shrink-0"
@@ -299,6 +297,7 @@ const RecipeDetail = () => {
                                 }
                             />
                         </div>
+
                         <button
                             onClick={handlePrint}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
@@ -307,24 +306,33 @@ const RecipeDetail = () => {
                         </button>
                     </div>
                 </div>
-                
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 print:text-gray-700 print:justify-start">
-                    <span className="flex items-center gap-2">
-                        👨‍🍳 By <span className="text-gray-90 dark:text-gray-200 print:text-black">{authorName}</span>
+
+                {/* Metadata Row */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 print:text-gray-700 print:justify-start px-4 md:px-0">
+                    <span className="flex items-center gap-1.5">
+                        👨‍🍳 By <span className="text-gray-900 dark:text-gray-200 print:text-black">{authorName}</span>
                     </span>
 
-                    <SourceAttribution
-                        sourceName={recipe.sourceName}
-                        sourceUrl={recipe.sourceUrl}
-                    />
+                    {(recipe.sourceName || recipe.sourceUrl) && (
+                        <>
+                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
+                            <SourceAttribution
+                                sourceName={recipe.sourceName}
+                                sourceUrl={recipe.sourceUrl}
+                            />
+                        </>
+                    )}
 
-                    <span>•</span>
-                    {avgRating ? (
-                        <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:text-black">
-                            ★ <span className="font-bold">{avgRating}</span> <span className="text-gray-400 dark:text-gray-200 text-sm print:text-gray-600">({ratings.length} reviews)</span>
-                        </span>
-                    ) : (
-                        <span>No ratings yet</span>
+                    {avgRating && (
+                        <>
+                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
+                            <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:text-black">
+                                ★ <span className="font-bold">{avgRating}</span>
+                                <span className="text-gray-400 dark:text-gray-200 text-sm print:text-gray-600">
+                                    ({ratings.length} reviews)
+                                </span>
+                            </span>
+                        </>
                     )}
                 </div>
 
@@ -332,15 +340,14 @@ const RecipeDetail = () => {
                     {recipe.summary || "A delicious recipe ready to be cooked."}
                 </p>
 
-                {/* Badges & Tags*/}
-                <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start">
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start px-4 md:px-0">
                     {recipe && (
                         <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:bg-white print:text-black print:border print:border-black print:shadow-none print:px-3 print:py-1">
                             {recipe?.matchPercentage}% Match
                         </span>
                     )}
                     {recipe.tags?.map((tag: any) => (
-                        <span key={tag.id} className="bg-gray-100 text-gray-600 dark:text-gray-200 dark:bg-gray-900 border border-gray-200 dark:border-gray-200 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest print:bg-white print:text-black print:border-gray-400 print:px-3 print:py-1">
+                        <span key={tag.id} className="bg-gray-100 text-gray-600 dark:text-gray-200 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest">
                             {tag.name}
                         </span>
                     ))}

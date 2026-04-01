@@ -20,7 +20,6 @@ export const SourceAttribution = ({ sourceName, sourceUrl }: SourceAttributionPr
 
     return (
         <div className="flex items-center gap-2 mt-2 md:mt-0 print:text-black">
-            <span className="hidden md:inline text-gray-300 dark:text-gray-600 print:hidden">•</span>
             <span className="text-gray-500 dark:text-gray-400">
                 Adapted from:{' '}
                 {isLink ? (
