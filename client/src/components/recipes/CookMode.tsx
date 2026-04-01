@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, List, PlaySquare, Volume2, Square } from 'lucide-react';
 import { speakText } from '../../utils/ttsUtils';
+import { useAuth } from '../../context/AuthContext';
 
 interface CookModeProps {
     recipeName: string;
@@ -18,6 +19,11 @@ interface CookModeProps {
 }
 
 export const CookMode = ({ recipeName, instructions, ingredients, onClose, checkedIngredients, setCheckedIngredients }: CookModeProps) => {
+    const { user } = useAuth();
+    const prefs = user?.preferences 
+        ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences) 
+        : {};
+    
     const [currentStep, setCurrentStep] = useState(0);
     const [view, setView] = useState<'step' | 'ingredients'>('step');
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -55,7 +61,8 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
     const handleToggleSpeech = (text: string) => {
         speakText(text, {
             onStart: () => setIsSpeaking(true),
-            onEnd: () => setIsSpeaking(false)
+            onEnd: () => setIsSpeaking(false),
+            voicePreference: prefs.ttsVoice || 'female'
         });
     };
 

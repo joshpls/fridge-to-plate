@@ -16,7 +16,7 @@ const Profile = () => {
 
     // Form Data States
     const [profileData, setProfileData] = useState({ firstName: '', lastName: '', alias: '' });
-    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true });
+    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true, ttsVoice: 'female' });
     const [securityData, setSecurityData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
     // Initialize from Context
@@ -33,7 +33,8 @@ const Profile = () => {
                 const p = typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences;
                 setPrefsData({
                     darkMode: p.darkMode || false,
-                    cookMode: p.cookMode ?? true // Default true if undefined
+                    cookMode: p.cookMode ?? true,
+                    ttsVoice: p.ttsVoice || 'female'
                 });
             }
         }
@@ -193,6 +194,21 @@ const Profile = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Automatically prevents your screen from sleeping while viewing a recipe.</p>
                             </div>
                             <Toggle checked={prefsData.cookMode} onChange={(val) => setPrefsData({...prefsData, cookMode: val})} />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                            <div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Assistant Voice</h4>
+                                <p className="text-sm text-gray-500 font-medium">Choose your preferred voice for Cook Mode.</p>
+                            </div>
+                            <select
+                                value={prefsData.ttsVoice}
+                                onChange={(e) => setPrefsData({ ...prefsData, ttsVoice: e.target.value })}
+                                className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl font-bold outline-none focus:border-orange-500 text-gray-700 dark:text-gray-300 cursor-pointer"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </select>
                         </div>
 
                         <div className="flex justify-end pt-2">

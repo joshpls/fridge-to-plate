@@ -273,12 +273,12 @@ const RecipeDetail = () => {
                     
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center">
                         
-                        {isLocked && (
+                        {/* {isLocked && (
                             <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 dark:bg-orange-500/15 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
                                 <Flame size={16} className="animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
                             </div>
-                        )}
+                        )} */}
 
                         <button
                             onClick={() => setIsCookModeOpen(true)}
