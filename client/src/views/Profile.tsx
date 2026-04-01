@@ -118,9 +118,9 @@ const Profile = () => {
         <button 
             type="button" 
             onClick={() => onChange(!checked)}
-            className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 shrink-0 ${checked ? 'bg-orange-50 dark:bg-orange-500/150' : 'bg-gray-300'}`}
+            className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 shrink-0 ${checked ? 'bg-orange-400 dark:bg-orange-500' : 'bg-gray-800 dark:bg-gray-500'}`}
         >
-            <div className={`w-4 h-4 rounded-full bg-white dark:bg-gray-900 shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
+            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
         </button>
     );
 

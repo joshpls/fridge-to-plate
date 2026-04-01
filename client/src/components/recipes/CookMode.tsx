@@ -78,7 +78,9 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
         if (currentStep > 0) setCurrentStep(prev => prev - 1);
     };
 
-    // Swipe Handlers
+    // --- Interaction Handlers ---
+
+    // Swipe Logic
     const onTouchStart = (e: React.TouchEvent) => {
         setTouchEnd(null);
         setTouchStart(e.targetTouches[0].clientX);
@@ -92,33 +94,52 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
         const isLeftSwipe = distance > minSwipeDistance;
         const isRightSwipe = distance < -minSwipeDistance;
 
-        if (isLeftSwipe) handleNext();
-        if (isRightSwipe) handlePrev();
+        if (isLeftSwipe && view === 'step') handleNext();
+        if (isRightSwipe && view === 'step') handlePrev();
+    };
+
+    // Tap Navigation Logic
+    const handleMainClick = (e: React.MouseEvent) => {
+        if (view !== 'step') return;
+
+        if (window.getSelection()?.toString().length || (e.target as HTMLElement).closest('button, input')) {
+            return;
+        }
+
+        const clickX = e.clientX;
+        const screenWidth = window.innerWidth;
+
+        // Left 40% goes back, Right 40% goes forward. The middle 20% is a safe zone for scrolling.
+        if (clickX < screenWidth * 0.4) {
+            handlePrev();
+        } else if (clickX > screenWidth * 0.6) {
+            handleNext();
+        }
     };
 
     return (
         <div 
-            className="fixed inset-0 z-100 bg-white dark:bg-gray-900 flex flex-col"
+            className="fixed inset-0 z-100 bg-white dark:bg-gray-900 flex flex-col select-none sm:select-auto"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
         >
             {/* Header */}
-            <header className="shrink-0 p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900">
+            <header className="shrink-0 p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 z-10">
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-500 mb-1">Cooking Mode</p>
                     <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white line-clamp-1">{recipeName}</h2>
                 </div>
                 <button 
                     onClick={onClose}
-                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors text-gray-400"
+                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors text-gray-400 z-20"
                 >
                     <X size={24} />
                 </button>
             </header>
 
             {/* Progress Bar */}
-            <div className="shrink-0 h-1.5 w-full bg-gray-100 dark:bg-gray-800">
+            <div className="shrink-0 h-1.5 w-full bg-gray-100 dark:bg-gray-800 z-10">
                 <div 
                     className="h-full bg-orange-500 transition-all duration-300"
                     style={{ width: `${((currentStep + 1) / instructions.length) * 100}%` }}
@@ -126,7 +147,10 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto p-3 sm:p-12 flex flex-col items-center">
+            <main 
+                className="flex-1 overflow-y-auto p-3 sm:p-12 flex flex-col items-center cursor-pointer sm:cursor-auto"
+                onClick={handleMainClick}
+            >
                 <div className="w-full max-w-2xl">
                     {view === 'step' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -143,11 +167,11 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                             </p>
                         </div>
                     ) : (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 cursor-auto">
                             <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8">Ingredients Checklist</h3>
                             <div className="space-y-4">
                                 {ingredients.map((ing) => (
-                                    <li key={ing.id} className="flex items-center gap-3 p-4 border-b dark:border-gray-800">
+                                    <li key={ing.id} className="flex items-center gap-3 p-4 border-b dark:border-gray-800 list-none">
                                         <input
                                             type="checkbox"
                                             className="w-6 h-6 rounded-lg border-2 border-orange-500 checked:bg-orange-500"
@@ -171,20 +195,20 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
             </main>
 
             {/* Footer Actions */}
-            <footer className="shrink-0 p-4 sm:p-8 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-4">
+            <footer className="shrink-0 p-4 sm:p-8 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-4 z-10 relative">
                 {view === 'step' && (
                     <div className="flex gap-3 h-16 sm:h-20">
                         <button 
                             onClick={handlePrev}
                             disabled={currentStep === 0}
-                            className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl font-black disabled:opacity-30 flex justify-center items-center active:scale-95 transition-all"
+                            className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl font-black disabled:opacity-30 flex justify-center items-center active:scale-95 transition-all z-20"
                         >
                             <ChevronLeft size={32} />
                         </button>
 
                         <button 
                             onClick={() => handleToggleSpeech(instructions[currentStep])}
-                            className={`flex-1 flex flex-col justify-center items-center rounded-2xl font-black active:scale-95 transition-all border-2 ${
+                            className={`flex-1 flex flex-col justify-center items-center rounded-2xl font-black active:scale-95 transition-all border-2 z-20 ${
                                 isSpeaking 
                                 ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-900/50' 
                                 : 'bg-orange-50 border-orange-100 text-orange-600 dark:bg-orange-900/20 dark:border-orange-900/50'
@@ -198,7 +222,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                         
                         <button 
                             onClick={handleNext}
-                            className="flex-3 bg-orange-600 dark:bg-orange-500 text-white rounded-2xl font-black flex justify-center items-center gap-2 active:scale-95 transition-all shadow-lg shadow-orange-500/30"
+                            className="flex-3 bg-orange-600 dark:bg-orange-500 text-white rounded-2xl font-black flex justify-center items-center gap-2 active:scale-95 transition-all shadow-lg shadow-orange-500/30 z-20"
                         >
                             <span className="text-xl">{currentStep === instructions.length - 1 ? 'Finish' : 'Next'}</span> 
                             <ChevronRight size={32} />
@@ -207,7 +231,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                 )}
 
                 {/* View Toggle Pill */}
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl flex">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl flex relative z-20">
                     <button 
                         onClick={() => setView('step')}
                         className={`flex-1 py-3 rounded-xl font-black flex justify-center items-center gap-2 text-sm transition-all ${view === 'step' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
