@@ -68,7 +68,7 @@ export const PromptModal: React.FC<PromptModalProps> = ({
             className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             onClick={handleOverlayClick}
         >
-            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl dark:border-gray-800 dark:shadow-none transform transition-all animate-in fade-in zoom-in-95 duration-200">
                 
                 {/* Header/Content Area */}
                 <div className="p-8 relative">
@@ -120,7 +120,7 @@ export const PromptModal: React.FC<PromptModalProps> = ({
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        className="flex-1 px-4 py-3.5 text-white font-black rounded-2xl shadow-xl shadow-blue-100 bg-blue-600 hover:bg-blue-700 transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5"
+                        className="flex-1 px-4 py-3.5 text-white font-black rounded-2xl shadow-xl shadow-blue-100 dark:border-gray-800 dark:shadow-none bg-blue-600 hover:bg-blue-700 transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5"
                     >
                         {confirmText}
                     </button>

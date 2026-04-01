@@ -104,7 +104,7 @@ export const CommentsTab = () => {
                 <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800/50 text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-widest font-black cursor-pointer">
+                            <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800/50 text-gray-500 dark:text-gray-200 text-[10px] uppercase tracking-widest font-black cursor-pointer">
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('createdAt')}>
                                     Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                                 </th>
@@ -122,7 +122,7 @@ export const CommentsTab = () => {
                             ) : comments.length > 0 ? (
                                 comments.map((comment) => (
                                     <tr key={comment.id} className="border-b border-gray-50 hover:bg-gray-50 dark:bg-gray-800/50 transition-colors">
-                                        <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <td className="p-4 text-gray-500 dark:text-gray-200 whitespace-nowrap">
                                             {new Date(comment.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="p-4 font-medium text-gray-900 dark:text-white">
@@ -133,7 +133,7 @@ export const CommentsTab = () => {
                                                 {comment.recipe?.name} <ExternalLink size={12} />
                                             </Link>
                                         </td>
-                                        <td className="p-4 text-gray-600 max-w-xs truncate" title={comment.content}>
+                                        <td className="p-4 text-gray-600 dark:text-gray-200 max-w-xs truncate" title={comment.content}>
                                             {comment.rating && <span className="text-yellow-400 mr-1">★{comment.rating}</span>}
                                             {comment.content}
                                         </td>
@@ -145,7 +145,7 @@ export const CommentsTab = () => {
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">No comments found.</td></tr>
+                                <tr><td colSpan={5} className="p-8 text-center text-gray-500 dark:text-gray-200 font-medium">No comments found.</td></tr>
                             )}
                         </tbody>
                     </table>

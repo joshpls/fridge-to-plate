@@ -60,7 +60,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             onClick={handleOverlayClick}
         >
-            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl transform transition-all">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl dark:border-gray-800 dark:shadow-none transform transition-all">
                 
                 {/* Header/Content Area */}
                 <div className="p-8 relative">
@@ -100,7 +100,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             onConfirm();
                             onClose();
                         }}
-                        className={`flex-1 px-4 py-3.5 text-white font-black rounded-2xl shadow-xl transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5 ${theme.button}`}
+                        className={`flex-1 px-4 py-3.5 text-white font-black rounded-2xl shadow-xl dark:border-gray-800 dark:shadow-none transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5 ${theme.button}`}
                     >
                         {confirmText}
                     </button>

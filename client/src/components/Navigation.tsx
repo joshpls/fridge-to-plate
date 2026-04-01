@@ -82,7 +82,7 @@ export const Navigation = () => {
                             <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                 Pantry
                                 {pantryCount > 0 && (
-                                    <span className="absolute -top-2 -right-4 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                    <span className="absolute -top-2 -right-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] px-1.5 py-0.5 rounded-full">
                                         {pantryCount}
                                     </span>
                                 )}
@@ -105,7 +105,7 @@ export const Navigation = () => {
 
                     {isAuthenticated ? (
                         <div className="flex items-center gap-5">
-                            <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold hover:bg-gray-100 transition-all border border-gray-100 dark:border-gray-800/50">
+                            <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-gray-200 transition-all border border-gray-100 dark:border-gray-800/50">
                                 <span className="text-lg leading-none">🛒</span>
                                 {shoppingCount > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-orange-600 dark:bg-orange-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
@@ -115,7 +115,7 @@ export const Navigation = () => {
                             </Link>
 
                             <div className="flex flex-col items-end border-l pl-5 border-gray-100 dark:border-gray-800/50">
-                                <Link to="/profile" className="text-xs font-black text-gray-900 dark:text-white leading-none hover:text-orange-600 transition-colors">
+                                <Link to="/profile" className="text-xs font-black text-gray-900 dark:text-white leading-none hover:text-orange-600 dark:hover:text-orange-500 transition-colors">
                                     {getDisplayName(user)}
                                 </Link>
                                 {isAdmin && (
@@ -125,7 +125,7 @@ export const Navigation = () => {
                                 )}
                             </div>
                             
-                            <button onClick={handleLogout} className="bg-gray-900 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-600 transition-all">
+                            <button onClick={handleLogout} className="bg-gray-900 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-600 dark:hover:bg-red-500 transition-all">
                                 Logout
                             </button>
                         </div>

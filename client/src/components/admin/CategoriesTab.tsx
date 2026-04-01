@@ -196,7 +196,7 @@ export const CategoriesTab = () => {
                 {categories.map(category => (
                     <div key={category.id} className="bg-white dark:bg-gray-900 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col">
                         <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-50">
-                            <h3 className="font-bold text-gray-800">{category.name}</h3>
+                            <h3 className="font-bold text-gray-800 dark:text-white">{category.name}</h3>
                             <div className="flex gap-2">
                                 <button onClick={() => handleEditCategory(category.id, category.name)} className="text-xs text-blue-500 hover:text-blue-700">Edit</button>
                                 <button onClick={() => handleDeleteCategory(category.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
@@ -206,7 +206,7 @@ export const CategoriesTab = () => {
                         <div className="flex-1 space-y-2 mb-6">
                             {category.subcategories.map(sub => (
                                 <div key={sub.id} className="group flex justify-between items-center bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-800/50">
-                                    <span className="text-sm text-gray-600">{sub.name}</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-200">{sub.name}</span>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => handleEditSubcategory(sub.id, sub.name)} className="text-xs text-blue-500 hover:text-blue-700">Edit</button>
                                         <button onClick={() => handleDeleteSubcategory(sub.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>

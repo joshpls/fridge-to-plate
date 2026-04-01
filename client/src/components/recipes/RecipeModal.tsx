@@ -151,7 +151,7 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                     </button>
                     <button
                         onClick={() => navigate(`/recipe/${recipe.slug}`)}
-                        className="flex-2 px-2 py-2.5 sm:px-4 sm:py-3.5 bg-orange-600 dark:bg-orange-500 text-white font-black hover:bg-orange-700 dark:hover:bg-orange-600 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl shadow-orange-200 transition-all tracking-widest uppercase text-[10px] sm:text-sm transform sm:hover:-translate-y-0.5"
+                        className="flex-2 px-2 py-2.5 sm:px-4 sm:py-3.5 bg-orange-600 dark:bg-orange-500 text-white font-black hover:bg-orange-700 dark:hover:bg-orange-600 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl shadow-orange-200 dark:border-gray-800 dark:shadow-none transition-all tracking-widest uppercase text-[10px] sm:text-sm transform sm:hover:-translate-y-0.5"
                     >
                         <span className="sm:hidden">View Recipe</span>
                         <span className="hidden sm:inline">View Full Recipe & Cook</span>
