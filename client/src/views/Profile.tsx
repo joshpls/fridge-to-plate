@@ -198,8 +198,8 @@ const Profile = () => {
 
                         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
                             <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white">Assistant Voice</h4>
-                                <p className="text-sm text-gray-500 font-medium">Choose your preferred voice for Cook Mode.</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><User size={16} className="text-blue-500"/> Assistant Voice</h3>
+                                <p className="text-sm text-gray-500 font-medium">Choose your preferred voice for Cook Mode (if applicable).</p>
                             </div>
                             <select
                                 value={prefsData.ttsVoice}

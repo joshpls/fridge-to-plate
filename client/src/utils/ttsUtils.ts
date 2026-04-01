@@ -13,7 +13,7 @@ const getPreferredVoice = (preference: 'male' | 'female'): SpeechSynthesisVoice 
     if (voices.length === 0) return null;
 
     const femaleNames = ['female', 'samantha', 'zira', 'karen', 'victoria', 'melina', 'moira', 'tessa', 'siri'];
-    const maleNames = ['male', 'daniel', 'alex', 'fred', 'tomas', 'mark', 'aaron', 'arthur', 'gordon', 'ryan', 'paul', 'david'];
+    const maleNames = ['male', 'andrew', 'daniel', 'alex', 'fred', 'tomas', 'mark', 'aaron', 'arthur', 'gordon', 'ryan', 'paul', 'david', 'voice iii', 'voice iv', 'en-us-x-iom-local'];
 
     const targetNames = preference === 'male' ? maleNames : femaleNames;
 
