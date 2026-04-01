@@ -46,9 +46,9 @@ const AdminDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <StatCard label="Total Users" value={stats.users} color="bg-blue-50 text-blue-600" />
-                <StatCard label="Total Recipes" value={stats.recipes} color="bg-orange-50 dark:bg-orange-500/15 text-orange-600" />
-                <StatCard label="Ingredients" value={stats.ingredients} color="bg-green-50 text-green-600" />
+                <StatCard label="Total Users" value={stats.users} color="bg-blue-50 text-blue-600 dark:bg-blue-500 dark:text-white" />
+                <StatCard label="Total Recipes" value={stats.recipes} color="bg-orange-50 dark:bg-orange-500 text-orange-600 dark:text-white" />
+                <StatCard label="Ingredients" value={stats.ingredients} color="bg-green-50 text-green-600 dark:bg-green-500 dark:text-white" />
             </div>
 
             {/* Tabs */}
