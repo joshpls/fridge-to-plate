@@ -56,7 +56,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         let isDark = false;
 
         if (user?.preferences) {
-            console.log("User preferences changes: ", user?.preferences);
             const prefs = typeof user.preferences === 'string' 
                 ? JSON.parse(user.preferences) 
                 : user.preferences;
