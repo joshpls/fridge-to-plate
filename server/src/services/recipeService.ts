@@ -77,6 +77,8 @@ export const createRecipe = async (userId: string, data: any) => {
         totalTime: (Number(data.prepTime) || 0) + (Number(data.cookTime) || 0),
         servings: Number(data.servings) || 1,
         nutrition: data.nutrition || {},
+        sourceName: data.sourceName || null,
+        sourceUrl: data.sourceUrl || null,
         
         author: { connect: { id: userId } },
         category: { connect: { id: data.categoryId } },
@@ -125,6 +127,8 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
         totalTime: (Number(data.prepTime) || 0) + (Number(data.cookTime) || 0),
         servings: Number(data.servings) || 1,
         nutrition: data.nutrition || {},
+        sourceName: data.sourceName || null,
+        sourceUrl: data.sourceUrl || null,
         
         category: { connect: { id: data.categoryId } },
         

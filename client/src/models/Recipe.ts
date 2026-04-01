@@ -67,6 +67,8 @@ export interface RecipeFormData {
     tagIds: string[];
     ingredients: { id: string; ingredientId: string; amount: number | ''; unitId: string, modifierId?: string;}[];
     nutrition: Nutrition;
+    sourceName?: string;
+    sourceUrl?: string;
 }
 
 export const initialRecipe: RecipeFormData = {
@@ -79,5 +81,7 @@ export const initialRecipe: RecipeFormData = {
         calories: '', protein: '', carbohydrates: '', 
         fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },
         fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminC: '', calcium: '', iron: ''
-    }
+    },
+    sourceName: '',
+    sourceUrl: ''
 };

@@ -60,6 +60,9 @@ model Recipe {
   notes     String? @db.Text // Optional chef notes
   nutrition Json? // e.g., { "calories": 500, "protein": "25g", "fat": "15g" }
 
+  sourceName   String?
+  sourceUrl    String?
+
   authorId String
   author   User   @relation("UserRecipes", fields: [authorId], references: [id], onDelete: Cascade)
 

@@ -78,6 +78,9 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) 
     // Nutrition (JSON)
     nutrition: recipe.nutrition || {},
 
+    sourceName: recipe.sourceName,
+    sourceUrl: recipe.sourceUrl,
+
     // Author (Sanitized)
     author: recipe.author ? {
       id: recipe.author.id,

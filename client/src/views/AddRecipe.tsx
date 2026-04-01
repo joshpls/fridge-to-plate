@@ -82,6 +82,8 @@ const AddRecipe = () => {
                             servings: r.servings || '',
                             instructions: r.instructions || '',
                             notes: r.notes || '',
+                            sourceName: r.sourceName || '',
+                            sourceUrl: r.sourceUrl || '',
                             tagIds: r.tags?.map((t: any) => t.id) || [],
                             ingredients: r.ingredients?.map((i: any) => ({
                                 id: i.id || Math.random().toString(36).substring(7), // Ensure existing ingredients get IDs
@@ -398,6 +400,30 @@ const AddRecipe = () => {
                     <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Summary</label>
                         <textarea name="summary" value={formData.summary} onChange={handleChange} placeholder="A brief description of this dish..." rows={3} className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none resize-y" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Original Creator (Optional)</label>
+                            <input
+                                type="text"
+                                name="sourceName"
+                                value={formData.sourceName || ''}
+                                onChange={handleChange}
+                                placeholder="e.g., Serious Eats or Chef John"
+                                className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Source URL (Optional)</label>
+                            <input
+                                type="url"
+                                name="sourceUrl"
+                                value={formData.sourceUrl || ''}
+                                onChange={handleChange}
+                                placeholder="https://..."
+                                className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900"
+                            />
+                        </div>
                     </div>
                 </section>
 

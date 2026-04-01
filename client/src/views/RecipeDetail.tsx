@@ -14,6 +14,7 @@ import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { SourceAttribution } from '../components/recipes/RenderSourceAttribution';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -311,6 +312,12 @@ const RecipeDetail = () => {
                     <span className="flex items-center gap-2">
                         👨‍🍳 By <span className="text-gray-90 dark:text-gray-200 print:text-black">{authorName}</span>
                     </span>
+
+                    <SourceAttribution
+                        sourceName={recipe.sourceName}
+                        sourceUrl={recipe.sourceUrl}
+                    />
+
                     <span>•</span>
                     {avgRating ? (
                         <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:text-black">
