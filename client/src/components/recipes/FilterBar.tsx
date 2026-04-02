@@ -13,8 +13,13 @@ export const FilterBar = ({
     favoritesOnly, setFavoritesOnly,
     sortOrder, setSortOrder,
     showStaples, setShowStaples,
-    onClearFilters
-}: FilterBarProps & { onClearFilters?: () => void }) => {
+    onClearFilters,
+    matchOnly, setMatchOnly
+}: FilterBarProps & {
+    onClearFilters?: () => void,
+    matchOnly?: boolean,
+    setMatchOnly?: (val: boolean) => void
+    }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { isAuthenticated } = useAuth();
 
@@ -118,6 +123,13 @@ export const FilterBar = ({
 
                         {isAuthenticated &&
                             <>
+                            <button
+                                onClick={() => setMatchOnly?.(!matchOnly)}
+                                className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${matchOnly ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 shadow-md border-transparent' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                {matchOnly ? '🎯 100% Matches' : '🎯 All Matches'}
+                            </button>
                                 <button
                                     onClick={() => setFavoritesOnly(!favoritesOnly)}
                                     className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${favoritesOnly ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 shadow-md border-transparent' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'

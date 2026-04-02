@@ -180,9 +180,11 @@ export const getMatches = async (
     subcategoryId?: string;
     search?: string; 
     tags?: string;
-    includeIngredients?: string; // comma-separated ingredient IDs
-    excludeIngredients?: string; // comma-separated ingredient IDs
-    favoritesOnly?: string;      // 'true' or 'false'
+    includeIngredients?: string; 
+    excludeIngredients?: string; 
+    favoritesOnly?: string;      
+    matchOnly?: string;
+    showStaples?: string;
     sort?: 'asc' | 'desc';
   },
   pagination?: { page: number, limit: number }
@@ -194,7 +196,6 @@ export const getMatches = async (
   const skip = pagination ? (pagination.page - 1) * pagination.limit : 0;
   const take = pagination?.limit || 12;
 
-  // Build the dynamic WHERE clause
   const whereClause: any = { AND: [] };
 
   if (filters?.categoryId) whereClause.AND.push({ categoryId: filters.categoryId });
@@ -202,52 +203,49 @@ export const getMatches = async (
   if (filters?.search) whereClause.AND.push({ name: { contains: filters.search, mode: 'insensitive' } });
   if (filters?.favoritesOnly === 'true') whereClause.AND.push({ favorites: { some: { userId } } });
 
-  // 1. Tags (AND logic - must have ALL selected tags)
-  if (tagIds.length > 0) {
-    tagIds.forEach(tagId => {
-      whereClause.AND.push({ tags: { some: { id: tagId } } });
-    });
-  }
+  if (tagIds.length > 0) tagIds.forEach(tagId => whereClause.AND.push({ tags: { some: { id: tagId } } }));
+  if (includeIngIds.length > 0) includeIngIds.forEach(ingId => whereClause.AND.push({ ingredients: { some: { ingredientId: ingId } } }));
+  if (excludeIngIds.length > 0) whereClause.AND.push({ NOT: { ingredients: { some: { ingredientId: { in: excludeIngIds } } } } });
 
-  // 2. Include Ingredients (must have ALL these ingredients)
-  if (includeIngIds.length > 0) {
-    includeIngIds.forEach(ingId => {
-      whereClause.AND.push({ ingredients: { some: { ingredientId: ingId } } });
-    });
-  }
-
-  // 3. Exclude Ingredients (must NOT have ANY of these ingredients)
-  if (excludeIngIds.length > 0) {
-    whereClause.AND.push({
-      NOT: {
-        ingredients: { some: { ingredientId: { in: excludeIngIds } } }
-      }
-    });
-  }
-
-  // If no filters were applied, remove the empty AND array to prevent Prisma errors
   const finalWhere = whereClause.AND.length > 0 ? whereClause : {};
 
-  const [recipes, totalCount, pantryEntries] = await Promise.all([
+  const [allRecipes, pantryEntries] = await Promise.all([
     prisma.recipe.findMany({
         where: finalWhere,
-        include: userId ? recipeIncludes(userId) : fallbackIncludes, 
-        skip,
-        take,
-        orderBy: { name: filters?.sort === 'desc' ? 'desc' : 'asc' }
-    }),
-    prisma.recipe.count({
-      where: finalWhere
+        include: userId ? recipeIncludes(userId) : fallbackIncludes,
     }),
     userId ? prisma.pantryItem.findMany({ where: { userId } }) : Promise.resolve([])
   ]);
 
   const pantryIds = new Set<string>(pantryEntries.map((p: any) => p.ingredientId));
+  const showStaplesBool = filters?.showStaples === 'true';
+
+  let mappedRecipes = allRecipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds, showStaplesBool));
+
+  // Filter out non-100% matches
+  if (filters?.matchOnly === 'true') {
+      mappedRecipes = mappedRecipes.filter((r: any) => r.matchPercentage === 100);
+  }
+
+  // Sort: Highest Match % First -> then by Name (A-Z or Z-A)
+const sortDirection = filters?.sort === 'desc' ? -1 : 1;
+  mappedRecipes.sort((a: any, b: any) => {
+      // Only prioritize match percentage if a user is actively logged in
+      if (userId && b.matchPercentage !== a.matchPercentage) {
+          return b.matchPercentage - a.matchPercentage;
+      }
+      
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) * sortDirection;
+  });
+
+  // Paginate the sorted results
+  const totalCount = mappedRecipes.length;
+  const paginatedRecipes = mappedRecipes.slice(skip, skip + take);
   
   return {
-    recipes: recipes.map((recipe: any) => mapRecipeToDto(recipe, pantryIds)),
+    recipes: paginatedRecipes,
     totalCount,
-    hasMore: skip + recipes.length < totalCount
+    hasMore: skip + take < totalCount
   };
 };
 

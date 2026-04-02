@@ -32,6 +32,8 @@ export const getMatches = async (req: Request, res: Response) => {
       includeIngredients, 
       excludeIngredients, 
       favoritesOnly, 
+      matchOnly,
+      showStaples,
       sort, 
       page, 
       limit 
@@ -45,6 +47,8 @@ export const getMatches = async (req: Request, res: Response) => {
       includeIngredients: includeIngredients as string,
       excludeIngredients: excludeIngredients as string,
       favoritesOnly: favoritesOnly as string,
+      matchOnly: matchOnly as string,
+      showStaples: showStaples as string,
       sort: sort as 'asc' | 'desc',
     };
     
@@ -70,7 +74,6 @@ export const getCategories = async (req: Request, res: Response) => {
     }
 };
 
-// ADD THIS: Endpoint to get tags for your frontend filters
 export const getTags = async (req: Request, res: Response) => {
     try {
         const tags = await prisma.tag.findMany({ orderBy: { name: 'asc' } });

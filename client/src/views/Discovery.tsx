@@ -29,6 +29,7 @@ const Discovery: React.FC = () => {
     const [includeIngredients, setIncludeIngredients] = useState<string[]>([]);
     const [excludeIngredients, setExcludeIngredients] = useState<string[]>([]);
     
+    const [matchOnly, setMatchOnly] = useState(false);
     const [favoritesOnly, setFavoritesOnly] = useState(false);
     const [showStaples, setShowStaples] = useState(false);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -61,6 +62,8 @@ const Discovery: React.FC = () => {
             if (includeIngredients.length > 0) params.append('includeIngredients', includeIngredients.join(','));
             if (excludeIngredients.length > 0) params.append('excludeIngredients', excludeIngredients.join(','));
             if (favoritesOnly) params.append('favoritesOnly', 'true');
+            if (matchOnly) params.append('matchOnly', 'true');
+            if (showStaples) params.append('showStaples', 'true');
 
             const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
             const result = await response.json();
@@ -79,7 +82,8 @@ const Discovery: React.FC = () => {
     }, [
         page, searchQuery, selectedCategory, selectedSubcategory, 
         selectedTags, includeIngredients, excludeIngredients, 
-        favoritesOnly, sortOrder, hasMore, loadingMore, token
+        favoritesOnly, sortOrder, hasMore, loadingMore, token,
+        showStaples, matchOnly
     ]);
 
     // Initial Taxonomy Load
@@ -98,7 +102,7 @@ const Discovery: React.FC = () => {
     }, [
         searchQuery, selectedCategory, selectedSubcategory, 
         selectedTags, includeIngredients, excludeIngredients, 
-        favoritesOnly, sortOrder
+        favoritesOnly, sortOrder, showStaples, matchOnly
     ]);
 
     // Run fetch
@@ -135,6 +139,7 @@ const Discovery: React.FC = () => {
         setFavoritesOnly(false);
         setShowStaples(false);
         setSortOrder('asc');
+        setMatchOnly(false);
     };
 
     return (
@@ -175,6 +180,9 @@ const Discovery: React.FC = () => {
                 setShowStaples={setShowStaples}
 
                 onClearFilters={handleClearFilters}
+
+                matchOnly={matchOnly}
+                setMatchOnly={setMatchOnly}
             />
 
             {/* Grid */}

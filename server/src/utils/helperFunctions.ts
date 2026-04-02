@@ -31,16 +31,16 @@ export const generateUniqueSlug = (name: string): string => {
   return `${baseSlug}-${suffix}`;
 };
 
-export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) => {
+export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), showStaples: boolean = false) => {
   if (!recipe) return null;
 
-  // 1. Map and Flatten Ingredients first so we can use them for calculations
+  // 1. Map and Flatten Ingredients
   const ingredients = recipe.ingredients?.map((ri: any) => ({
     id: ri.id,
     ingredientId: ri.ingredientId,
     name: ri.ingredient.name,
     isStaple: ri.ingredient.isStaple,
-    amount: ri.amount, // Float from schema
+    amount: ri.amount,
     unit: ri.unit ? {
       id: ri.unit.id,
       name: ri.unit.name,
@@ -51,15 +51,18 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set()) 
     inPantry: pantryIds.has(ri.ingredientId)
   })) || [];
 
-  const missingIngredients = ingredients.filter((i: any) => !i.inPantry && !i.isStaple);
+  const missingIngredients = ingredients.filter((i: any) => {
+      if (i.inPantry) return false;
+      if (!showStaples && i.isStaple) return false;
+      return true;
+  });
+
   const totalIngredients = ingredients.length;
   
-  // Match percentage based on what the user actually HAS vs needs to GET
   const matchPercentage = totalIngredients > 0 
     ? Math.round(((totalIngredients - missingIngredients.length) / totalIngredients) * 100)
     : 0;
 
-  // 3. Complete Data Return (Restored metadata)
   return {
     id: recipe.id,
     name: recipe.name,

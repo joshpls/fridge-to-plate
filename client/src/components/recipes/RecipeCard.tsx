@@ -79,7 +79,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
                         {/* Favorite Button */}
                         <button
                             onClick={toggleFavorite}
-                            className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-gray-900/90 text-gray-400 hover:text-orange-500'}`}
+                            className={`absolute top-3 right-3 p-2.5 rounded-2xl transition-all shadow-lg ${isFavorite ? 'bg-orange-50 dark:bg-gray-900/90 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-gray-900/90 text-gray-400 hover:text-orange-500'}`}
                         >
                             {isFavorite ? '❤️' : '🤍'}
                         </button>
