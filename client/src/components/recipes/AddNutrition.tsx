@@ -34,27 +34,27 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
     }, [nutrition]);
 
     return (
-        <section className="bg-white dark:bg-gray-900 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 shadow-sm transition-all duration-300">
-            <div className="flex items-center justify-between border-b-2 border-gray-100 dark:border-gray-800/50 pb-2 mb-6">
-                <h2 className="text-lg sm:text-xl font-black text-gray-800">6. Nutrition Information</h2>
-                <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-800 px-2 sm:px-3 py-1 rounded-md">Optional</span>
+        <section className="bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 shadow-sm transition-all duration-300">
+            <div className="flex items-center justify-between border-b-2 border-gray-100 dark:border-gray-400 pb-2 mb-6">
+                <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200">6. Nutrition Information</h2>
+                <span className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-200 uppercase tracking-widest bg-gray-50 dark:bg-gray-800 px-2 sm:px-3 py-1 rounded-md">Optional</span>
             </div>
 
             {/* Core Macros Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 focus-within:border-orange-300 focus-within:bg-white dark:bg-gray-900 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-400 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Calories</label>
                     <input type="number" value={nutrition.calories} onChange={(e) => handleNutritionChange('calories', e.target.value)} placeholder="e.g. 450" className="w-full bg-transparent outline-none font-black text-xl text-gray-900 dark:text-white" />
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 focus-within:border-orange-300 focus-within:bg-white dark:bg-gray-900 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-400 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Protein</label>
                     <input type="text" value={nutrition.protein} onChange={(e) => handleNutritionChange('protein', e.target.value)} placeholder="e.g. 24g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900 dark:text-white" />
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 focus-within:border-orange-300 focus-within:bg-white dark:bg-gray-900 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-400 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Carbs</label>
                     <input type="text" value={nutrition.carbohydrates} onChange={(e) => handleNutritionChange('carbohydrates', e.target.value)} placeholder="e.g. 45g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900 dark:text-white" />
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 focus-within:border-orange-300 focus-within:bg-white dark:bg-gray-900 transition-colors">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-400 focus-within:border-orange-300 focus-within:bg-white transition-colors">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Fat</label>
                     <input type="text" value={nutrition.fat.total} onChange={(e) => handleNutritionChange('total', e.target.value, true)} placeholder="e.g. 12g" className="w-full bg-transparent outline-none font-black text-xl text-gray-900 dark:text-white" />
                 </div>
@@ -64,7 +64,7 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
             <button
                 type="button"
                 onClick={() => setShowDetailed(!showDetailed)}
-                className="flex items-center justify-center gap-2 w-full py-3 px-2 text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-orange-600 bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 dark:bg-orange-500/15 rounded-xl transition-colors border border-transparent hover:border-orange-100 text-center"
+                className="flex items-center justify-center gap-2 w-full py-3 px-2 text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-200 hover:text-orange-600 bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 rounded-xl transition-colors border border-transparent hover:border-orange-100 text-center"
             >
                 <span>{showDetailed ? 'Hide Detailed Nutrition' : 'Add Detailed Nutrition (Vitamins, Minerals...)'}</span>
                 {showDetailed ? <ChevronUp size={16} className="shrink-0" /> : <ChevronDown size={16} className="shrink-0" />}

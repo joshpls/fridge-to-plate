@@ -352,7 +352,7 @@ const AddRecipe = () => {
             <div className="space-y-6 sm:space-y-10">
                 {/* Basic Information */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
-                    <h2 className="text-lg sm:text-xl font-black text-gray-800 border-b-2 border-gray-200 dark:border-gray-800 pb-2">1. Basics</h2>
+                    <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">1. Basics</h2>
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Recipe Name *</label>
@@ -429,7 +429,7 @@ const AddRecipe = () => {
 
                 {/* Classification */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
-                    <h2 className="text-lg sm:text-xl font-black text-gray-800 border-b-2 border-gray-200 dark:border-gray-800 pb-2">2. Classification</h2>
+                    <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">2. Classification</h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div>
@@ -461,20 +461,20 @@ const AddRecipe = () => {
                 </section>
 
                 {/* Timing & Yield */}
-                <section className="bg-orange-50 dark:bg-orange-500/15/50 p-5 sm:p-8 rounded-3xl border-2 border-orange-100 space-y-6">
-                    <h2 className="text-lg sm:text-xl font-black text-orange-900 border-b-2 border-orange-200/50 pb-2">3. Time & Yield</h2>
+                <section className="bg-orange-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
+                    <h2 className="text-lg sm:text-xl font-black text-orange-900 border-b-2 border-orange-200/50 dark:border-gray-400 dark:text-gray-200 pb-2">3. Time & Yield</h2>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         <div>
-                            <label className="block text-sm font-bold text-orange-800 mb-2">Prep Time (min)</label>
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Prep Time (min)</label>
                             <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-orange-800 mb-2">Cook Time (min)</label>
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Cook Time (min)</label>
                             <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-orange-800 mb-2">Servings</label>
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Servings</label>
                             <input type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                     </div>
@@ -482,9 +482,9 @@ const AddRecipe = () => {
 
                 {/* Ingredients (DND Implementation) */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-4 sm:space-y-6">
-                    <div className="flex justify-between items-end border-b-2 border-gray-200 dark:border-gray-800 pb-2 px-2 sm:px-0">
-                        <h2 className="text-lg sm:text-xl font-black text-gray-800">4. Ingredients *</h2>
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">{formData.ingredients.length} Items</span>
+                    <div className="flex justify-between items-end border-b-2 border-gray-200 dark:border-gray-400 pb-2 px-2 sm:px-0">
+                        <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200">4. Ingredients *</h2>
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-200 uppercase tracking-widest">{formData.ingredients.length} Items</span>
                     </div>
 
                     <DndContext
@@ -519,21 +519,21 @@ const AddRecipe = () => {
 
                 {/* Instructions & Notes */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
-                    <h2 className="text-lg sm:text-xl font-black text-gray-800 border-b-2 border-gray-200 dark:border-gray-800 pb-2">5. Directions</h2>
+                    <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">5. Directions</h2>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Instructions * <span className="text-gray-400 font-normal block sm:inline">(Separate steps with a new line)</span></label>
-                        <textarea required name="instructions" value={formData.instructions} onChange={handleChange} rows={8} className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none resize-y leading-relaxed text-sm sm:text-base" placeholder="1. Preheat the oven...&#10;2. Mix the dry ingredients..." />
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Instructions * <span className="text-gray-400 font-normal block sm:inline">(Separate steps with a new line)</span></label>
+                        <textarea required name="instructions" value={formData.instructions} onChange={handleChange} rows={8} className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y leading-relaxed text-sm sm:text-base" placeholder="1. Preheat the oven...&#10;2. Mix the dry ingredients..." />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Chef's Notes</label>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Chef's Notes</label>
                         <textarea
                             name="notes"
                             value={formData.notes}
                             onChange={handleChange}
                             rows={4}
-                            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none resize-y bg-yellow-50/30 dark:bg-yellow-500/10 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 transition-colors text-sm sm:text-base"
+                            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y bg-yellow-50/30 dark:bg-yellow-500/10 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 transition-colors text-sm sm:text-base"
                             placeholder="Any special tips, substitute suggestions, or storage advice?"
                         />
                     </div>
