@@ -130,7 +130,7 @@ export const Navigation = () => {
                             </button>
                         </div>
                     ) : (
-                        <Link to="/auth" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100">
+                        <Link to="/auth" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100 dark:shadow-none">
                             Sign In
                         </Link>
                     )}

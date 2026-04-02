@@ -1,5 +1,5 @@
 // src/pages/Discovery.tsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
 import RecipeCard from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
@@ -20,15 +20,12 @@ const Discovery: React.FC = () => {
 
     // Filter States
     const [searchInput, setSearchInput] = useState('');
-    const [searchQuery, setSearchQuery] = useState(''); // Only updates when user hits Search
-    
+    const [searchQuery, setSearchQuery] = useState(''); 
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    
     const [includeIngredients, setIncludeIngredients] = useState<string[]>([]);
     const [excludeIngredients, setExcludeIngredients] = useState<string[]>([]);
-    
     const [matchOnly, setMatchOnly] = useState(false);
     const [favoritesOnly, setFavoritesOnly] = useState(false);
     const [showStaples, setShowStaples] = useState(false);
@@ -42,49 +39,15 @@ const Discovery: React.FC = () => {
 
     const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 });
 
-    // Core Fetch Function
-    const fetchRecipes = useCallback(async () => {
-        if (loadingMore || (page > 1 && !hasMore)) return;
-        page === 1 ? setLoading(true) : setLoadingMore(true);
-
-        try {
-            const params = new URLSearchParams({
-                page: page.toString(), 
-                limit: '12',
-                sort: sortOrder
-            });
-            
-            // Append all active filters
-            if (selectedCategory) params.append('categoryId', selectedCategory);
-            if (selectedSubcategory) params.append('subcategoryId', selectedSubcategory);
-            if (searchQuery.trim()) params.append('search', searchQuery.trim());
-            if (selectedTags.length > 0) params.append('tags', selectedTags.join(','));
-            if (includeIngredients.length > 0) params.append('includeIngredients', includeIngredients.join(','));
-            if (excludeIngredients.length > 0) params.append('excludeIngredients', excludeIngredients.join(','));
-            if (favoritesOnly) params.append('favoritesOnly', 'true');
-            if (matchOnly) params.append('matchOnly', 'true');
-            if (showStaples) params.append('showStaples', 'true');
-
-            const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                const { recipes: newRecipes, hasMore: moreAvailable } = result.data;
-                setRecipes(prev => page === 1 ? newRecipes : [...prev, ...newRecipes]);
-                setHasMore(moreAvailable);
-            }
-        } catch (error) {
-            console.error("Fetch error:", error);
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
-        }
-    }, [
-        page, searchQuery, selectedCategory, selectedSubcategory, 
+    // Stringify active filters to easily detect when ANY filter changes
+    const filtersStr = JSON.stringify({
+        searchQuery, selectedCategory, selectedSubcategory, 
         selectedTags, includeIngredients, excludeIngredients, 
-        favoritesOnly, sortOrder, hasMore, loadingMore, token,
-        showStaples, matchOnly
-    ]);
+        favoritesOnly, sortOrder, showStaples, matchOnly
+    });
+
+    // Refs to prevent duplicate API calls during rapid state changes
+    const lastFiltersRef = useRef(filtersStr);
 
     // Initial Taxonomy Load
     useEffect(() => {
@@ -95,20 +58,77 @@ const Discovery: React.FC = () => {
         fetchTaxonomy();
     }, []);
 
-    // Reset Watcher: Reset to page 1 whenever any filter changes
+    // Core Fetcher - Replaces all overlapping useCallbacks and reset watchers
     useEffect(() => {
-        setPage(1);
-        setHasMore(true);
-    }, [
-        searchQuery, selectedCategory, selectedSubcategory, 
-        selectedTags, includeIngredients, excludeIngredients, 
-        favoritesOnly, sortOrder, showStaples, matchOnly
-    ]);
+        let isSubscribed = true;
+        
+        const isNewSearch = lastFiltersRef.current !== filtersStr;
+        lastFiltersRef.current = filtersStr;
 
-    // Run fetch
-    useEffect(() => {
-        fetchRecipes();
-    }, [page, fetchRecipes]);
+        if (isNewSearch && page !== 1) {
+            setPage(1);
+            return;
+        }
+
+        const loadRecipes = async () => {
+            // Safety catch: don't fetch if we know there are no more pages
+            if (page > 1 && !hasMore) return;
+
+            try {
+                page === 1 ? setLoading(true) : setLoadingMore(true);
+                
+                const params = new URLSearchParams({
+                    page: page.toString(), 
+                    limit: '12',
+                    sort: sortOrder
+                });
+                
+                // Append all active filters
+                if (selectedCategory) params.append('categoryId', selectedCategory);
+                if (selectedSubcategory) params.append('subcategoryId', selectedSubcategory);
+                if (searchQuery.trim()) params.append('search', searchQuery.trim());
+                if (selectedTags.length > 0) params.append('tags', selectedTags.join(','));
+                if (includeIngredients.length > 0) params.append('includeIngredients', includeIngredients.join(','));
+                if (excludeIngredients.length > 0) params.append('excludeIngredients', excludeIngredients.join(','));
+                if (favoritesOnly) params.append('favoritesOnly', 'true');
+                if (matchOnly) params.append('matchOnly', 'true');
+                if (showStaples) params.append('showStaples', 'true');
+
+                const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
+                const result = await response.json();
+
+                if (isSubscribed && result.status === 'success') {
+                    const { recipes: newRecipes, hasMore: moreAvailable } = result.data;
+                    
+                    setRecipes(prev => {
+                        // If it's a brand new search (page 1), completely replace the list
+                        if (page === 1) return newRecipes;
+                        
+                        // If appending (scrolling), strip out duplicates to prevent "ghosts"
+                        const existingIds = new Set(prev.map((r: any) => r.id));
+                        const uniqueNew = newRecipes.filter((r: any) => !existingIds.has(r.id));
+                        return [...prev, ...uniqueNew];
+                    });
+                    
+                    setHasMore(moreAvailable);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+            } finally {
+                if (isSubscribed) {
+                    setLoading(false);
+                    setLoadingMore(false);
+                }
+            }
+        };
+
+        loadRecipes();
+
+        // Cleanup function prevents state updates if the component unmounts mid-fetch
+        return () => { isSubscribed = false; };
+        
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, filtersStr]);
 
     // Infinite Scroll Watcher
     useEffect(() => {
@@ -118,28 +138,16 @@ const Discovery: React.FC = () => {
     }, [inView, hasMore, loadingMore, loading]);
 
     // Handlers
-    const handleExecuteSearch = () => {
-        setSearchQuery(searchInput);
-    };
+    const handleExecuteSearch = () => setSearchQuery(searchInput);
 
     const toggleTag = (tagId: string) => {
-        setSelectedTags(prev => 
-            prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
-        );
+        setSelectedTags(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]);
     };
 
     const handleClearFilters = () => {
-        setSearchInput('');
-        setSearchQuery('');
-        setSelectedCategory('');
-        setSelectedSubcategory('');
-        setSelectedTags([]);
-        setIncludeIngredients([]);
-        setExcludeIngredients([]);
-        setFavoritesOnly(false);
-        setShowStaples(false);
-        setSortOrder('asc');
-        setMatchOnly(false);
+        setSearchInput(''); setSearchQuery(''); setSelectedCategory(''); setSelectedSubcategory('');
+        setSelectedTags([]); setIncludeIngredients([]); setExcludeIngredients([]); setFavoritesOnly(false);
+        setShowStaples(false); setSortOrder('asc'); setMatchOnly(false);
     };
 
     return (
@@ -152,35 +160,26 @@ const Discovery: React.FC = () => {
 
             <FilterBar 
                 taxonomy={taxonomy}
-                
                 searchInput={searchInput}
                 setSearchInput={setSearchInput}
                 onExecuteSearch={handleExecuteSearch}
-
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
                 selectedSubcategory={selectedSubcategory}
                 setSelectedSubcategory={setSelectedSubcategory}
-
                 selectedTags={selectedTags}
                 toggleTag={toggleTag}
-
                 includeIngredients={includeIngredients}
                 setIncludeIngredients={setIncludeIngredients}
                 excludeIngredients={excludeIngredients}
                 setExcludeIngredients={setExcludeIngredients}
-
                 favoritesOnly={favoritesOnly}
                 setFavoritesOnly={setFavoritesOnly}
-                
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
-
                 showStaples={showStaples}
                 setShowStaples={setShowStaples}
-
                 onClearFilters={handleClearFilters}
-
                 matchOnly={matchOnly}
                 setMatchOnly={setMatchOnly}
             />
@@ -188,7 +187,7 @@ const Discovery: React.FC = () => {
             {/* Grid */}
             {loading && page === 1 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
-                    {[...Array(8)].map((_, i) => <div key={i} className="h-96 bg-gray-100 rounded-3xl" />)}
+                    {[...Array(8)].map((_, i) => <div key={i} className="h-96 bg-gray-100 dark:bg-gray-800 rounded-3xl" />)}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -204,15 +203,12 @@ const Discovery: React.FC = () => {
             {recipes.length === 0 && !loading && (
                 <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
                     <span className="text-4xl mb-4 block">🍳</span>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">No recipes found</h3>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">No recipes found</h3>
                     <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md mx-auto">
                         Try adjusting your filters, removing excluded ingredients, or clearing your search term to find what you're looking for.
                     </p>
                     <button 
-                        onClick={() => {
-                            setSearchInput(''); setSearchQuery(''); setSelectedCategory(''); setSelectedSubcategory('');
-                            setSelectedTags([]); setIncludeIngredients([]); setExcludeIngredients([]); setFavoritesOnly(false);
-                        }}
+                        onClick={handleClearFilters}
                         className="mt-6 text-orange-600 font-bold hover:underline"
                     >
                         Clear all filters

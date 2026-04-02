@@ -344,7 +344,7 @@ const AddRecipe = () => {
                         {isEditMode ? 'Tweak your culinary masterpiece.' : 'Create a new culinary masterpiece.'}
                     </p>
                 </div>
-                <button type="submit" disabled={saving} className="w-full sm:w-auto bg-gray-900 dark:bg-orange-500 text-white px-8 py-3 sm:py-3.5 rounded-xl font-black hover:bg-orange-600 dark:hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95 disabled:opacity-50">
+                <button type="submit" disabled={saving} className="w-full sm:w-auto bg-gray-900 dark:bg-orange-500 text-white px-8 py-3 sm:py-3.5 rounded-xl font-black hover:bg-orange-600 dark:hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 dark:shadow-none active:scale-95 disabled:opacity-50">
                     {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
                 </button>
             </div>
@@ -356,14 +356,14 @@ const AddRecipe = () => {
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Recipe Name *</label>
-                        <input required type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Grandma's Lasagna" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none" />
+                        <input required type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Grandma's Lasagna" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:border-orange-500 outline-none" />
                     </div>
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Recipe Image</label>
 
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                            <div className="w-full sm:w-32 h-40 sm:h-32 shrink-0 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800 flex flex-col items-center justify-center overflow-hidden relative group">
+                            <div className="w-full sm:w-32 h-40 sm:h-32 shrink-0 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 flex flex-col items-center justify-center overflow-hidden relative group">
                                 {formData.imageUrl ? (
                                     <>
                                         <img src={getNetworkImageUrl(formData.imageUrl)} alt="Recipe Preview" className="w-full h-full object-cover" />
@@ -388,7 +388,7 @@ const AddRecipe = () => {
                                     {isUploading ? 'Uploading...' : formData.imageUrl ? 'Choose Different Image' : 'Select Image File'}
                                 </label>
                                 <p className="text-xs font-medium text-gray-400 mt-3">
-                                    Supports JPG, PNG, or WEBP. You can also press <kbd className="bg-gray-200 px-1 rounded text-gray-700 dark:text-gray-300 hidden sm:inline">Ctrl+V</kbd> <span className="sm:hidden">paste</span> to paste an image.
+                                    Supports JPG, PNG, or WEBP. You can also press <kbd className="bg-gray-200 dark:bg-gray-900 px-1 rounded text-gray-700 dark:text-gray-300 hidden sm:inline">Ctrl+V</kbd> <span className="sm:hidden">paste</span> to paste an image.
                                 </p>
                                 <p className="text-xs font-medium text-gray-400 mt-1">
                                     <kbd className="text-orange-500">Max Image Size: 10MB</kbd>
@@ -399,7 +399,7 @@ const AddRecipe = () => {
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Summary</label>
-                        <textarea name="summary" value={formData.summary} onChange={handleChange} placeholder="A brief description of this dish..." rows={3} className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none resize-y" />
+                        <textarea name="summary" value={formData.summary} onChange={handleChange} placeholder="A brief description of this dish..." rows={3} className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:border-orange-500 outline-none resize-y" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                         <div>
