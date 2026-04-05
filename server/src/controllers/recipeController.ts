@@ -12,18 +12,30 @@ export const getMatches = async (req: Request, res: Response) => {
     let userId = (req as any).user?.id;
     let activeHouseholdId = (req as any).user?.activeHouseholdId;
 
+    // The manual fallback for routes not wrapped in requireAuth
     if (!userId && req.headers.authorization?.startsWith('Bearer ')) {
         try {
             const token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
             userId = decoded.id;
-        } catch (e) {}
+            
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { activeHouseholdId: true }
+            });
+            
+            if (user) {
+                activeHouseholdId = user.activeHouseholdId;
+            }
+        } catch (e) {
+            // Ignore token errors here, they just get treated as a guest
+        }
     }
 
     const { 
       categoryId, subcategoryId, search, tags, includeIngredients, 
       excludeIngredients, favoritesOnly, matchOnly, showStaples,
-      sort, page, limit, scope // [NEW] Catch the scope variable
+      sort, page, limit, scope 
     } = req.query;
     
     const filters = {
@@ -74,7 +86,6 @@ export const getTags = async (req: Request, res: Response) => {
 export const getTaxonomy = async (req: Request, res: Response) => {
     try {
         const [categories, tags, units, ingredients, modifiers] = await Promise.all([
-            // Nest subcategories directly inside categories
             prisma.category.findMany({ 
                 orderBy: { name: 'asc' },
                 include: { 
@@ -109,7 +120,6 @@ export const createRecipe = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ status: 'error', message: 'A recipe must have at least one ingredient.' });
       }
 
-        // [UPDATED]
         const newRecipe = await recipeService.createRecipe(userId, activeHouseholdId, recipeData);
 
         return res.status(201).json({ status: 'success', data: newRecipe });

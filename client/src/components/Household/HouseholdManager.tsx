@@ -213,7 +213,7 @@ export const HouseholdManager = () => {
                                         Remove Member
                                     </button>
                                 )}
-                                {m.user.id === user?.id && (
+                                {householdData.members.length > 1 && m.user.id === user?.id && (
                                     <button onClick={handleLeaveHousehold} className="flex-1 sm:flex-none text-xs text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-2 sm:py-1 rounded-lg font-bold transition-colors">
                                         Leave Household
                                     </button>

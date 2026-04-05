@@ -20,6 +20,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
         ...options,
         headers,
         credentials: 'include',
+        cache: options.cache || 'no-store',
     };
 
     // Make the original request

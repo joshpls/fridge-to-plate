@@ -70,6 +70,7 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), 
     summary: recipe.summary,
     instructions: recipe.instructions,
     notes: recipe.notes,
+    visibility: recipe.visibility,
     
     // Times & Servings
     prepTime: recipe.prepTime || 0,

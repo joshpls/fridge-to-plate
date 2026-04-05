@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import type { AuthContextType, User } from '../models/Auth';
+import { storageService } from '../services/storageService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -30,7 +31,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!response.ok) {
                 throw new Error("Failed to switch household on the server.");
             }
-            
+
+            storageService.cache.clearPantry()
             // Note: If you add React Query later, you would call queryClient.invalidateQueries() here 
             // to automatically refetch the pantry and recipes for the new household.
         } catch (error) {
@@ -109,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        storageService.cache.clearAll();
         setToken(null);
         setUser(null);
     };

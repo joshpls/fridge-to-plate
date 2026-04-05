@@ -7,13 +7,13 @@ import { CookMode } from '../components/recipes/CookMode';
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer, Flame, Play } from 'lucide-react';
+import { Printer, Flame, Play, Heart } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
-import { useWakeLock } from '../hooks/useWakeLock';
+// import { useWakeLock } from '../hooks/useWakeLock';
 import { SourceAttribution } from '../components/recipes/RenderSourceAttribution';
 
 const RecipeDetail = () => {
@@ -28,11 +28,11 @@ const RecipeDetail = () => {
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
-    const prefs = user?.preferences
-        ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences)
-        : { cookMode: true };
+    // const prefs = user?.preferences
+    //     ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences)
+    //     : { cookMode: true };
 
-    const { isLocked } = useWakeLock(prefs.cookMode);
+    // const { isLocked } = useWakeLock(prefs.cookMode);
 
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
@@ -213,6 +213,29 @@ const RecipeDetail = () => {
         }
     };
 
+    const handleToggleFavorite = async () => {
+        if (!isAuthenticated) {
+            toast.error("You must be signed in to favorite a recipe.");
+            return;
+        }
+        
+        try {
+            const response = await fetchWithAuth(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
+                method: 'POST',
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                setRecipe({ ...recipe, isFavorite: result.data.favorited });
+            } else {
+                toast.error(result.message || 'Failed to update favorite status.');
+            }
+        } catch (error) {
+            console.error("Error toggling favorite:", error);
+            toast.error('An error occurred.');
+        }
+    };
+
     if (loading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold text-xl print:hidden">Prepping your kitchen...</div>;
     if (!recipe) return <div className="p-20 text-center text-red-500 font-bold">Recipe not found.</div>;
 
@@ -249,19 +272,28 @@ const RecipeDetail = () => {
                 <img src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent print:hidden" />
                 
-                <div className="absolute top-4 right-4 flex gap-2 print:hidden">
+                <div className="absolute top-4 right-4 flex items-center gap-2 print:hidden z-10">
                     {(isAdmin || (isAuthenticated && user?.id === recipe?.author?.id)) && (
-                        <>
+                        <div className="flex gap-2 mr-1">
                             <Link to={`/edit-recipe/${recipe.slug}`}>
-                                <button className="bg-white dark:bg-gray-900/90 backdrop-blur text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl font-black text-sm hover:bg-white dark:hover:bg-orange-500 transition-all shadow-lg">
+                                <button title="Edit Recipe" className="bg-white dark:bg-gray-900/90 backdrop-blur text-gray-800 dark:text-gray-200 px-4 py-2 rounded-xl font-black text-sm hover:bg-white dark:hover:bg-orange-500 transition-all shadow-lg">
                                     ✏️ Edit
                                 </button>
                             </Link>
-                            <button onClick={handleDeleteRecipe} className="bg-red-500/90 backdrop-blur text-white px-4 py-2 rounded-xl font-black text-sm hover:bg-red-600 transition-all shadow-lg">
+                            <button onClick={handleDeleteRecipe} title="Delete Recipe" className="bg-red-500/90 backdrop-blur text-white px-4 py-2 rounded-xl font-black text-sm hover:bg-red-600 transition-all shadow-lg">
                                 🗑️ Delete
                             </button>
-                        </>
+                        </div>
                     )}
+                    {isAuthenticated &&
+                        <button
+                            onClick={handleToggleFavorite}
+                            title={recipe?.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            className={`w-10 h-10 rounded-full transition-all flex items-center justify-center font-bold ${recipe?.isFavorite ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-black/50 text-white hover:bg-black/70'}`}
+                        >
+                            <Heart size={20} className={recipe?.isFavorite ? 'fill-white' : ''} />
+                        </button>
+                    }
                 </div>
             </div>
 

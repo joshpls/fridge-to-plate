@@ -53,6 +53,12 @@ export interface Nutrition {
     [key: string]: any;
 };
 
+export const Visibility = {
+    PRIVATE: 'PRIVATE',
+    HOUSEHOLD: 'HOUSEHOLD',
+    PUBLIC: 'PUBLIC'
+};
+
 export interface RecipeFormData {
     id?: string;
     name: string;
@@ -70,6 +76,7 @@ export interface RecipeFormData {
     nutrition: Nutrition;
     sourceName?: string;
     sourceUrl?: string;
+    visibility: string;
 }
 
 export const initialRecipe: RecipeFormData = {
@@ -84,5 +91,6 @@ export const initialRecipe: RecipeFormData = {
         fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminC: '', calcium: '', iron: ''
     },
     sourceName: '',
-    sourceUrl: ''
+    sourceUrl: '',
+    visibility: 'PRIVATE'
 };

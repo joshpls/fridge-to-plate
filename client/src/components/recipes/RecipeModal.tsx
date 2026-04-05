@@ -1,8 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDisplayName } from '../../utils/userUtils';
-import { getNetworkImageUrl } from '../../utils/apiConfig';
+import { API_BASE, getNetworkImageUrl } from '../../utils/apiConfig';
 import { useAuth } from '../../context/AuthContext';
+import { fetchWithAuth } from '../../utils/apiClient';
+import toast from 'react-hot-toast';
+import { Heart, X } from 'lucide-react';
 
 interface RecipeModalProps {
     recipe: any;
@@ -12,6 +15,7 @@ interface RecipeModalProps {
 export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const [isFavorite, setIsFavorite] = useState(recipe.isFavorite);
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) onClose();
@@ -24,6 +28,29 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown); 
     }, [onClose]);
+
+    const handleToggleFavorite = async () => {
+        if (!isAuthenticated) {
+            toast.error("You must be signed in to favorite a recipe.");
+            return;
+        }
+        
+        try {
+            const response = await fetchWithAuth(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
+                method: 'POST',
+            });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                setIsFavorite(result.data.favorited);
+            } else {
+                toast.error(result.message || 'Failed to update favorite status.');
+            }
+        } catch (error) {
+            console.error("Error toggling favorite:", error);
+            toast.error('An error occurred.');
+        }
+    };
 
     // Derived values
     const authorName = getDisplayName(recipe.author);
@@ -49,6 +76,24 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                     >
                         ✕
                     </button>
+
+                    {isAuthenticated && <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2 z-10">
+                        <button
+                            onClick={handleToggleFavorite}
+                            title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            className={`w-8 h-8 rounded-full transition-all flex items-center justify-center font-bold ${isFavorite ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-black/50 text-white hover:bg-black/70'}`}
+                        >
+                            <Heart size={18} className={isFavorite ? 'fill-white' : ''} />
+                        </button>
+                        <button
+                            onClick={onClose}
+                            title="Close"
+                            className="bg-black/50 text-white w-8 h-8 rounded-full hover:bg-black/70 transition-colors flex items-center justify-center font-bold"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>}
+
                     <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
                     
                     <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 text-white">

@@ -6,6 +6,7 @@ import { getDisplayName } from '../utils/userUtils';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { BellRing, Menu, X } from 'lucide-react';
+import { pantryService } from '../services/pantryService';
 
 export const Navigation = () => {
     const location = useLocation();
@@ -20,29 +21,23 @@ export const Navigation = () => {
     const fetchAllCounts = async () => {
         try {
             if (isAuthenticated && user?.id) {
-                // Fetch Pantry, Invites, and Local Shopping List in parallel
-                const [pantryRes, inviteRes] = await Promise.all([
-                    fetchWithAuth(`${API_BASE}/pantry`),
+                const [pantryData, inviteRes] = await Promise.all([
+                    pantryService.getPantry(),
                     fetchWithAuth(`${API_BASE}/household/invites/me`)
                 ]);
-                
-                if (pantryRes.ok) {
-                    const pResult = await pantryRes.json();
-                    setPantryCount(pResult.data?.length || 0);
+
+                if (pantryData) {
+                    setPantryCount(pantryData.length || 0);
                 }
-                
+
                 if (inviteRes.ok) {
                     const iResult = await inviteRes.json();
                     setInviteCount(iResult.data?.length || 0);
                 }
-            } else {
-                setPantryCount(0);
-                setInviteCount(0);
+
+                const sList = storageService.shopping.get();
+                setShoppingCount(sList.filter(i => !i.bought).length);
             }
-
-            const localItems = storageService.shopping.get();
-            setShoppingCount(localItems.length);
-
         } catch (err) {
             console.error("Failed to refresh counts", err);
         }

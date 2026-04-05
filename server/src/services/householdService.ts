@@ -31,6 +31,21 @@ const safelyRemoveUserFromHousehold = async (tx: any, userId: string, householdI
     });
 };
 
+// --- Migrate User Content to New Household ---
+const migrateUserContent = async (tx: any, userId: string, newHouseholdId: string) => {
+    // Move all recipes authored by this user
+    await tx.recipe.updateMany({
+        where: { authorId: userId },
+        data: { householdId: newHouseholdId }
+    });
+
+    // Move all of their favorites to the new household scope
+    await tx.favorite.updateMany({
+        where: { userId: userId },
+        data: { householdId: newHouseholdId }
+    });
+};
+
 const assignFallbackHousehold = async (tx: any, user: any) => {
     const newHousehold = await tx.household.create({
         data: { name: `${user.firstName || 'Personal'} Household` }
@@ -122,6 +137,8 @@ export const acceptInvite = async (userId: string, token: string) => {
             data: { activeHouseholdId: invite.householdId }
         });
 
+        await migrateUserContent(tx, userId, invite.householdId);
+
         return { householdId: invite.householdId };
     });
 };
@@ -167,6 +184,8 @@ export const leaveHousehold = async (userId: string, householdId: string) => {
 
         await safelyRemoveUserFromHousehold(tx, userId, householdId);
         const fallback = await assignFallbackHousehold(tx, user);
+
+        await migrateUserContent(tx, userId, fallback.id);
         
         return { newHouseholdId: fallback.id };
     });
@@ -186,7 +205,9 @@ export const removeMember = async (adminId: string, householdId: string, targetU
         if (!targetUser) throw new Error("Target user not found");
 
         await safelyRemoveUserFromHousehold(tx, targetUserId, householdId);
-        await assignFallbackHousehold(tx, targetUser);
+        const fallback = await assignFallbackHousehold(tx, targetUser);
+
+        await migrateUserContent(tx, targetUserId, fallback.id);
 
         return true;
     });
