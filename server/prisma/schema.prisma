@@ -1,4 +1,3 @@
-// server/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
 }
@@ -7,21 +6,90 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Enums
+enum HouseholdRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REJECTED
+}
+
+enum Visibility {
+  PRIVATE
+  HOUSEHOLD
+  PUBLIC
+}
+
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
-  password       String
-  role           String       @default("USER")
-  firstName      String?
-  lastName       String?
-  alias          String?
-  pantry         PantryItem[]
-  preferences    Json?        @default("{\"darkMode\": false, \"cookMode\": true}")
+  id        String  @id @default(uuid())
+  email     String  @unique
+  password  String
+  role      String  @default("USER")
+  firstName String?
+  lastName  String?
+  alias     String?
+
+  activeHouseholdId String?
+  activeHousehold   Household? @relation(fields: [activeHouseholdId], references: [id])
+
+  preferences Json? @default("{\"darkMode\": false, \"cookMode\": true}")
+
+  households       HouseholdMember[]
+  addedPantryItems PantryItem[]      @relation("AddedBy")
+
   favorites      Favorite[]
   comments       Comment[]
-  createdRecipes Recipe[]     @relation("UserRecipes")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
+  createdRecipes Recipe[]   @relation("UserRecipes")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Household {
+  id   String @id @default(uuid())
+  name String
+
+  members     HouseholdMember[]
+  invites     HouseholdInvite[]
+  pantryItems PantryItem[]
+  recipes     Recipe[]          @relation("HouseholdRecipes")
+  users       User[]
+  favorites   Favorite[]        @relation("HouseholdFavorites")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model HouseholdMember {
+  id          String        @id @default(uuid())
+  userId      String
+  householdId String
+  role        HouseholdRole @default(MEMBER)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, householdId])
+}
+
+model HouseholdInvite {
+  id          String       @id @default(uuid())
+  householdId String
+  email       String
+  token       String       @unique
+  status      InviteStatus @default(PENDING)
+  expiresAt   DateTime
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
 }
 
 model Ingredient {
@@ -33,15 +101,20 @@ model Ingredient {
 }
 
 model PantryItem {
-  id           String     @id @default(uuid())
-  userId       String
+  id           String @id @default(uuid())
+  householdId  String
   ingredientId String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now()) @updatedAt
 
-  @@unique([userId, ingredientId])
+  addedById String?
+  addedBy   User?   @relation("AddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  household  Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([householdId, ingredientId])
 }
 
 model Recipe {
@@ -57,14 +130,18 @@ model Recipe {
   totalTime Int?
   servings  Int  @default(1)
 
-  notes     String? @db.Text // Optional chef notes
-  nutrition Json? // e.g., { "calories": 500, "protein": "25g", "fat": "15g" }
+  notes     String? @db.Text
+  nutrition Json?
 
-  sourceName   String?
-  sourceUrl    String?
+  sourceName String?
+  sourceUrl  String?
 
   authorId String
   author   User   @relation("UserRecipes", fields: [authorId], references: [id], onDelete: Cascade)
+
+  visibility  Visibility @default(PRIVATE)
+  householdId String?
+  household   Household? @relation("HouseholdRecipes", fields: [householdId], references: [id], onDelete: Cascade)
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -87,26 +164,24 @@ model Category {
 }
 
 model Subcategory {
-  id   String @id @default(uuid())
-  name String @unique
-
+  id         String   @id @default(uuid())
+  name       String   @unique
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  recipes Recipe[]
+  recipes    Recipe[]
 }
 
 model Tag {
   id      String   @id @default(uuid())
-  name    String   @unique // e.g., "Vegan"
-  code    String   @unique // e.g., "V"
+  name    String   @unique
+  code    String   @unique
   recipes Recipe[] @relation("RecipeTags")
 }
 
 model Unit {
   id                String             @id @default(uuid())
-  name              String             @unique // e.g., "Cup", "Teaspoon", "Gram", "Whole"
-  abbreviation      String? // e.g., "c", "tsp", "g"
+  name              String             @unique
+  abbreviation      String?
   recipeIngredients RecipeIngredient[]
 }
 
@@ -118,8 +193,8 @@ model RecipeIngredient {
   amount       Float
   order        Int    @default(0)
 
-  modifierId   String?  
-  modifier     Modifier? @relation(fields: [modifierId], references: [id], onDelete: SetNull)
+  modifierId String?
+  modifier   Modifier? @relation(fields: [modifierId], references: [id], onDelete: SetNull)
 
   recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
@@ -127,10 +202,12 @@ model RecipeIngredient {
 }
 
 model Favorite {
-  userId   String
-  recipeId String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId      String
+  recipeId    String
+  householdId String?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe      Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  household   Household? @relation("HouseholdFavorites", fields: [householdId], references: [id], onDelete: Cascade)
 
   @@id([userId, recipeId])
 }
@@ -138,7 +215,7 @@ model Favorite {
 model Comment {
   id        String   @id @default(uuid())
   content   String
-  rating    Int? // Optional 1-5 star rating
+  rating    Int?
   userId    String
   recipeId  String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -148,6 +225,6 @@ model Comment {
 
 model Modifier {
   id                String             @id @default(uuid())
-  name              String             @unique // e.g., "Minced", "Chopped", "Diced"
+  name              String             @unique
   recipeIngredients RecipeIngredient[]
 }

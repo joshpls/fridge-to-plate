@@ -138,7 +138,7 @@ const Favorites = () => {
                         placeholder={`Search ${activeTab === 'favorites' ? 'favorites' : 'my recipes'}...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800/50 rounded-2xl focus:bg-white dark:bg-gray-900 focus:border-orange-500 outline-none transition-all font-medium text-sm"
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800/50 rounded-2xl focus:bg-white focus:border-orange-500 outline-none transition-all font-medium text-sm"
                     />
                 </div>
             </header>

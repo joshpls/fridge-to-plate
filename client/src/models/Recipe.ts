@@ -28,6 +28,7 @@ export interface Ingredient {
     id: string;
     name: string;
     isStaple: boolean;
+    addedBy: string;
 }
 
 export interface Nutrition {

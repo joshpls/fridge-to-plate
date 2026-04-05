@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-import { Menu, X } from 'lucide-react';
+import { BellRing, Menu, X } from 'lucide-react';
 
 export const Navigation = () => {
     const location = useLocation();
@@ -15,15 +15,29 @@ export const Navigation = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [pantryCount, setPantryCount] = useState(0);
     const [shoppingCount, setShoppingCount] = useState(0);
+    const [inviteCount, setInviteCount] = useState(0);
 
     const fetchAllCounts = async () => {
         try {
             if (isAuthenticated && user?.id) {
-                const pantryRes = await fetchWithAuth(`${API_BASE}/pantry?userId=${user.id}`);
-                const pResult = await pantryRes.json();
-                if (pResult.status === 'success') setPantryCount(pResult.data.length);
+                // Fetch Pantry, Invites, and Local Shopping List in parallel
+                const [pantryRes, inviteRes] = await Promise.all([
+                    fetchWithAuth(`${API_BASE}/pantry`),
+                    fetchWithAuth(`${API_BASE}/household/invites/me`)
+                ]);
+                
+                if (pantryRes.ok) {
+                    const pResult = await pantryRes.json();
+                    setPantryCount(pResult.data?.length || 0);
+                }
+                
+                if (inviteRes.ok) {
+                    const iResult = await inviteRes.json();
+                    setInviteCount(iResult.data?.length || 0);
+                }
             } else {
                 setPantryCount(0);
+                setInviteCount(0);
             }
 
             const localItems = storageService.shopping.get();
@@ -59,171 +73,179 @@ export const Navigation = () => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-60 shadow-sm">
-            <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                
-                <div className="flex items-center">
-                    <Link to="/" className="text-xl font-black text-orange-600 tracking-tighter hover:opacity-80 transition-opacity">
-                        FRIDGE2PLATE
-                    </Link>
+        <>
+            {inviteCount > 0 && (
+                <div className="bg-orange-500 text-white px-4 py-2.5 text-center text-sm font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-orange-600 transition-colors z-50 relative" onClick={() => navigate('/profile')}>
+                    <BellRing size={16} className="animate-bounce" />
+                    You have {inviteCount} pending household invitation{inviteCount > 1 ? 's' : ''}. Click to view.
                 </div>
+            )}
+            <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-60 shadow-sm">
+                <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
-                <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-                    <Link to="/discovery" className={`text-sm font-bold transition-colors ${isActive('/discovery') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
-                        Discovery
-                    </Link>
-                    
-                    {isAuthenticated && (
-                        <>
-                            <Link to="/favorites" className={`text-sm font-bold transition-colors ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
-                                My Cookbook
-                            </Link>
-                            
-                            <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
-                                Pantry
-                                {pantryCount > 0 && (
-                                    <span className="absolute -top-2 -right-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] px-1.5 py-0.5 rounded-full">
-                                        {pantryCount}
-                                    </span>
-                                )}
-                            </Link>
-                            
-                            <Link to="/recipe/add" className={`text-sm font-bold transition-colors ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
-                                Add Recipe
-                            </Link>
-
-                            {isAdmin && (
-                                <Link to="/admin" className={`text-sm font-bold transition-colors ${isActive('/admin') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
-                                    Admin
-                                </Link>
-                            )}
-                        </>
-                    )}
-
-                    {/* Divider */}
-                    <div className="h-6 w-px bg-gray-200" />
-
-                    {isAuthenticated ? (
-                        <div className="flex items-center gap-5">
-                            <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-gray-200 transition-all border border-gray-100 dark:border-gray-800/50">
-                                <span className="text-lg leading-none">🛒</span>
-                                {shoppingCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-orange-600 dark:bg-orange-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
-                                        {shoppingCount}
-                                    </span>
-                                )}
-                            </Link>
-
-                            <div className="flex flex-col items-end border-l pl-5 border-gray-100 dark:border-gray-800/50">
-                                <Link to="/profile" className="text-xs font-black text-gray-900 dark:text-white leading-none hover:text-orange-600 dark:hover:text-orange-500 transition-colors">
-                                    {getDisplayName(user)}
-                                </Link>
-                                {isAdmin && (
-                                    <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter mt-0.5">
-                                        Admin
-                                    </span>
-                                )}
-                            </div>
-                            
-                            <button onClick={handleLogout} className="bg-gray-900 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-600 dark:hover:bg-red-500 transition-all">
-                                Logout
-                            </button>
-                        </div>
-                    ) : (
-                        <Link to="/auth" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100 dark:shadow-none">
-                            Sign In
+                    <div className="flex items-center">
+                        <Link to="/" className="text-xl font-black text-orange-600 tracking-tighter hover:opacity-80 transition-opacity">
+                            FRIDGE2PLATE
                         </Link>
-                    )}
-                </div>
+                    </div>
 
-                <div className="flex lg:hidden items-center gap-4">
-                    {/* Quick Access Mobile Cart */}
-                    {isAuthenticated && (
-                        <Link to="/shopping-list" className="relative p-1">
-                            <span className="text-xl">🛒</span>
-                            {shoppingCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-orange-600 dark:bg-orange-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full border border-white">
-                                    {shoppingCount}
-                                </span>
-                            )}
-                        </Link>
-                    )}
-                    
-                    <button 
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-gray-900 dark:text-white hover:text-orange-600 hover:dark:bg-orange-500 focus:outline-none p-1"
-                    >
-                        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                    </button>
-                </div>
-            </div>
-
-            {/* MOBILE DROPDOWN MENU */}
-            {isMobileMenuOpen && (
-                <div className="lg:hidden absolute top-16 left-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-xl flex flex-col px-6 py-4 z-40">
-                    <div className="flex flex-col gap-4">
-                        <Link to="/discovery" className={`text-base font-bold ${isActive('/discovery') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                    <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+                        <Link to="/discovery" className={`text-sm font-bold transition-colors ${isActive('/discovery') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                             Discovery
                         </Link>
-                        
+
                         {isAuthenticated && (
                             <>
-                                <Link to="/favorites" className={`text-base font-bold ${isActive('/favorites') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                <Link to="/favorites" className={`text-sm font-bold transition-colors ${isActive('/favorites') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                     My Cookbook
                                 </Link>
-                                
-                                <Link to="/pantry" className={`flex justify-between items-center text-base font-bold ${isActive('/pantry') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    <span>Pantry</span>
+
+                                <Link to="/pantry" className={`relative text-sm font-bold transition-colors ${isActive('/pantry') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
+                                    Pantry
                                     {pantryCount > 0 && (
-                                        <span className="bg-gray-900 text-white dark:bg-orange-500 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
-                                            {pantryCount} items
+                                        <span className="absolute -top-2 -right-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] px-1.5 py-0.5 rounded-full">
+                                            {pantryCount}
                                         </span>
                                     )}
                                 </Link>
-                                
-                                <Link to="/recipe/add" className={`text-base font-bold ${isActive('/recipe/add') ? 'text-orange-600 dark:-text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+
+                                <Link to="/recipe/add" className={`text-sm font-bold transition-colors ${isActive('/recipe/add') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
                                     Add Recipe
                                 </Link>
 
-                                <Link to="/shopping-list" className={`flex justify-between items-center text-base font-bold ${isActive('/shopping-list') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    <span>Shopping List</span>
-                                    {shoppingCount > 0 && (
-                                        <span className="bg-orange-600 dark:bg-orange-500 text-white dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
-                                            {shoppingCount} items
-                                        </span>
-                                    )}
-                                </Link>
-
                                 {isAdmin && (
-                                    <Link to="/admin" className={`text-base font-bold ${isActive('/admin') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                                        Admin Dashboard
+                                    <Link to="/admin" className={`text-sm font-bold transition-colors ${isActive('/admin') ? 'text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 hover:dark:text-gray-200'}`}>
+                                        Admin
                                     </Link>
                                 )}
                             </>
                         )}
+
+                        {/* Divider */}
+                        <div className="h-6 w-px bg-gray-200" />
+
+                        {isAuthenticated ? (
+                            <div className="flex items-center gap-5">
+                                <Link to="/shopping-list" className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-gray-200 transition-all border border-gray-100 dark:border-gray-800/50">
+                                    <span className="text-lg leading-none">🛒</span>
+                                    {shoppingCount > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-orange-600 dark:bg-orange-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                                            {shoppingCount}
+                                        </span>
+                                    )}
+                                </Link>
+
+                                <div className="flex flex-col items-end border-l pl-5 border-gray-100 dark:border-gray-800/50">
+                                    <Link to="/profile" className="text-xs font-black text-gray-900 dark:text-white leading-none hover:text-orange-600 dark:hover:text-orange-500 transition-colors">
+                                        {getDisplayName(user)}
+                                    </Link>
+                                    {isAdmin && (
+                                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter mt-0.5">
+                                            Admin
+                                        </span>
+                                    )}
+                                </div>
+
+                                <button onClick={handleLogout} className="bg-gray-900 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-600 dark:hover:bg-red-500 transition-all">
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <Link to="/auth" className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100 dark:shadow-none">
+                                Sign In
+                            </Link>
+                        )}
                     </div>
 
-                    <div className="h-px w-full bg-gray-100 my-5"></div>
+                    <div className="flex lg:hidden items-center gap-4">
+                        {/* Quick Access Mobile Cart */}
+                        {isAuthenticated && (
+                            <Link to="/shopping-list" className="relative p-1">
+                                <span className="text-xl">🛒</span>
+                                {shoppingCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-orange-600 dark:bg-orange-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full border border-white">
+                                        {shoppingCount}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
 
-                    {isAuthenticated ? (
-                        <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-800/50">
-                            <div className="flex flex-col">
-                                <Link to="/profile" className="text-sm font-black text-gray-900 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-500">
-                                    {getDisplayName(user)}
-                                </Link>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Manage Account</span>
-                            </div>
-                            <button onClick={handleLogout} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600 dark:hover-red-500 hover:text-white transition-colors">
-                                Logout
-                            </button>
-                        </div>
-                    ) : (
-                        <Link to="/auth" className="block text-center bg-orange-600 text-white dark:bg-orange-500 dark:text-gray-200 px-6 py-3 rounded-xl font-bold text-base shadow-md shadow-orange-100">
-                            Sign In
-                        </Link>
-                    )}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="text-gray-900 dark:text-white hover:text-orange-600 hover:dark:bg-orange-500 focus:outline-none p-1"
+                        >
+                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
+                    </div>
                 </div>
-            )}
-        </nav>
+
+                {/* MOBILE DROPDOWN MENU */}
+                {isMobileMenuOpen && (
+                    <div className="lg:hidden absolute top-16 left-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-xl flex flex-col px-6 py-4 z-40">
+                        <div className="flex flex-col gap-4">
+                            <Link to="/discovery" className={`text-base font-bold ${isActive('/discovery') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                Discovery
+                            </Link>
+
+                            {isAuthenticated && (
+                                <>
+                                    <Link to="/favorites" className={`text-base font-bold ${isActive('/favorites') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        My Cookbook
+                                    </Link>
+
+                                    <Link to="/pantry" className={`flex justify-between items-center text-base font-bold ${isActive('/pantry') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        <span>Pantry</span>
+                                        {pantryCount > 0 && (
+                                            <span className="bg-gray-900 text-white dark:bg-orange-500 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
+                                                {pantryCount} items
+                                            </span>
+                                        )}
+                                    </Link>
+
+                                    <Link to="/recipe/add" className={`text-base font-bold ${isActive('/recipe/add') ? 'text-orange-600 dark:-text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        Add Recipe
+                                    </Link>
+
+                                    <Link to="/shopping-list" className={`flex justify-between items-center text-base font-bold ${isActive('/shopping-list') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                        <span>Shopping List</span>
+                                        {shoppingCount > 0 && (
+                                            <span className="bg-orange-600 dark:bg-orange-500 text-white dark:text-gray-200 text-xs px-2 py-0.5 rounded-full">
+                                                {shoppingCount} items
+                                            </span>
+                                        )}
+                                    </Link>
+
+                                    {isAdmin && (
+                                        <Link to="/admin" className={`text-base font-bold ${isActive('/admin') ? 'text-orange-600 dark:text-orange-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                                            Admin Dashboard
+                                        </Link>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        <div className="h-px w-full bg-gray-100 my-5"></div>
+
+                        {isAuthenticated ? (
+                            <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-800/50">
+                                <div className="flex flex-col">
+                                    <Link to="/profile" className="text-sm font-black text-gray-900 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-500">
+                                        {getDisplayName(user)}
+                                    </Link>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Manage Account</span>
+                                </div>
+                                <button onClick={handleLogout} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600 dark:hover-red-500 hover:text-white transition-colors">
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <Link to="/auth" className="block text-center bg-orange-600 text-white dark:bg-orange-500 dark:text-gray-200 px-6 py-3 rounded-xl font-bold text-base shadow-md shadow-orange-100">
+                                Sign In
+                            </Link>
+                        )}
+                    </div>
+                )}
+            </nav>
+        </>
     );
 };

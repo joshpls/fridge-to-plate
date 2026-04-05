@@ -30,9 +30,17 @@ export interface FilterBarProps {
     sortOrder: 'asc' | 'desc';
     setSortOrder: (val: 'asc' | 'desc') => void;
 
+    onClearFilters?: () => void,
+    matchOnly?: boolean,
+    setMatchOnly?: (val: boolean) => void
+
     // Staples
     showStaples: boolean;
     setShowStaples: (val: boolean) => void;
+
+    // Scope
+    scope: 'all' | 'household' | 'mine';
+    setScope?: (val: any) => void;
 }
 
 export interface NutritionProps {

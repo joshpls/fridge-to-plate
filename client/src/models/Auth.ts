@@ -6,6 +6,10 @@ export interface User {
     email: string;
     preferences: any;
     role: 'USER' | 'ADMIN';
+    activeHouseholdId?: string;
+    activeHousehold?: {
+        name: string;
+    };
 }
 
 export interface AuthContextType {
@@ -16,5 +20,6 @@ export interface AuthContextType {
     isAdmin: boolean;
     login: (token: string, userData: User) => void;
     logout: () => void;
+    switchHousehold: (id: string) => Promise<void>;
     loading: boolean;
 }

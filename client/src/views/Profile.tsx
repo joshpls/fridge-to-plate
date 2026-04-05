@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Shield, Moon, Flame, KeyRound } from 'lucide-react';
+import { User, Shield, Moon, Flame, KeyRound, Users } from 'lucide-react';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
+import { HouseholdManager } from '../components/Household/HouseholdManager';
 
 const Profile = () => {
     const { user, updateUserParams } = useAuth();
@@ -133,7 +134,7 @@ const Profile = () => {
 
             <div className="space-y-8">
                 
-                {/* 1. IDENTITY CARD */}
+                {/* IDENTITY CARD */}
                 <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-blue-50 text-blue-600 p-2 rounded-xl"><User size={20} /></div>
@@ -171,7 +172,7 @@ const Profile = () => {
                     </form>
                 </section>
 
-                {/* 2. PREFERENCES CARD */}
+                {/* PREFERENCES CARD */}
                 <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-purple-50 text-purple-600 p-2 rounded-xl"><Moon size={20} /></div>
@@ -219,7 +220,20 @@ const Profile = () => {
                     </form>
                 </section>
 
-                {/* 3. SECURITY CARD */}
+                {/* --- HOUSEHOLD SECTION --- */}
+                <section className="bg-white dark:bg-gray-900 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800/50">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                            <Users size={20} />
+                        </div>
+
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider">Household</h2>
+                    </div>
+                    
+                    <HouseholdManager />
+                </section>
+
+                {/* SECURITY CARD */}
                 <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
                         <div className="bg-green-50 text-green-600 p-2 rounded-xl"><KeyRound size={20} /></div>

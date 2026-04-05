@@ -7,12 +7,7 @@ import { taxonomyService } from '../services/taxonomyService';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
-
-interface Ingredient {
-    id: string;
-    name: string;
-    isStaple: boolean;
-}
+import type { Ingredient } from '../models/Recipe';
 
 const Pantry = () => {
     const navigate = useNavigate();
@@ -27,7 +22,7 @@ const Pantry = () => {
     // Use a ref to prevent auto-saving on the very first render
     const initialLoadDone = useRef(false);
 
-    // 1. Fetch Data (Cached Ingredients + Live Pantry)
+    // Fetch Data (Cached Ingredients + Live Pantry)
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/auth');
@@ -63,8 +58,6 @@ const Pantry = () => {
         loadInitialData();
     }, [isAuthenticated, token, navigate]);
 
-    // 2. Auto-Save Logic
-    // Whenever myPantry changes (after initial load), sync it to the database silently
     useEffect(() => {
         if (!initialLoadDone.current) return;
 
@@ -92,7 +85,6 @@ const Pantry = () => {
         return () => clearTimeout(timer);
     }, [myPantry, token]);
 
-    // 3. Handlers
     const filteredResults = allIngredients.filter(ing =>
         ing.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !myPantry.some(p => p.id === ing.id)
@@ -164,12 +156,9 @@ const Pantry = () => {
                     <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{myPantry.length} items</span>
                 </h2>
                 
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2 min-h-[50px] p-4 bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
                     {myPantry.length === 0 ? (
-                        <div className="text-center w-full py-10">
-                            <span className="text-4xl mb-3 block">🧊</span>
-                            <p className="text-gray-400 font-medium">Your fridge is empty. Start typing above to add ingredients!</p>
-                        </div>
+                        <p className="text-gray-400 font-bold m-auto">Your household pantry is empty.</p>
                     ) : (
                         myPantry.map((ing) => (
                             <span
@@ -177,9 +166,17 @@ const Pantry = () => {
                                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 dark:bg-orange-500/15 text-orange-900 border border-orange-100 font-bold text-sm animate-in fade-in zoom-in duration-200 group"
                             >
                                 {ing.name}
+
+                                {/* --- Display who added it if available --- */}
+                                {ing.addedBy && (
+                                    <span className="text-[10px] uppercase tracking-wider opacity-60 ml-1 font-medium">
+                                        ({ing.addedBy})
+                                    </span>
+                                )}
+
                                 <button
                                     onClick={() => removeFromPantry(ing.id)}
-                                    className="bg-orange-100/50 hover:bg-orange-200 text-orange-600 rounded-full p-0.5 transition-colors"
+                                    className="bg-orange-100/50 hover:bg-orange-200 text-orange-600 rounded-full p-0.5 transition-colors ml-1"
                                 >
                                     <X size={14} />
                                 </button>

@@ -14,6 +14,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(prev => prev ? { ...prev, ...newData } : null);
     };
 
+    const switchHousehold = async (newHouseholdId: string) => {
+        if (!user) return;
+        
+        try {
+            // Optimistic UI update
+            updateUserParams({ activeHouseholdId: newHouseholdId });
+            
+            // Sync with backend so the next API calls hit the right DB rows
+            const response = await fetchWithAuth(`${API_BASE}/auth/profile`, {
+                method: 'PATCH',
+                body: JSON.stringify({ activeHouseholdId: newHouseholdId })
+            });
+            
+            if (!response.ok) {
+                throw new Error("Failed to switch household on the server.");
+            }
+            
+            // Note: If you add React Query later, you would call queryClient.invalidateQueries() here 
+            // to automatically refetch the pantry and recipes for the new household.
+        } catch (error) {
+            console.error(error);
+            // Revert on failure
+            if (user.activeHouseholdId) {
+                updateUserParams({ activeHouseholdId: user.activeHouseholdId });
+            }
+        }
+    };
+
     useEffect(() => {
         const handleForceLogout = () => {
             console.warn("Session fully expired. Forcing logout.");
@@ -37,9 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    setUser(result.data); // Set the real user data from DB
-                } else {
-                    // Token is invalid/expired
+                    setUser(result.data); 
+                } else if (response.status === 401) {
                     logout();
                 }
             } catch (err) {
@@ -61,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 : user.preferences;
             isDark = prefs.darkMode;
         } else {
-            // Fallback to OS preference if logged out
             isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
 
@@ -94,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             token, 
             login, 
             logout, 
+            switchHousehold,
             isAuthenticated: !!user,
             isAdmin: user?.role === 'ADMIN',
             loading 
@@ -103,7 +130,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-// Custom hook to make accessing auth state incredibly easy
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {

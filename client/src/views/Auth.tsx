@@ -1,11 +1,12 @@
 // src/pages/Auth.tsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../utils/apiConfig';
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
+    const [searchParams] = useSearchParams();
     
     // Core Auth State
     const [email, setEmail] = useState('');
@@ -19,8 +20,16 @@ const Auth = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    
+    useEffect(() => {
+        if (isAuthenticated) {
+            const returnUrl = searchParams.get('returnUrl');
+            // If there's a returnUrl, use it. Otherwise, default to home.
+            navigate(returnUrl ? decodeURIComponent(returnUrl) : '/', { replace: true });
+        }
+    }, [isAuthenticated, navigate, searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +37,6 @@ const Auth = () => {
         setLoading(true);
 
         const endpoint = isLogin ? '/auth/login' : '/auth/register';
-        
-        // Dynamically build the payload based on the mode
         const payload = isLogin 
             ? { email, password } 
             : { email, password, firstName, lastName, alias };
@@ -44,14 +51,14 @@ const Auth = () => {
 
             const data = await response.json();
 
-            if (data.status === 'success') {
-                login(data.token, data.data);
-                navigate('/');
-            } else {
-                setError(data.message || 'Authentication failed');
+            if (!response.ok) {
+                throw new Error(data.message || 'Authentication failed');
             }
-        } catch (err) {
-            setError('Unable to connect to the server. Please try again.');
+
+            login(data.token, data.data);
+            
+        } catch (err: any) {
+            setError(err.message);
         } finally {
             setLoading(false);
         }
