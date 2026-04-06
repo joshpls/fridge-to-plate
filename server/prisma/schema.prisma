@@ -38,7 +38,7 @@ model User {
   activeHouseholdId String?
   activeHousehold   Household? @relation(fields: [activeHouseholdId], references: [id])
 
-  preferences Json? @default("{\"darkMode\": false, \"cookMode\": true}")
+  preferences Json? @default("{\"darkMode\": false, \"cookMode\": true, \"autoTTS\": false}")
 
   households       HouseholdMember[]
   addedPantryItems PantryItem[]      @relation("AddedBy")

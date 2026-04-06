@@ -48,7 +48,7 @@ export const getMatches = async (req: Request, res: Response) => {
       favoritesOnly: favoritesOnly as string,
       matchOnly: matchOnly as string,
       showStaples: showStaples as string,
-      scope: scope as 'all' | 'household' | 'mine', // [NEW]
+      scope: scope as 'all' | 'household' | 'mine',
       sort: sort as 'asc' | 'desc',
     };
     
@@ -109,7 +109,7 @@ export const getTaxonomy = async (req: Request, res: Response) => {
 export const createRecipe = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id; 
-        const activeHouseholdId = req.user!.activeHouseholdId; // [NEW]
+        const activeHouseholdId = req.user!.activeHouseholdId;
         const { userId: fakeId, ...recipeData } = req.body; 
 
       if (!recipeData.name || !recipeData.categoryId || !recipeData.instructions) {
@@ -219,7 +219,7 @@ export const getRecipeDetail = async (req: Request, res: Response) => {
 export const handleToggleFavorite = async (req: AuthRequest, res: Response) => {
   const slug = req.params.slug as string;
   const userId = req.user!.id;
-  const activeHouseholdId = req.user!.activeHouseholdId; // [NEW]
+  const activeHouseholdId = req.user!.activeHouseholdId;
 
   if (!slug) return res.status(400).json({ status: 'error', message: 'Missing recipe slug' });
 

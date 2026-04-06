@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Shield, Moon, Flame, KeyRound, Users } from 'lucide-react';
+import { User, Shield, Moon, Flame, KeyRound, Users, Volume2 } from 'lucide-react';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { HouseholdManager } from '../components/Household/HouseholdManager';
@@ -17,7 +17,7 @@ const Profile = () => {
 
     // Form Data States
     const [profileData, setProfileData] = useState({ firstName: '', lastName: '', alias: '' });
-    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true, ttsVoice: 'female' });
+    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true, ttsVoice: 'female', autoTTS: false });
     const [securityData, setSecurityData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
     // Initialize from Context
@@ -35,7 +35,8 @@ const Profile = () => {
                 setPrefsData({
                     darkMode: p.darkMode || false,
                     cookMode: p.cookMode ?? true,
-                    ttsVoice: p.ttsVoice || 'female'
+                    ttsVoice: p.ttsVoice || 'female',
+                    autoTTS: p.autoTTS || false
                 });
             }
         }
@@ -195,6 +196,14 @@ const Profile = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Automatically prevents your screen from sleeping while viewing a recipe.</p>
                             </div>
                             <Toggle checked={prefsData.cookMode} onChange={(val) => setPrefsData({...prefsData, cookMode: val})} />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50">
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><Volume2 size={16} className="text-blue-500"/> Auto-Read Steps (TTS)</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Automatically read instructions aloud when navigating steps in Cook Mode.</p>
+                            </div>
+                            <Toggle checked={prefsData.autoTTS} onChange={(val) => setPrefsData({...prefsData, autoTTS: val})} />
                         </div>
 
                         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">

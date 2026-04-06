@@ -30,7 +30,7 @@ const RecipeDetail = () => {
     const userId = user?.id;
     // const prefs = user?.preferences
     //     ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences)
-    //     : { cookMode: true };
+    //     : { cookMode: true, autoTTS: false };
 
     // const { isLocked } = useWakeLock(prefs.cookMode);
 

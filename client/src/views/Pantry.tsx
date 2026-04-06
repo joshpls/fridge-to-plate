@@ -158,7 +158,7 @@ const Pantry = () => {
                 )}
             </div>
 
-            {/* Current Pantry Display */}
+            {/* Pantry Display */}
             <section className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm">
                 <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
@@ -166,7 +166,6 @@ const Pantry = () => {
                         <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-md">{myPantry.length} items</span>
                     </div>
                     
-                    {/* [NEW] Clear All Button */}
                     {myPantry.length > 0 && (
                         <button 
                             onClick={clearPantry}
