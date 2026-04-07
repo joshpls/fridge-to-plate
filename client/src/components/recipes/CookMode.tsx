@@ -27,6 +27,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
     const [currentStep, setCurrentStep] = useState(0);
     const [view, setView] = useState<'step' | 'ingredients'>('step');
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const autoTTS = prefs.autoTTS;
     
     // Swipe detection states
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -58,6 +59,16 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
         setIsSpeaking(false);
     }, [currentStep, view]);
 
+    useEffect(() => {
+        if (autoTTS && instructions[currentStep]) {
+            const timer = setTimeout(() => {
+                handleToggleSpeech(instructions[currentStep])
+            }, 500);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [currentStep, autoTTS, instructions]);
+
     const handleToggleSpeech = (text: string) => {
         speakText(text, {
             onStart: () => setIsSpeaking(true),
@@ -70,7 +81,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
         if (currentStep < instructions.length - 1) {
             setCurrentStep(prev => prev + 1);
         } else {
-            onClose(); // Exit modal if on the last step
+            onClose();
         }
     };
 

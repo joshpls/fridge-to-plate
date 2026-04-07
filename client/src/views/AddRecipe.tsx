@@ -6,7 +6,7 @@ import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
-import { initialRecipe, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
+import { initialRecipe, Visibility, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 import { AddNutrition } from '../components/recipes/AddNutrition';
 
 import {
@@ -70,6 +70,8 @@ const AddRecipe = () => {
                         originalImageUrlRef.current = r.imageUrl || '';
                         currentImageUrlRef.current = r.imageUrl || '';
 
+                        console.log("recipe result: ", result);
+
                         setFormData({
                             id: r.id,
                             name: r.name || '',
@@ -111,7 +113,8 @@ const AddRecipe = () => {
                                 vitaminC: fetchedNutrition.vitaminC || '',
                                 calcium: fetchedNutrition.calcium || '',
                                 iron: fetchedNutrition.iron || '',
-                            }
+                            },
+                            visibility: r.visibility || Visibility.PRIVATE
                         });
                     }
                 }
@@ -536,6 +539,33 @@ const AddRecipe = () => {
                             className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y bg-yellow-50/30 dark:bg-yellow-500/10 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 transition-colors text-sm sm:text-base"
                             placeholder="Any special tips, substitute suggestions, or storage advice?"
                         />
+                    </div>
+                </section>
+
+                <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
+                    <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">Visibility Settings</h2>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Recipe Visibility *</label>
+                        <select 
+                            required 
+                            name="visibility" 
+                            value={formData.visibility} 
+                            onChange={handleChange} 
+                            className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900"
+                        >
+                            {Object.values(Visibility).map(v => (
+                                <option key={v} value={v}>{v}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs font-medium text-gray-400 mt-2">
+                            • <strong>PRIVATE:</strong> Only you can see this recipe.
+                        </p>
+                        <p className="text-xs font-medium text-gray-400">
+                            • <strong>HOUSEHOLD:</strong> You and other members of your current household can see this.
+                        </p>
+                        <p className="text-xs font-medium text-gray-400">
+                            • <strong>PUBLIC:</strong> Everyone can discover and view this recipe.
+                        </p>
                     </div>
                 </section>
 

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import jwt, { type SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import * as authService from '../services/authService.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
 import { prisma } from '../config/db.js';
@@ -9,7 +9,7 @@ const generateAccessToken = (userId: string, role: string): string => {
     return jwt.sign(
         { id: userId, role },
         process.env.JWT_SECRET as string,
-        { expiresIn: '15m' } // 15 minutes
+        { expiresIn: '15m' } 
     );
 };
 
@@ -18,17 +18,16 @@ const generateRefreshToken = (userId: string, role: string): string => {
     return jwt.sign(
         { id: userId, role },
         process.env.JWT_REFRESH_SECRET as string,
-        { expiresIn: '7d' } // 7 days
+        { expiresIn: '7d' } 
     );
 };
 
-//Helper to set the HttpOnly cookie
 const setRefreshCookie = (res: Response, token: string) => {
     res.cookie('jwt_refresh', token, {
-        httpOnly: true, // Javascript cannot access this (prevents XSS)
-        secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-        sameSite: 'lax', // Protects against CSRF
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: 'lax', 
+        maxAge: 7 * 24 * 60 * 60 * 1000 
     });
 };
 
@@ -78,14 +77,14 @@ export const login = async (req: Request, res: Response) => {
             message: 'Login successful'
         });
     } catch (error: any) {
-        return res.status(401).json({ status: 'error', message: error.message }); // 401 Unauthorized
+        return res.status(401).json({ status: 'error', message: error.message });
     }
 };
 
 export const updateProfile = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const { firstName, lastName, alias, preferences } = req.body;
+        const { firstName, lastName, alias, preferences, activeHouseholdId } = req.body;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
@@ -93,9 +92,13 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
                 firstName, 
                 lastName, 
                 alias,
-                ...(preferences && { preferences })
+                ...(preferences && { preferences }),
+                ...(activeHouseholdId && { activeHouseholdId })
             },
-            select: { id: true, email: true, role: true, firstName: true, lastName: true, alias: true, preferences: true }
+            select: { 
+                id: true, email: true, role: true, firstName: true, 
+                lastName: true, alias: true, preferences: true, activeHouseholdId: true 
+            }
         });
 
         res.status(200).json({ status: 'success', data: updatedUser });
@@ -106,28 +109,22 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
 export const refreshSession = async (req: Request, res: Response) => {
     try {
-        // 1. Grab the refresh token from the secure cookie
         const refreshToken = req.cookies.jwt_refresh;
         if (!refreshToken) {
             return res.status(401).json({ status: 'error', message: 'No refresh token found' });
         }
 
-        // 2. Verify the refresh token
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as any;
-
-        // 3. Issue a fresh Access Token
         const newAccessToken = generateAccessToken(decoded.id, decoded.role);
 
         res.status(200).json({ status: 'success', token: newAccessToken });
     } catch (error) {
-        // If the refresh token is expired or tampered with, clear it
         res.clearCookie('jwt_refresh');
         res.status(403).json({ status: 'error', message: 'Invalid or expired refresh token' });
     }
 };
 
 export const logout = async (req: Request, res: Response) => {
-    // Clear the secure cookie to fully log the user out
     res.clearCookie('jwt_refresh');
     res.status(200).json({ status: 'success', message: 'Logged out successfully' });
 };
@@ -140,7 +137,10 @@ export const getMe = async (req: AuthRequest, res: Response) => {
             select: { 
                 id: true, email: true, role: true,
                 firstName: true, lastName: true, alias: true,
-                preferences: true
+                preferences: true, activeHouseholdId: true,
+                activeHousehold: {
+                    select: { name: true }
+                }
             }
         });
         res.json({ status: 'success', data: user });
@@ -166,7 +166,6 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
         res.status(200).json({ status: 'success', message: 'Password updated successfully.' });
     } catch (error: any) {
-        // Return 400 for incorrect password so the frontend knows it was a validation error
         if (error.message === 'Incorrect current password') {
             return res.status(400).json({ status: 'error', message: error.message });
         }

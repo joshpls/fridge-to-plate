@@ -6,32 +6,41 @@ export const fetchAllIngredients = async () => {
   });
 };
 
-export const fetchUserPantry = async (userId: string) => {
+export const fetchHouseholdPantry = async (householdId: string) => {
   const entries = await prisma.pantryItem.findMany({
-    where: { userId },
-    include: { ingredient: true }
+    where: { householdId },
+    include: { 
+      ingredient: true,
+      addedBy: { select: { firstName: true, alias: true } }
+    }
   });
-  return entries.map(entry => entry.ingredient);
+  
+  return entries.map(entry => ({
+      ...entry.ingredient,
+      addedBy: entry.addedBy?.alias || entry.addedBy?.firstName || 'Unknown'
+  }));
 };
 
-export const updateUserPantry = async (userId: string, ingredientIds: string[]) => {
+export const updateHouseholdPantry = async (householdId: string, ingredientIds: string[], addedById: string) => {
   return await prisma.$transaction([
-    prisma.pantryItem.deleteMany({ where: { userId } }),
+    prisma.pantryItem.deleteMany({ where: { householdId } }),
     prisma.pantryItem.createMany({
       data: ingredientIds.map(id => ({
         ingredientId: id,
-        userId: userId,
+        householdId: householdId,
+        addedById: addedById,
       })),
     })
   ]);
 };
 
-export const appendToPantry = async (userId: string, ingredientIds: string[]) => {
+export const appendToHouseholdPantry = async (householdId: string, ingredientIds: string[], addedById: string) => {
   return await prisma.pantryItem.createMany({
     data: ingredientIds.map(id => ({
       ingredientId: id,
-      userId: userId,
+      householdId: householdId,
+      addedById: addedById,
     })),
-    skipDuplicates: true, // Crucial: prevents errors if an item is already in the pantry
+    skipDuplicates: true,
   });
 };

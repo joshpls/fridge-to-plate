@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import * as recipeService from '../services/recipeService.js';
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
-import { mapRecipeToDto } from '../utils/helperFunctions.js';
 import { prisma } from '../config/db.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
 import jwt from 'jsonwebtoken';
@@ -11,32 +10,32 @@ import path from 'path';
 export const getMatches = async (req: Request, res: Response) => {
   try {
     let userId = (req as any).user?.id;
+    let activeHouseholdId = (req as any).user?.activeHouseholdId;
 
-    // If the route isn't strictly protected, manually decode the token if it exists
+    // The manual fallback for routes not wrapped in requireAuth
     if (!userId && req.headers.authorization?.startsWith('Bearer ')) {
         try {
             const token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
             userId = decoded.id;
+            
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { activeHouseholdId: true }
+            });
+            
+            if (user) {
+                activeHouseholdId = user.activeHouseholdId;
+            }
         } catch (e) {
-            // Token is invalid or expired. Ignore and treat as a guest.
+            // Ignore token errors here, they just get treated as a guest
         }
     }
 
-    // Extract all the new filters from the URL query
     const { 
-      categoryId, 
-      subcategoryId, 
-      search, 
-      tags, 
-      includeIngredients, 
-      excludeIngredients, 
-      favoritesOnly, 
-      matchOnly,
-      showStaples,
-      sort, 
-      page, 
-      limit 
+      categoryId, subcategoryId, search, tags, includeIngredients, 
+      excludeIngredients, favoritesOnly, matchOnly, showStaples,
+      sort, page, limit, scope 
     } = req.query;
     
     const filters = {
@@ -49,6 +48,7 @@ export const getMatches = async (req: Request, res: Response) => {
       favoritesOnly: favoritesOnly as string,
       matchOnly: matchOnly as string,
       showStaples: showStaples as string,
+      scope: scope as 'all' | 'household' | 'mine',
       sort: sort as 'asc' | 'desc',
     };
     
@@ -57,7 +57,7 @@ export const getMatches = async (req: Request, res: Response) => {
       limit: parseInt(limit as string) || 12,
     };
 
-    const matchData = await recipeService.getMatches(userId, filters, pagination);
+    const matchData = await recipeService.getMatches(userId, activeHouseholdId, filters, pagination);
     
     return sendSuccess(res, matchData, "Recipe matches found");
   } catch (error) {
@@ -86,7 +86,6 @@ export const getTags = async (req: Request, res: Response) => {
 export const getTaxonomy = async (req: Request, res: Response) => {
     try {
         const [categories, tags, units, ingredients, modifiers] = await Promise.all([
-            // Nest subcategories directly inside categories
             prisma.category.findMany({ 
                 orderBy: { name: 'asc' },
                 include: { 
@@ -107,33 +106,21 @@ export const getTaxonomy = async (req: Request, res: Response) => {
     }
 };
 
-
-// Notice we change `req: Request` to `req: AuthRequest`
 export const createRecipe = async (req: AuthRequest, res: Response) => {
     try {
-        // The bouncer (requireAuth) guarantees req.user exists by the time we get here
         const userId = req.user!.id; 
-        
-        // Strip out any fake userId the frontend might try to send
+        const activeHouseholdId = req.user!.activeHouseholdId;
         const { userId: fakeId, ...recipeData } = req.body; 
 
-        // 1. Basic Validation Boundary
       if (!recipeData.name || !recipeData.categoryId || !recipeData.instructions) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Missing required fields (Name, Category, Instructions)'
-        });
+        return res.status(400).json({ status: 'error', message: 'Missing required fields' });
       }
 
       if (!recipeData.ingredients || recipeData.ingredients.length === 0) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'A recipe must have at least one ingredient.'
-        });
+        return res.status(400).json({ status: 'error', message: 'A recipe must have at least one ingredient.' });
       }
 
-        // Pass the verified ID from the token into the service
-        const newRecipe = await recipeService.createRecipe(userId, recipeData);
+        const newRecipe = await recipeService.createRecipe(userId, activeHouseholdId, recipeData);
 
         return res.status(201).json({ status: 'success', data: newRecipe });
     } catch (error: any) {
@@ -215,25 +202,16 @@ export const deleteRecipe = async (req: AuthRequest, res: Response) => {
 
 export const getRecipeDetail = async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
-  const userId = req.query.userId as string | undefined;
+  const userId = (req as any).user?.id || req.query.userId as string | undefined;
+  const activeHouseholdId = (req as any).user?.activeHouseholdId;
 
-  if (!slug) {
-    return res.status(400).json({ status: 'error', message: 'Missing slug or userId' });
-  }
+  if (!slug) return res.status(400).json({ status: 'error', message: 'Missing slug' });
 
   try {
-    const recipeDto = await recipeService.getRecipeBySlug(slug, userId);
-
-    if (!recipeDto) {
-      return res.status(404).json({ status: 'error', message: 'Recipe not found' });
-    }
-
-    res.status(200).json({ 
-      status: 'success', 
-      data: recipeDto 
-    });
+    const recipeDto = await recipeService.getRecipeBySlug(slug, userId, activeHouseholdId);
+    if (!recipeDto) return res.status(404).json({ status: 'error', message: 'Recipe not found or private' });
+    res.status(200).json({ status: 'success', data: recipeDto });
   } catch (error) {
-    console.error("Error in getRecipeDetail:", error);
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
@@ -241,13 +219,12 @@ export const getRecipeDetail = async (req: Request, res: Response) => {
 export const handleToggleFavorite = async (req: AuthRequest, res: Response) => {
   const slug = req.params.slug as string;
   const userId = req.user!.id;
+  const activeHouseholdId = req.user!.activeHouseholdId;
 
-  if (!slug) {
-    return res.status(400).json({ status: 'error', message: 'Missing recipe slug' });
-  }
+  if (!slug) return res.status(400).json({ status: 'error', message: 'Missing recipe slug' });
 
   try {
-    const result = await recipeService.toggleRecipeFavorite(userId, slug);
+    const result = await recipeService.toggleRecipeFavorite(userId, activeHouseholdId, slug);
     res.status(200).json({ status: 'success', data: result });
   } catch (error: any) {
     const statusCode = error.message === 'Recipe not found' ? 404 : 500;
@@ -257,9 +234,10 @@ export const handleToggleFavorite = async (req: AuthRequest, res: Response) => {
 
 export const getFavorites = async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
+  const activeHouseholdId = req.user!.activeHouseholdId;
 
   try {
-    const favorites = await recipeService.getFavoriteRecipes(userId);
+    const favorites = await recipeService.getFavoriteRecipes(userId, activeHouseholdId);
     res.status(200).json({ status: 'success', data: favorites });
   } catch (error: any) {
     res.status(500).json({ status: 'error', message: 'Failed to retrieve favorites' });
@@ -319,7 +297,8 @@ export const deleteUserComment = async (req: AuthRequest, res: Response) => {
 export const getAuthoredRecipes = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
-        const recipes = await recipeService.getAuthoredRecipes(userId);
+        const activeHouseholdId = req.user!.activeHouseholdId;
+        const recipes = await recipeService.getAuthoredRecipes(userId, activeHouseholdId);
         res.status(200).json({ status: 'success', data: recipes });
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Failed to fetch authored recipes' });

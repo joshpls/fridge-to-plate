@@ -4,6 +4,7 @@ import type { ShoppingListItem, TaxonomyData } from "../models/Recipe";
 const KEYS = {
     SHOPPING: 'f2p_shopping_list',
     TAXONOMY: 'f2p_taxonomy_cache',
+    PANTRY: 'f2p_pantry_cache',
 };
 
 export const storageService = {
@@ -24,7 +25,7 @@ export const storageService = {
         addItems: (newItems: { ingredientId: string; name: string; amount: string }[]) => {
             const currentList = storageService.shopping.get();
             const updatedList = [...currentList];
-            
+
             newItems.forEach(newItem => {
                 const exists = updatedList.find(i => i.ingredientId === newItem.ingredientId);
                 if (!exists) {
@@ -37,9 +38,9 @@ export const storageService = {
 
         toggleBought: (ingredientId: string) => {
             const list = storageService.shopping.get();
-            const updatedList = list.map(item => 
-                item.ingredientId === ingredientId 
-                    ? { ...item, bought: !item.bought } 
+            const updatedList = list.map(item =>
+                item.ingredientId === ingredientId
+                    ? { ...item, bought: !item.bought }
                     : item
             );
             storageService.shopping.save(updatedList);
@@ -75,9 +76,15 @@ export const storageService = {
             sessionStorage.setItem(key, JSON.stringify(value));
         },
 
+        // Taxonomy
         getTaxonomy: () => storageService.cache.get<TaxonomyData>(KEYS.TAXONOMY),
         setTaxonomy: (data: TaxonomyData) => storageService.cache.set(KEYS.TAXONOMY, data),
         clearTaxonomy: () => sessionStorage.removeItem(KEYS.TAXONOMY),
+
+        // Pantry
+        getPantry: () => storageService.cache.get<any[]>(KEYS.PANTRY),
+        setPantry: (data: any[]) => storageService.cache.set(KEYS.PANTRY, data),
+        clearPantry: () => sessionStorage.removeItem(KEYS.PANTRY),
 
         clearAll: () => sessionStorage.clear()
     }

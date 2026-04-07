@@ -14,12 +14,9 @@ export const FilterBar = ({
     sortOrder, setSortOrder,
     showStaples, setShowStaples,
     onClearFilters,
-    matchOnly, setMatchOnly
-}: FilterBarProps & {
-    onClearFilters?: () => void,
-    matchOnly?: boolean,
-    setMatchOnly?: (val: boolean) => void
-    }) => {
+    matchOnly, setMatchOnly,
+    scope, setScope
+}: FilterBarProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { isAuthenticated } = useAuth();
 
@@ -76,6 +73,17 @@ export const FilterBar = ({
 
                 {/* Category & Toggle Button */}
                 <div className="grid grid-cols-2 sm:flex gap-2 w-full lg:w-auto">
+                    {isAuthenticated && setScope && (
+                        <select
+                            value={scope || 'all'}
+                            onChange={(e) => setScope(e.target.value as 'all' | 'household' | 'mine')}
+                            className="w-full sm:w-48 p-3 md:p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800/50 bg-white dark:bg-gray-900 font-bold text-gray-700 dark:text-gray-300 outline-none cursor-pointer text-sm md:text-base"
+                        >
+                            <option value="all">🌍 All Recipes</option>
+                            <option value="household">🏠 Household Only</option>
+                            <option value="mine">👤 My Recipes</option>
+                        </select>
+                    )}
                     <select
                         value={selectedCategory}
                         onChange={(e) => {

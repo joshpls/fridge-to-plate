@@ -11,6 +11,7 @@ import Auth from './views/Auth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import AdminDashboard from './views/AdminDashboard';
 import Profile from './views/Profile';
+import { JoinHousehold } from './views/JoinHousehold';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/auth" element={<Auth />} />
 
             <Route element={<ProtectedRoute />}>
+              <Route path="/join/:token" element={<JoinHousehold />} />
               <Route path="/shopping-list" element={<ShoppingList />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/pantry" element={<Pantry />} />

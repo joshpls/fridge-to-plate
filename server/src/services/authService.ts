@@ -5,7 +5,6 @@ import bcrypt from 'bcrypt';
 const SALT_ROUNDS = 10;
 
 export const registerUser = async (data: any) => {
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
         where: { email: data.email }
     });
@@ -14,25 +13,51 @@ export const registerUser = async (data: any) => {
         throw new Error('Email is already in use.');
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
 
-    // Create the user
-    const user = await prisma.user.create({
-        data: {
-            email: data.email.toLowerCase(),
-            password: hashedPassword,
-            firstName: data.firstName, 
-            lastName: data.lastName, 
-            alias: data.alias,
-            // First user created gets to be ADMIN, everyone else is a USER
-            // Adjust this logic later
-            role: (await prisma.user.count()) === 0 ? 'ADMIN' : 'USER',
-        }
+    const result = await prisma.$transaction(async (tx) => {
+        const role = (await tx.user.count()) === 0 ? 'ADMIN' : 'USER';
+
+        // Create the base User
+        const user = await tx.user.create({
+            data: {
+                email: data.email.toLowerCase(),
+                password: hashedPassword,
+                firstName: data.firstName, 
+                lastName: data.lastName, 
+                alias: data.alias,
+                role: role,
+            }
+        });
+
+        // Create their default Personal Household
+        const householdName = data.firstName ? `${data.firstName}'s Household` : 'Personal Household';
+        const household = await tx.household.create({
+            data: {
+                name: householdName,
+            }
+        });
+
+        // Link the User to the Household as the OWNER
+        await tx.householdMember.create({
+            data: {
+                userId: user.id,
+                householdId: household.id,
+                role: 'OWNER',
+            }
+        });
+
+        // Update the user's activeHouseholdId to this newly created household
+        const finalizedUser = await tx.user.update({
+            where: { id: user.id },
+            data: { activeHouseholdId: household.id }
+        });
+
+        return finalizedUser;
     });
 
     // Strip the password before returning
-    const { password, ...userWithoutPassword } = user;
+    const { password, ...userWithoutPassword } = result;
     return userWithoutPassword;
 };
 

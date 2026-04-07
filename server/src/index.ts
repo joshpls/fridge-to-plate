@@ -7,7 +7,8 @@ import recipeRoutes from './routes/recipeRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import { globalLimiter } from './middleware/rateLimiter.js';
+import householdRoutes from './routes/householdRoutes.js';
+import { tokenBucketLimiter } from './middleware/rateLimiter.js';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
@@ -24,11 +25,12 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api', globalLimiter);
+app.use('/api', tokenBucketLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pantry', pantryRoutes);
+app.use('/api/household', householdRoutes)
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
