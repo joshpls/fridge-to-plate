@@ -107,12 +107,11 @@ const Favorites = () => {
                 <div>
                     <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-6">My Cookbook</h1>
                     
-                    {/* FANG-Style Segmented Control */}
                     <div className="flex bg-gray-100 p-1 rounded-2xl w-full max-w-sm">
                         <button 
                             onClick={() => setActiveTab('favorites')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                                activeTab === 'favorites' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                                activeTab === 'favorites' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
                             <Heart size={16} className={activeTab === 'favorites' ? 'fill-red-500 text-red-500' : ''} />
@@ -121,7 +120,7 @@ const Favorites = () => {
                         <button 
                             onClick={() => setActiveTab('authored')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                                activeTab === 'authored' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
+                                activeTab === 'authored' ? 'bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                         >
                             <ChefHat size={16} className={activeTab === 'authored' ? 'text-orange-500' : ''} />
