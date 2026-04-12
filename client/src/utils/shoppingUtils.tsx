@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { storageService } from '../services/storageService';
 
 export const addIngredientsToShoppingList = async (
-    items: { ingredientId: string; amount: string; name: string }[]
+    items: { ingredientId: string; quantity: string; name: string, unit: string, unitId: string }[]
 ) => {
     if (items.length === 0) return { success: false, count: 0 };
 

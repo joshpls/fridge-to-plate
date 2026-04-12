@@ -22,7 +22,7 @@ export const storageService = {
             window.dispatchEvent(new Event('shoppingListUpdated'));
         },
 
-        addItems: (newItems: { ingredientId: string; name: string; amount: string }[]) => {
+        addItems: (newItems: { ingredientId: string; name: string; quantity: string, unit: string, unitId: string | null }[]) => {
             const currentList = storageService.shopping.get();
             const updatedList = [...currentList];
 

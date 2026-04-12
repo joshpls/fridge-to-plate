@@ -64,16 +64,15 @@ const ShoppingList = () => {
         }
 
         const list = storageService.shopping.get();
-        const ingredientIds = list.map(item => item.ingredientId);
 
-        if (ingredientIds.length === 0) return;
+        if (list.length === 0) return;
 
         setIsSyncing(true);
         try {
             const res = await fetchWithAuth(`${API_BASE}/pantry/bulk`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ingredientIds })
+                body: JSON.stringify({ items: list })
             });
 
             const result = await res.json();
@@ -160,7 +159,7 @@ const ShoppingList = () => {
                                 {/* Item Name & Amount */}
                                 <div className={`${item.bought ? 'line-through text-gray-400 dark:text-white print:no-underline print:text-black' : 'print:text-black'}`}>
                                     <p className="font-bold text-gray-800 dark:text-gray-300 print:text-black print:text-lg">{item.name}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-200 print:text-gray-600 print:text-sm">{item.amount}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-200 print:text-gray-600 print:text-sm">{item.quantity} {item.unit}</p>
                                 </div>
                             </div>
 

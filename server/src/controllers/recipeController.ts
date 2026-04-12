@@ -34,7 +34,7 @@ export const getMatches = async (req: Request, res: Response) => {
 
     const { 
       categoryId, subcategoryId, search, tags, includeIngredients, 
-      excludeIngredients, favoritesOnly, matchOnly, showStaples,
+      excludeIngredients, favoritesOnly, matchOnly, showStaples, allowSubstitutions,
       sort, page, limit, scope 
     } = req.query;
     
@@ -48,6 +48,7 @@ export const getMatches = async (req: Request, res: Response) => {
       favoritesOnly: favoritesOnly as string,
       matchOnly: matchOnly as string,
       showStaples: showStaples as string,
+      allowSubstitutions: allowSubstitutions as string,
       scope: scope as 'all' | 'household' | 'mine',
       sort: sort as 'asc' | 'desc',
     };
@@ -85,27 +86,31 @@ export const getTags = async (req: Request, res: Response) => {
 
 export const getTaxonomy = async (req: Request, res: Response) => {
     try {
-        const [categories, tags, units, ingredients, modifiers] = await Promise.all([
+        const [
+            categories, tags, units, ingredients, modifiers,
+            ingredientCategories, substitutionGroups // [NEW]
+        ] = await Promise.all([
             prisma.category.findMany({ 
                 orderBy: { name: 'asc' },
-                include: { 
-                    subcategories: {
-                        orderBy: { name: 'asc' }
-                    }
-                }
+                include: { subcategories: { orderBy: { name: 'asc' } } }
             }),
             prisma.tag.findMany({ orderBy: { name: 'asc' } }),
             prisma.unit.findMany({ orderBy: { name: 'asc' } }),
             prisma.ingredient.findMany({ orderBy: { name: 'asc' } }),
-            prisma.modifier.findMany({ orderBy: { name: 'asc' } })
+            prisma.modifier.findMany({ orderBy: { name: 'asc' } }),
+            
+            prisma.ingredientCategory.findMany({ orderBy: { order: 'asc' } }),
+            prisma.substitutionGroup.findMany({ orderBy: { name: 'asc' } })
         ]);
         
-        return sendSuccess(res, { categories, tags, units, ingredients, modifiers }, "Taxonomy retrieved");
+        return sendSuccess(res, { 
+            categories, tags, units, ingredients, modifiers,
+            ingredientCategories, substitutionGroups
+        }, "Taxonomy retrieved");
     } catch (error) {
         return sendError(res, "Could not fetch taxonomy", 500, error);
     }
 };
-
 export const createRecipe = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id; 
@@ -202,8 +207,27 @@ export const deleteRecipe = async (req: AuthRequest, res: Response) => {
 
 export const getRecipeDetail = async (req: Request, res: Response) => {
   const slug = req.params.slug as string;
-  const userId = (req as any).user?.id || req.query.userId as string | undefined;
-  const activeHouseholdId = (req as any).user?.activeHouseholdId;
+  let userId = (req as any).user?.id || req.query.userId as string | undefined;
+  let activeHouseholdId = (req as any).user?.activeHouseholdId;
+
+  if (!activeHouseholdId && req.headers.authorization?.startsWith('Bearer ')) {
+      try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+          userId = decoded.id; // Also guarantees userId is accurate
+          
+          const user = await prisma.user.findUnique({
+              where: { id: userId },
+              select: { activeHouseholdId: true }
+          });
+          
+          if (user) {
+              activeHouseholdId = user.activeHouseholdId;
+          }
+      } catch (e) {
+          // Ignore token errors here, they just get treated as a guest
+      }
+  }
 
   if (!slug) return res.status(400).json({ status: 'error', message: 'Missing slug' });
 

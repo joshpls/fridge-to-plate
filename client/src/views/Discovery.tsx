@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import RecipeCard from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
@@ -9,6 +10,8 @@ import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 
 const Discovery: React.FC = () => {
+    const location = useLocation();
+    
     const [recipes, setRecipes] = useState<any[]>([]);
     const [taxonomy, setTaxonomy] = useState<any>(null);
     const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
@@ -19,38 +22,31 @@ const Discovery: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [includeIngredients, setIncludeIngredients] = useState<string[]>([]);
+    const [includeIngredients, setIncludeIngredients] = useState<string[]>(location.state?.includeIngredients || []);
     const [excludeIngredients, setExcludeIngredients] = useState<string[]>([]);
-    const [matchOnly, setMatchOnly] = useState(false);
     const [favoritesOnly, setFavoritesOnly] = useState(false);
     const [showStaples, setShowStaples] = useState(false);
+    const [allowSubstitutions, setAllowSubstitutions] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    
-    // Pagination & Loading States
     const [scope, setScope] = useState<'all' | 'household' | 'mine'>('all');
+    const [matchOnly, setMatchOnly] = useState(location.state?.filterByPantry || false);
 
+    // Pagination & Loading States
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
     const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 });
+    const isInitialMount = useRef(true);
 
     const filtersStr = JSON.stringify({
         searchQuery, selectedCategory, selectedSubcategory, 
         selectedTags, includeIngredients, excludeIngredients, 
-        favoritesOnly, sortOrder, showStaples, matchOnly, scope
+        favoritesOnly, sortOrder, showStaples, allowSubstitutions, matchOnly, scope
     });
 
     const lastFiltersRef = useRef(filtersStr);
-
-    useEffect(() => {
-        const fetchTaxonomy = async () => {
-            const data = await taxonomyService.getTaxonomy();
-            if (data) setTaxonomy(data);
-        }
-        fetchTaxonomy();
-    }, []);
 
     useEffect(() => {
         let isSubscribed = true;
@@ -62,12 +58,44 @@ const Discovery: React.FC = () => {
             return;
         }
 
-        const loadRecipes = async () => {
+        const loadData = async () => {
             if (page > 1 && !hasMore) return;
 
             try {
                 page === 1 ? setLoading(true) : setLoadingMore(true);
+
+                // Determine if we are in a pure, unfiltered default state
+                const isDefaultSearch = 
+                    searchQuery === '' && selectedCategory === '' && selectedSubcategory === '' &&
+                    selectedTags.length === 0 && includeIngredients.length === 0 &&
+                    excludeIngredients.length === 0 && !favoritesOnly &&
+                    sortOrder === 'asc' && !showStaples && !matchOnly && scope === 'all';
+
+                // --- BOOTSTRAP (Fast Initial Load) ---
+                if (isInitialMount.current && isDefaultSearch && page === 1) {
+                    const res = await fetchWithAuth(`${API_BASE}/discovery/bootstrap`);
+                    const result = await res.json();
+
+                    if (isSubscribed && result.status === 'success') {
+                        setTaxonomy(result.data.taxonomy);
+                        setRecipes(result.data.recipes);
+                        setHasMore(result.data.totalRecipes > result.data.recipes.length);
+                        isInitialMount.current = false;
+                        return; // Exit early, we got the DTO!
+                    }
+                }
+
+                isInitialMount.current = false;
+
+                // SPECIFIC FETCHING (Filters or Pagination Active) ---
                 
+                // 1. Ensure taxonomy is loaded if we bypassed the bootstrap
+                if (!taxonomy) {
+                    const taxData = await taxonomyService.getTaxonomy();
+                    if (isSubscribed && taxData) setTaxonomy(taxData);
+                }
+
+                // 2. Fetch specific recipes
                 const params = new URLSearchParams({
                     page: page.toString(), limit: '12', sort: sortOrder
                 });
@@ -81,7 +109,7 @@ const Discovery: React.FC = () => {
                 if (favoritesOnly) params.append('favoritesOnly', 'true');
                 if (matchOnly) params.append('matchOnly', 'true');
                 if (showStaples) params.append('showStaples', 'true');
-                
+                if (allowSubstitutions === false) params.append('allowSubstitutions', 'false');
                 if (scope !== 'all') params.append('scope', scope);
 
                 const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
@@ -107,10 +135,11 @@ const Discovery: React.FC = () => {
             }
         };
 
-        loadRecipes();
+        loadData();
         return () => { isSubscribed = false; };
-    }, [page, filtersStr]);
+    }, [page, filtersStr]); 
 
+    // Handle Infinite Scroll
     useEffect(() => {
         if (inView && hasMore && !loadingMore && !loading) {
             setPage(prev => prev + 1);
@@ -123,7 +152,7 @@ const Discovery: React.FC = () => {
     const handleClearFilters = () => {
         setSearchInput(''); setSearchQuery(''); setSelectedCategory(''); setSelectedSubcategory('');
         setSelectedTags([]); setIncludeIngredients([]); setExcludeIngredients([]); setFavoritesOnly(false);
-        setShowStaples(false); setSortOrder('asc'); setMatchOnly(false); setScope('all');
+        setShowStaples(false); setAllowSubstitutions(true); setSortOrder('asc'); setMatchOnly(false); setScope('all');
     };
 
     return (
@@ -146,6 +175,8 @@ const Discovery: React.FC = () => {
                 favoritesOnly={favoritesOnly} setFavoritesOnly={setFavoritesOnly}
                 sortOrder={sortOrder} setSortOrder={setSortOrder}
                 showStaples={showStaples} setShowStaples={setShowStaples}
+                allowSubstitutions={allowSubstitutions}
+                setAllowSubstitutions={setAllowSubstitutions}
                 matchOnly={matchOnly} setMatchOnly={setMatchOnly}
                 scope={scope} setScope={setScope} 
                 onClearFilters={handleClearFilters}

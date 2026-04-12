@@ -26,8 +26,8 @@ export const Navigation = () => {
                     fetchWithAuth(`${API_BASE}/household/invites/me`)
                 ]);
 
-                if (pantryData) {
-                    setPantryCount(pantryData.length || 0);
+                if (pantryData && pantryData.items) {
+                    setPantryCount(pantryData.items.length || 0);
                 }
 
                 if (inviteRes.ok) {

@@ -24,6 +24,7 @@ const RecipeDetail = () => {
     const [loading, setLoading] = useState(true);
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
     const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+    const [activeSwaps, setActiveSwaps] = useState<Record<string, any>>({});
     
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
@@ -37,6 +38,7 @@ const RecipeDetail = () => {
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
     const [showStaples, setShowStaples] = useState(false);
+    const [allowSubstitutions, setAllowSubstitutions] = useState(true);
     const [missingIngredients, setMissingIngredients] = useState<any[]>([]);
 
     // Comment State
@@ -103,24 +105,41 @@ const RecipeDetail = () => {
         const itemsToAdd = missingIngredients.map((item: any) => {
             const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
             return {
-            ingredientId: item.ingredientId,
-            name: item.name,
-            amount: `${amount} ${unit}`.trim()
-            }});
+                ingredientId: item.ingredientId,
+                name: item.name,
+                quantity: `${amount}`.trim(),
+                unit: `${unit}`.trim(),
+                unitId: item.unit?.id || null
+            };
+        });
         await addIngredientsToShoppingList(itemsToAdd);
     };
 
     useEffect(() => {
         if (recipe && isAuthenticated) {
-            if (showStaples){
-                const ingredients = recipe.ingredients.filter((item: any) => !item.inPantry);
-                setMissingIngredients(ingredients);
-            } else {
-                const ingredients = recipe.ingredients.filter((item: any) => !item.inPantry && !item.isStaple);
-                setMissingIngredients(ingredients);
-            }
+            const ingredients = recipe.ingredients.filter((item: any) => {
+                if (item.inPantry) return false; 
+                if (allowSubstitutions && item.isSubstituted) return false; 
+                if (!showStaples && item.isStaple) return false;
+                return true;
+            });
+            setMissingIngredients(ingredients);
         }
-    }, [recipe, showStaples, isAuthenticated]);
+    }, [recipe, showStaples, allowSubstitutions, isAuthenticated]);
+
+
+    // Handlers
+    const handleSwap = (originalIngredientId: string, substitute: any) => {
+        setActiveSwaps(prev => ({ ...prev, [originalIngredientId]: substitute }));
+    };
+
+    const handleUndoSwap = (originalIngredientId: string) => {
+        setActiveSwaps(prev => {
+            const newSwaps = { ...prev };
+            delete newSwaps[originalIngredientId];
+            return newSwaps;
+        });
+    };
 
     const handlePrint = () => {
         window.print();
@@ -250,6 +269,22 @@ const RecipeDetail = () => {
             modifier: item.modifier,
             displayAmount: `${amount} ${unit}`.trim()
         };
+    }) || [];
+
+    const effectiveIngredients = recipe?.ingredients?.map((ing: any) => {
+        const activeSwap = activeSwaps[ing.ingredientId];
+
+        if (activeSwap) {
+            return {
+                ...ing,
+                originalName: ing.name,
+                name: activeSwap.name,
+                ingredientId: activeSwap.ingredientId || activeSwap.id,
+                isSwapped: true,
+                inPantry: true,
+            };
+        }
+        return ing;
     }) || [];
 
     return (
@@ -446,6 +481,17 @@ const RecipeDetail = () => {
                                         {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
                                     </button>
                                 }
+                                {isAuthenticated &&
+                                    <button
+                                        onClick={() => setAllowSubstitutions(!allowSubstitutions)}
+                                        className={`w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${allowSubstitutions
+                                                ? 'bg-blue-50 text-blue-600 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 shadow-sm'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-white border border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {allowSubstitutions ? '💡 Smart Subs: ON' : '🚫 Smart Subs: OFF'}
+                                    </button>
+                                }
                                 <button
                                     onClick={() => {
                                         setMeasurementSystem(prev => {
@@ -497,8 +543,10 @@ const RecipeDetail = () => {
                                             </div>
                                         </div>
                                         {isAuthenticated &&
-                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50 dark:bg-orange-500/15' : 'hidden'}`}>
-                                                {item.inPantry ? 'In Pantry' : 'Missing'}
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' :
+                                                (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50 dark:bg-orange-500/15' : 'hidden'}`}>
+                                                {item.inPantry ? 'In Pantry' : (allowSubstitutions && item.isSubstituted) ? 'Sub Available' : 'Missing'}
                                             </span>
                                         }
                                     </li>
@@ -628,7 +676,7 @@ const RecipeDetail = () => {
                 <CookMode 
                     recipeName={recipe.name}
                     instructions={steps}
-                    ingredients={formattedIngredients}
+                    ingredients={effectiveIngredients}
                     onClose={() => setIsCookModeOpen(false)}
                     checkedIngredients={checkedIngredients}
                     setCheckedIngredients={setCheckedIngredients}
