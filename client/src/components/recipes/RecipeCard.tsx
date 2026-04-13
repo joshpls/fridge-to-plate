@@ -18,8 +18,6 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples, allowSubstitutions }
     const { user, isAuthenticated } = useAuth();
     const userId = user?.id;
 
-    console.log("recipe.ingredients: ", recipe.ingredients);
-
     const missingIngredients = recipe.ingredients?.filter((ing: any) =>
         !ing.inPantry && (allowSubstitutions ? !ing.isSubstituted : true) && (showStaples || !ing.isStaple)
     ) || [];

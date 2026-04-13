@@ -29,6 +29,7 @@ const Pantry = () => {
     const { confirm } = useConfirm();
     const { token, isAuthenticated } = useAuth();
     
+    const [activeTab, setActiveTab] = useState<'all' | 'staples'>('all');
     const [taxonomy, setTaxonomy] = useState<any>(null);
     const [myPantry, setMyPantry] = useState<PantryItemUI[]>([]);
     const [loading, setLoading] = useState(true);
@@ -146,12 +147,20 @@ const Pantry = () => {
         }).sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
     }, [myPantry]);
 
+    // Filter the pantry list before rendering categories based on the active tab
+    const visiblePantryItems = useMemo(() => {
+        if (activeTab === 'staples') {
+            return myPantry.filter(item => item.isPersonalStaple || item.isDefaultStaple);
+        }
+        return myPantry;
+    }, [myPantry, activeTab]);
+
     const groupedPantry = useMemo(() => {
         const groups: Record<string, PantryItemUI[]> = { 'uncategorized': [] };
         if (taxonomy?.ingredientCategories) {
             taxonomy.ingredientCategories.forEach((cat: any) => groups[cat.id] = []);
         }
-        myPantry.forEach(item => {
+        visiblePantryItems.forEach(item => {
             if (item.categoryId && groups[item.categoryId]) {
                 groups[item.categoryId].push(item);
             } else {
@@ -159,7 +168,7 @@ const Pantry = () => {
             }
         });
         return groups;
-    }, [myPantry, taxonomy]);
+    }, [visiblePantryItems, taxonomy]);
 
     // Apply the Category Filter to the visible accordions
     const visibleCategories = useMemo(() => {
@@ -207,16 +216,6 @@ const Pantry = () => {
         if (isConfirmed) setMyPantry([]);
     };
 
-    const handleTogglePersonalStaple = async (ingredientId: string, currentStatus: boolean) => {
-        updateItem(ingredientId, 'isPersonalStaple', !currentStatus);
-        try {
-            await pantryService.togglePersonalStaple(ingredientId);
-        } catch (e) {
-            updateItem(ingredientId, 'isPersonalStaple', currentStatus);
-            toast.error("Failed to update staple");
-        }
-    };
-
     const handleFindRecipes = (specificIngredients: string[] = []) => {
         navigate('/discovery', { state: { filterByPantry: true, includeIngredients: specificIngredients } });
     };
@@ -228,6 +227,29 @@ const Pantry = () => {
             else next.has(categoryId) ? next.delete(categoryId) : next.add(categoryId);
             return next;
         });
+    };
+
+    const handleToggleStaple = async (ingredientId: string, currentStatus: boolean) => {
+        const newStatus = !currentStatus;
+
+        setMyPantry(prev => prev.map(item =>
+            item.ingredientId === ingredientId
+                ? { ...item, isPersonalStaple: newStatus }
+                : item
+        ));
+
+        try {
+            await pantryService.togglePersonalStaple(ingredientId);
+            toast.success(newStatus ? "Added to My Staples" : "Removed from My Staples");
+        } catch (error) {
+            // Revert on failure
+            setMyPantry(prev => prev.map(item =>
+                item.ingredientId === ingredientId
+                    ? { ...item, isPersonalStaple: currentStatus }
+                    : item
+            ));
+            toast.error("Failed to update staple status");
+        }
     };
 
     if (loading || !taxonomy) return <div className="p-20 text-center font-bold text-gray-400 animate-pulse">Loading your fridge...</div>;
@@ -306,6 +328,31 @@ const Pantry = () => {
                 setFilterCategory={setFilterCategory}
             />
 
+            {/* --- Tab Navigation --- */}
+            <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl mb-6">
+                <button
+                    onClick={() => setActiveTab('all')}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                        activeTab === 'all'
+                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                >
+                    All Items
+                </button>
+                <button
+                    onClick={() => setActiveTab('staples')}
+                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                        activeTab === 'staples'
+                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                >
+                    <Star size={16} className={activeTab === 'staples' ? 'fill-orange-400 text-orange-400' : ''} />
+                    My Staples
+                </button>
+            </div>
+
             {/* Categorized Pantry Display */}
             <section className="space-y-4">
                 {visibleCategories.map((category: any) => {
@@ -335,7 +382,7 @@ const Pantry = () => {
                                             <div className="flex justify-between items-start sm:items-center w-full sm:w-auto flex-1">
                                                 <div className="flex items-center gap-3">
                                                     <button 
-                                                        onClick={() => handleTogglePersonalStaple(item.ingredientId, item.isPersonalStaple)}
+                                                        onClick={() => handleToggleStaple(item.ingredientId, item.isPersonalStaple)}
                                                         disabled={item.isDefaultStaple}
                                                         title={item.isDefaultStaple ? "Global staple (always on)" : "Toggle personal staple"}
                                                         className={`p-1.5 rounded-full transition-colors ${item.isDefaultStaple ? 'bg-yellow-100 text-yellow-400 cursor-not-allowed dark:bg-yellow-900/30 dark:text-yellow-600' : item.isPersonalStaple ? 'bg-yellow-100 text-yellow-500 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:hover:bg-yellow-500/40' : 'bg-gray-200 text-gray-400 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-500 dark:hover:bg-gray-600'}`}
@@ -415,6 +462,16 @@ const Pantry = () => {
                         </div>
                     );
                 })}
+
+                {visiblePantryItems.length === 0 && (
+                     <div className="text-center py-12">
+                         <p className="text-gray-500 dark:text-gray-400 font-medium">
+                             {activeTab === 'staples' 
+                                 ? "You haven't marked any personal staples yet. Click the star icon on any ingredient to add it!" 
+                                 : "Your pantry is currently empty."}
+                         </p>
+                     </div>
+                )}
             </section>
         </div>
     );
