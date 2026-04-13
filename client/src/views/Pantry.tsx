@@ -17,7 +17,7 @@ interface PantryItemUI {
     name: string;
     categoryId: string | null;
     isDefaultStaple: boolean;
-    isPersonalStaple: boolean;
+    isHouseholdStaple: boolean;
     quantity: number | '';
     unitId: string;
     expiresAt: string; 
@@ -32,6 +32,8 @@ const Pantry = () => {
     const [activeTab, setActiveTab] = useState<'all' | 'staples'>('all');
     const [taxonomy, setTaxonomy] = useState<any>(null);
     const [myPantry, setMyPantry] = useState<PantryItemUI[]>([]);
+    const [householdStaples, setHouseholdStaples] = useState<string[]>([]);
+    
     const [loading, setLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
     
@@ -51,17 +53,41 @@ const Pantry = () => {
         const loadInitialData = async () => {
             try {
                 setLoading(true);
-                const tax = await taxonomyService.getTaxonomy();
+                
+                // Fetch Taxonomy and Pantry simultaneously
+                const [tax, pantryData] = await Promise.all([
+                    taxonomyService.getTaxonomy(),
+                    pantryService.getPantry()
+                ]);
+
                 if (tax) setTaxonomy(tax);
 
-                const pantryData = await pantryService.getPantry();
+                // Fetch new household staples array
+                let staplesList: string[] = [];
+                try {
+                    const staplesRes = await fetchWithAuth(`${API_BASE}/household/staples`);
+                    if (staplesRes.ok) {
+                        const sData = await staplesRes.json();
+                        if (sData.status === 'success') {
+                            staplesList = sData.data;
+                        }
+                    }
+                } catch(e) { 
+                    console.error("Failed to fetch household staples", e); 
+                }
+
+                setHouseholdStaples(staplesList);
+
                 if (pantryData && tax) {
-                    const mappedItems: PantryItemUI[] = pantryData.items.map((item: any) => ({
+                    // Safe guard against array vs object structure
+                    const itemsArray = Array.isArray(pantryData) ? pantryData : pantryData.items || [];
+                    
+                    const mappedItems: PantryItemUI[] = itemsArray.map((item: any) => ({
                         ingredientId: item.ingredientId,
                         name: item.ingredient?.name || 'Unknown',
                         categoryId: item.ingredient?.categoryId || null,
                         isDefaultStaple: item.ingredient?.isDefaultStaple || false,
-                        isPersonalStaple: pantryData.personalStapleIds.includes(item.ingredientId),
+                        isHouseholdStaple: staplesList.includes(item.ingredientId),
                         quantity: item.quantity || '',
                         unitId: item.unitId || '',
                         expiresAt: item.expiresAt ? new Date(item.expiresAt).toISOString().split('T')[0] : '',
@@ -79,6 +105,7 @@ const Pantry = () => {
         loadInitialData();
     }, [isAuthenticated, token, navigate]);
 
+    // Autosaving Debounce Logic
     useEffect(() => {
         if (!initialLoadDone.current) return;
 
@@ -98,8 +125,6 @@ const Pantry = () => {
                     body: JSON.stringify({ items: itemsPayload })
                 });
 
-                const stapleIds = myPantry.filter(i => i.isPersonalStaple).map(i => i.ingredientId);
-
                 const cacheItems = myPantry.map(item => ({
                     ingredientId: item.ingredientId,
                     quantity: item.quantity,
@@ -113,7 +138,8 @@ const Pantry = () => {
                     addedBy: item.addedBy ? { alias: item.addedBy } : null
                 }));
 
-                pantryService.optimisticUpdate({ items: cacheItems, personalStapleIds: stapleIds });
+                // Update standard cache format
+                pantryService.optimisticUpdate({ items: cacheItems });
                 refreshPantryCount();
             } catch (err) {
                 console.error("Failed to sync pantry:", err);
@@ -147,13 +173,16 @@ const Pantry = () => {
         }).sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
     }, [myPantry]);
 
-    // Filter the pantry list before rendering categories based on the active tab
+    // Memoize sets for performance
+    const householdStaplesSet = useMemo(() => new Set(householdStaples), [householdStaples]);
+
+    // Filter active items based on Tab
     const visiblePantryItems = useMemo(() => {
         if (activeTab === 'staples') {
-            return myPantry.filter(item => item.isPersonalStaple || item.isDefaultStaple);
+            return myPantry.filter(item => householdStaplesSet.has(item.ingredientId) || item.isDefaultStaple);
         }
         return myPantry;
-    }, [myPantry, activeTab]);
+    }, [myPantry, activeTab, householdStaplesSet]);
 
     const groupedPantry = useMemo(() => {
         const groups: Record<string, PantryItemUI[]> = { 'uncategorized': [] };
@@ -170,7 +199,29 @@ const Pantry = () => {
         return groups;
     }, [visiblePantryItems, taxonomy]);
 
-    // Apply the Category Filter to the visible accordions
+    // Calculate staples the user is completely out of
+    const missingStaples = useMemo(() => {
+        if (activeTab !== 'staples') return [];
+        
+        const currentlyStockedIds = new Set(myPantry.map(item => item.ingredientId));
+        return householdStaples
+            .filter(id => !currentlyStockedIds.has(id))
+            .map(id => {
+                const taxIng = taxonomy?.ingredients?.find((ing: any) => ing.id === id);
+                return {
+                    ingredientId: id,
+                    name: taxIng?.name || 'Unknown',
+                    categoryId: taxIng?.categoryId || null,
+                    isDefaultStaple: taxIng?.isDefaultStaple || false,
+                    isHouseholdStaple: true,
+                    quantity: 0,
+                    unitId: '',
+                    expiresAt: ''
+                } as PantryItemUI;
+            })
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [activeTab, myPantry, householdStaples, taxonomy]);
+
     const visibleCategories = useMemo(() => {
         if (!taxonomy) return [];
         let cats = taxonomy.ingredientCategories.map((c: any) => ({ ...c, isUncategorized: false }));
@@ -188,7 +239,7 @@ const Pantry = () => {
             name: ing.name,
             categoryId: ing.categoryId,
             isDefaultStaple: ing.isDefaultStaple,
-            isPersonalStaple: false,
+            isHouseholdStaple: householdStaplesSet.has(ing.id),
             quantity: '',
             unitId: '',
             expiresAt: ''
@@ -196,6 +247,17 @@ const Pantry = () => {
         setMyPantry(prev => [newItem, ...prev]);
         setSearchTerm('');
         if (ing.categoryId) toggleCategory(ing.categoryId, true);
+    };
+
+    const addMissingStapleToPantry = (item: PantryItemUI) => {
+        const newItem: PantryItemUI = {
+            ...item,
+            quantity: 1, 
+            unitId: taxonomy?.units?.[0]?.id || '' 
+        };
+        setMyPantry(prev => [newItem, ...prev]);
+        toast.success(`Restocked ${item.name}`);
+        if (item.categoryId) toggleCategory(item.categoryId, true);
     };
 
     const updateItem = (ingredientId: string, field: keyof PantryItemUI, value: any) => {
@@ -232,20 +294,33 @@ const Pantry = () => {
     const handleToggleStaple = async (ingredientId: string, currentStatus: boolean) => {
         const newStatus = !currentStatus;
 
+        // Optimistic Update Staples Master List
+        setHouseholdStaples(prev => 
+            newStatus ? [...prev, ingredientId] : prev.filter(id => id !== ingredientId)
+        );
+
+        // Optimistic Update UI List (So stars change color immediately)
         setMyPantry(prev => prev.map(item =>
             item.ingredientId === ingredientId
-                ? { ...item, isPersonalStaple: newStatus }
+                ? { ...item, isHouseholdStaple: newStatus }
                 : item
         ));
 
         try {
-            await pantryService.togglePersonalStaple(ingredientId);
-            toast.success(newStatus ? "Added to My Staples" : "Removed from My Staples");
+            await fetchWithAuth(`${API_BASE}/household/staples/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ingredientId })
+            });
+            toast.success(newStatus ? "Added to Household Staples" : "Removed from Household Staples");
         } catch (error) {
             // Revert on failure
+            setHouseholdStaples(prev => 
+                currentStatus ? [...prev, ingredientId] : prev.filter(id => id !== ingredientId)
+            );
             setMyPantry(prev => prev.map(item =>
                 item.ingredientId === ingredientId
-                    ? { ...item, isPersonalStaple: currentStatus }
+                    ? { ...item, isHouseholdStaple: currentStatus }
                     : item
             ));
             toast.error("Failed to update staple status");
@@ -353,7 +428,7 @@ const Pantry = () => {
                 </button>
             </div>
 
-            {/* Categorized Pantry Display */}
+            {/* Categorized Pantry Display (Handles BOTH 'All' and 'In-Stock Staples') */}
             <section className="space-y-4">
                 {visibleCategories.map((category: any) => {
                     const items = groupedPantry[category.id] || [];
@@ -382,12 +457,12 @@ const Pantry = () => {
                                             <div className="flex justify-between items-start sm:items-center w-full sm:w-auto flex-1">
                                                 <div className="flex items-center gap-3">
                                                     <button 
-                                                        onClick={() => handleToggleStaple(item.ingredientId, item.isPersonalStaple)}
+                                                        onClick={() => handleToggleStaple(item.ingredientId, item.isHouseholdStaple)}
                                                         disabled={item.isDefaultStaple}
-                                                        title={item.isDefaultStaple ? "Global staple (always on)" : "Toggle personal staple"}
-                                                        className={`p-1.5 rounded-full transition-colors ${item.isDefaultStaple ? 'bg-yellow-100 text-yellow-400 cursor-not-allowed dark:bg-yellow-900/30 dark:text-yellow-600' : item.isPersonalStaple ? 'bg-yellow-100 text-yellow-500 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:hover:bg-yellow-500/40' : 'bg-gray-200 text-gray-400 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-500 dark:hover:bg-gray-600'}`}
+                                                        title={item.isDefaultStaple ? "Global staple (always on)" : "Toggle household staple"}
+                                                        className={`p-1.5 rounded-full transition-colors ${item.isDefaultStaple ? 'bg-yellow-100 text-yellow-400 cursor-not-allowed dark:bg-yellow-900/30 dark:text-yellow-600' : item.isHouseholdStaple ? 'bg-yellow-100 text-yellow-500 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:hover:bg-yellow-500/40' : 'bg-gray-200 text-gray-400 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-500 dark:hover:bg-gray-600'}`}
                                                     >
-                                                        <Star size={16} className={item.isPersonalStaple || item.isDefaultStaple ? 'fill-current' : ''} />
+                                                        <Star size={16} className={item.isHouseholdStaple || item.isDefaultStaple ? 'fill-current' : ''} />
                                                     </button>
                                                     <span className="font-bold text-gray-800 dark:text-gray-200">
                                                         {item.name}
@@ -463,16 +538,63 @@ const Pantry = () => {
                     );
                 })}
 
-                {visiblePantryItems.length === 0 && (
+                {visiblePantryItems.length === 0 && activeTab === 'all' && (
                      <div className="text-center py-12">
-                         <p className="text-gray-500 dark:text-gray-400 font-medium">
-                             {activeTab === 'staples' 
-                                 ? "You haven't marked any personal staples yet. Click the star icon on any ingredient to add it!" 
-                                 : "Your pantry is currently empty."}
-                         </p>
+                         <p className="text-gray-500 dark:text-gray-400 font-medium">Your pantry is currently empty.</p>
                      </div>
                 )}
             </section>
+
+            {/* --- Needs Restock Section (Only visible in Staples Tab) --- */}
+            {activeTab === 'staples' && (
+                <section className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2 px-1">
+                        Needs Restock 
+                        {missingStaples.length > 0 && <span className="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 text-xs px-2.5 py-1 rounded-full font-black">{missingStaples.length}</span>}
+                    </h2>
+                    
+                    {missingStaples.length === 0 ? (
+                        <div className="text-center py-10 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">
+                                {householdStaples.length === 0 
+                                    ? "You haven't added any household staples yet. Star items to track them here!" 
+                                    : "Awesome! All your household staples are fully stocked."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+                            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                                {missingStaples.map(item => (
+                                    <div key={item.ingredientId} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-800/30 group">
+                                        
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <button 
+                                                onClick={() => handleToggleStaple(item.ingredientId, true)}
+                                                className="p-1.5 rounded-full bg-yellow-100 text-yellow-500 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:hover:bg-yellow-500/40 transition-colors shrink-0"
+                                                title="Remove from household staples"
+                                            >
+                                                <Star size={18} className="fill-current" />
+                                            </button>
+                                            <span className="font-bold text-gray-400 dark:text-gray-500 line-through decoration-2 text-lg sm:text-base">
+                                                {item.name}
+                                            </span>
+                                        </div>
+
+                                        <button 
+                                            onClick={() => addMissingStapleToPantry(item)}
+                                            className="w-full sm:w-auto px-5 py-2.5 bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-500/20 dark:hover:bg-orange-500/30 dark:text-orange-400 font-black text-sm rounded-xl transition-all whitespace-nowrap shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                                        >
+                                            <span className="text-lg leading-none">+</span> Restock Item
+                                        </button>
+
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </section>
+            )}
+
         </div>
     );
 };

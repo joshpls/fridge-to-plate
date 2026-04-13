@@ -60,8 +60,6 @@ const assignFallbackHousehold = async (tx: any, user: any) => {
     return newHousehold;
 };
 
-// --- EXISTING ENDPOINTS UPDATED ---
-
 export const getHouseholdDetails = async (householdId: string) => {
     return await prisma.household.findUnique({
         where: { id: householdId },
@@ -228,4 +226,34 @@ export const rejectInvite = async (inviteId: string, email: string) => {
         where: { id: inviteId },
         data: { status: 'REJECTED' }
     });
+};
+
+export const getHouseholdStaples = async (householdId: string) => {
+    // Return a flat array of string IDs
+    const staples = await prisma.householdStaple.findMany({
+        where: { householdId },
+        select: { ingredientId: true }
+    });
+    return staples.map(s => s.ingredientId);
+};
+
+export const toggleHouseholdStaple = async (householdId: string, ingredientId: string) => {
+    // Check if the staple already exists
+    const existing = await prisma.householdStaple.findUnique({
+        where: {
+            householdId_ingredientId: { householdId, ingredientId }
+        }
+    });
+
+    if (existing) {
+        await prisma.householdStaple.delete({
+            where: { id: existing.id }
+        });
+        return { added: false };
+    } else {
+        await prisma.householdStaple.create({
+            data: { householdId, ingredientId }
+        });
+        return { added: true };
+    }
 };

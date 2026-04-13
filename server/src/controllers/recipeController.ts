@@ -111,6 +111,7 @@ export const getTaxonomy = async (req: Request, res: Response) => {
         return sendError(res, "Could not fetch taxonomy", 500, error);
     }
 };
+
 export const createRecipe = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id; 

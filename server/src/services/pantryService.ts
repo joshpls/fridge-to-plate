@@ -2,26 +2,18 @@
 import { prisma } from '../config/db.js';
 
 export const fetchHouseholdPantry = async (householdId: string) => {
-    const [pantryItems, staples] = await Promise.all([
-        prisma.pantryItem.findMany({
-            where: { householdId },
-            include: {
-                ingredient: true,
-                unit: true,
-                addedBy: { select: { alias: true, firstName: true } }
-            },
-            orderBy: { createdAt: 'desc' }
-        }),
-        prisma.householdStaple.findMany({
-            where: { householdId },
-            select: { ingredientId: true }
-        })
-    ]);
+    // Just fetch and return the pantry items
+    const pantryItems = await prisma.pantryItem.findMany({
+        where: { householdId },
+        include: {
+            ingredient: true,
+            unit: true,
+            addedBy: { select: { alias: true, firstName: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
 
-    return {
-        items: pantryItems,
-        personalStapleIds: staples.map(s => s.ingredientId)
-    };
+    return pantryItems;
 };
 
 export const updateHouseholdPantry = async (householdId: string, items: any[], userId: string) => {
@@ -64,24 +56,4 @@ export const appendToHouseholdPantry = async (householdId: string, items: any[],
     });
 
     return true;
-};
-
-export const togglePersonalStaple = async (householdId: string, ingredientId: string) => {
-    const existing = await prisma.householdStaple.findUnique({
-        where: {
-            householdId_ingredientId: { householdId, ingredientId }
-        }
-    });
-
-    if (existing) {
-        await prisma.householdStaple.delete({
-            where: { householdId_ingredientId: { householdId, ingredientId } }
-        });
-        return { isStaple: false };
-    } else {
-        await prisma.householdStaple.create({
-            data: { householdId, ingredientId }
-        });
-        return { isStaple: true };
-    }
 };

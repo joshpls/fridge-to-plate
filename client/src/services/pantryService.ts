@@ -1,4 +1,4 @@
-// client/src/services/pantryService.ts
+// src/services/pantryService.ts
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { storageService } from './storageService';
@@ -43,14 +43,18 @@ export const pantryService = {
         return fetchPromise;
     },
 
-    togglePersonalStaple: async (ingredientId: string) => {
+    toggleHouseholdStaple: async (ingredientId: string) => {
         try {
-            const res = await fetchWithAuth(`${API_BASE}/pantry/${ingredientId}/staple`, {
-                method: 'POST'
+            const res = await fetchWithAuth(`${API_BASE}/household/staples`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ingredientId })
             });
             return await res.json();
         } catch (error) {
-            console.error("Failed to toggle staple", error);
+            console.error("Failed to toggle household staple", error);
             throw error;
         }
     },

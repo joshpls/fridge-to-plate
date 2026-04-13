@@ -43,14 +43,17 @@ export const mapRecipeToDto = (
 
   // Map and Flatten Ingredients (with Smart Substitutions & Hybrid Staples)
   const ingredients = recipe.ingredients?.map((ri: any) => {
-    const inPantry = pantryIds.has(ri.ingredientId);
-    
+    // [FIX] An item is available if it's physically in the pantry OR if it's a household staple
+    const isPhysicallyOwned = pantryIds.has(ri.ingredientId);
+    const isPersonalStaple = householdStapleIds.has(ri.ingredientId);
+
+    // We consider it "inPantry" for logic purposes if they have it or it's a staple
+    const inPantry = isPhysicallyOwned || isPersonalStaple;
+
     // Check if missing but a valid substitute exists in the pantry
     const isSubstituted = !inPantry && !!ri.ingredient.subGroupId && pantrySubGroups.has(ri.ingredient.subGroupId);
-    
-    // Hybrid Staple Logic: It's a staple if global OR personal
+
     const isGlobalStaple = ri.ingredient.isDefaultStaple;
-    const isPersonalStaple = householdStapleIds.has(ri.ingredientId);
     const isStaple = isGlobalStaple || isPersonalStaple;
 
     return {

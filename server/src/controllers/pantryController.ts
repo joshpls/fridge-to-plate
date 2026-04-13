@@ -47,18 +47,3 @@ export const bulkAddToPantry = async (req: AuthRequest, res: Response) => {
     return sendError(res, "Failed to bulk add pantry items", 500, error);
   }
 };
-
-export const togglePersonalStaple = async (req: AuthRequest, res: Response) => {
-  try {
-    const householdId = req.user!.activeHouseholdId;
-    const { ingredientId } = req.params;
-
-    if (!ingredientId) return sendError(res, "Ingredient ID required", 400);
-    if (typeof ingredientId != "string") return sendError(res, "ingredientId must be a string", 400);
-
-    const result = await pantryService.togglePersonalStaple(householdId, ingredientId);
-    return sendSuccess(res, result, "Staple status toggled");
-  } catch (error) {
-    return sendError(res, "Failed to toggle staple", 500, error);
-  }
-};
