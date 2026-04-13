@@ -10,9 +10,10 @@ interface RecipeCardProps {
     recipe: any;
     initialFavorite: boolean;
     showStaples?: boolean;
+    allowSubstitutions?: boolean;
 }
 
-const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
+const RecipeCard = ({ recipe, initialFavorite, showStaples, allowSubstitutions }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
     const { user, isAuthenticated } = useAuth();
     const userId = user?.id;
@@ -20,7 +21,7 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
     console.log("recipe.ingredients: ", recipe.ingredients);
 
     const missingIngredients = recipe.ingredients?.filter((ing: any) =>
-        !ing.inPantry && !ing.isSubstituted && (showStaples || !ing.isStaple)
+        !ing.inPantry && (allowSubstitutions ? !ing.isSubstituted : true) && (showStaples || !ing.isStaple)
     ) || [];
     
     const missingCount = missingIngredients.length;
