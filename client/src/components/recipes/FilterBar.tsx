@@ -18,7 +18,9 @@ export const FilterBar = ({
     matchOnly, setMatchOnly,
     scope, setScope
 }: FilterBarProps) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(() => (matchOnly || showStaples || !allowSubstitutions || favoritesOnly ||
+        selectedTags.length > 0 || includeIngredients.length > 0 ||
+        excludeIngredients.length > 0 || selectedSubcategory !== ''));
     const { isAuthenticated } = useAuth();
 
     const availableSubcategories = taxonomy?.categories?.find(
