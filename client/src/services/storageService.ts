@@ -5,6 +5,7 @@ const KEYS = {
     SHOPPING: 'f2p_shopping_list',
     TAXONOMY: 'f2p_taxonomy_cache',
     PANTRY: 'f2p_pantry_cache',
+    FILTERBAR: 'f2p_discovery_filters',
 };
 
 export const storageService = {
@@ -22,7 +23,7 @@ export const storageService = {
             window.dispatchEvent(new Event('shoppingListUpdated'));
         },
 
-        addItems: (newItems: { ingredientId: string; name: string; amount: string }[]) => {
+        addItems: (newItems: { ingredientId: string; name: string; quantity: string, unit: string, unitId: string | null }[]) => {
             const currentList = storageService.shopping.get();
             const updatedList = [...currentList];
 

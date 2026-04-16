@@ -18,13 +18,13 @@ export const savePantry = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const householdId = req.user!.activeHouseholdId;
-    const { ingredientIds } = req.body;
+    const { items } = req.body; // [UPDATED] Changed from ingredientIds to items
 
-    if (!Array.isArray(ingredientIds)) {
-      return sendError(res, "ingredientIds must be an array", 400);
+    if (!Array.isArray(items)) {
+      return sendError(res, "items must be an array of objects", 400);
     }
 
-    await pantryService.updateHouseholdPantry(householdId, ingredientIds, userId);
+    await pantryService.updateHouseholdPantry(householdId, items, userId);
     return sendSuccess(res, null, "Household pantry updated successfully");
   } catch (error) {
     return sendError(res, "Failed to save pantry items", 500, error);
@@ -35,13 +35,13 @@ export const bulkAddToPantry = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const householdId = req.user!.activeHouseholdId;
-    const { ingredientIds } = req.body;
+    const { items } = req.body;
 
-    if (!Array.isArray(ingredientIds)) {
-      return sendError(res, "ingredientIds must be an array", 400);
+    if (!Array.isArray(items)) {
+      return sendError(res, "items must be an array of objects", 400);
     }
 
-    await pantryService.appendToHouseholdPantry(householdId, ingredientIds, userId);
+    await pantryService.appendToHouseholdPantry(householdId, items, userId);
     return sendSuccess(res, null, "Items added to household pantry successfully");
   } catch (error) {
     return sendError(res, "Failed to bulk add pantry items", 500, error);

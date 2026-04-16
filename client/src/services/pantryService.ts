@@ -1,3 +1,4 @@
+// src/services/pantryService.ts
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { storageService } from './storageService';
@@ -7,14 +8,12 @@ let fetchPromise: Promise<any> | null = null;
 
 export const pantryService = {
     getPantry: async (forceRefresh = false) => {
-        // 1. Check centralized session storage first
         const cachedPantry = storageService.cache.getPantry();
         
         if (cachedPantry && !forceRefresh) {
             return cachedPantry;
         }
 
-        // 2. Prevent duplicate network requests
         if (isFetching && fetchPromise) {
             return fetchPromise;
         }
@@ -27,7 +26,6 @@ export const pantryService = {
             })
             .then(result => {
                 if (result.status === 'success') {
-                    // 3. Save to centralized storage
                     storageService.cache.setPantry(result.data);
                     return result.data;
                 }
@@ -45,12 +43,27 @@ export const pantryService = {
         return fetchPromise;
     },
 
+    toggleHouseholdStaple: async (ingredientId: string) => {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/household/staples`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ingredientId })
+            });
+            return await res.json();
+        } catch (error) {
+            console.error("Failed to toggle household staple", error);
+            throw error;
+        }
+    },
+
     clearCache: () => {
         storageService.cache.clearPantry();
     },
 
-    // Helper to keep SessionStorage in sync with React state without an API call
-    optimisticUpdate: (newList: any[]) => {
-        storageService.cache.setPantry(newList);
+    optimisticUpdate: (newData: any) => {
+        storageService.cache.setPantry(newData);
     }
 };

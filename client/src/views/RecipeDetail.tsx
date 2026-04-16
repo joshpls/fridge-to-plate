@@ -15,6 +15,8 @@ import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
 // import { useWakeLock } from '../hooks/useWakeLock';
 import { SourceAttribution } from '../components/recipes/RenderSourceAttribution';
+import { taxonomyService } from '../services/taxonomyService';
+import { pantryService } from '../services/pantryService';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -37,6 +39,7 @@ const RecipeDetail = () => {
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
     const [showStaples, setShowStaples] = useState(false);
+    const [allowSubstitutions, setAllowSubstitutions] = useState(true);
     const [missingIngredients, setMissingIngredients] = useState<any[]>([]);
 
     // Comment State
@@ -44,6 +47,16 @@ const RecipeDetail = () => {
     const [newRating, setNewRating] = useState<number>(5);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [measurementSystem, setMeasurementSystem] = useState<'original' | 'metric' | 'imperial'>('original');
+
+    // Background Data for Smart Swaps
+    const [pantryItems, setPantryItems] = useState<any[]>([]);
+    const [taxonomyIngredients, setTaxonomyIngredients] = useState<any[]>([]);
+
+    // Swap Modal State
+    const [activeSwaps, setActiveSwaps] = useState<Record<string, any>>({});
+    const [swapModalOpen, setSwapModalOpen] = useState(false);
+    const [swapTarget, setSwapTarget] = useState<any>(null);
+    const [swapOptions, setSwapOptions] = useState<any[]>([]);
 
     const [isCookModeOpen, setIsCookModeOpen] = useState(false);
 
@@ -103,24 +116,81 @@ const RecipeDetail = () => {
         const itemsToAdd = missingIngredients.map((item: any) => {
             const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
             return {
-            ingredientId: item.ingredientId,
-            name: item.name,
-            amount: `${amount} ${unit}`.trim()
-            }});
+                ingredientId: item.ingredientId,
+                name: item.name,
+                quantity: `${amount}`.trim(),
+                unit: `${unit}`.trim(),
+                unitId: item.unit?.id || null
+            };
+        });
         await addIngredientsToShoppingList(itemsToAdd);
     };
 
     useEffect(() => {
         if (recipe && isAuthenticated) {
-            if (showStaples){
-                const ingredients = recipe.ingredients.filter((item: any) => !item.inPantry);
-                setMissingIngredients(ingredients);
-            } else {
-                const ingredients = recipe.ingredients.filter((item: any) => !item.inPantry && !item.isStaple);
-                setMissingIngredients(ingredients);
-            }
+            const ingredients = recipe.ingredients.filter((item: any) => {
+                if (item.inPantry) return false; 
+                if (allowSubstitutions && item.isSubstituted) return false; 
+                if (!showStaples && item.isStaple) return false;
+                return true;
+            });
+            setMissingIngredients(ingredients);
         }
-    }, [recipe, showStaples, isAuthenticated]);
+    }, [recipe, showStaples, allowSubstitutions, isAuthenticated]);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            pantryService.getPantry().then(res => {
+                if (res && res.items) setPantryItems(res.items);
+            });
+            taxonomyService.getTaxonomy().then(res => {
+                if (res && res.ingredients) setTaxonomyIngredients(res.ingredients);
+            });
+        }
+    }, [isAuthenticated]);
+
+
+    // Handlers
+    const handleSwap = (originalIngredientId: string, substitute: any) => {
+        setActiveSwaps(prev => ({ ...prev, [originalIngredientId]: substitute }));
+    };
+
+    const handleUndoSwap = (originalIngredientId: string) => {
+        setActiveSwaps(prev => {
+            const newSwaps = { ...prev };
+            delete newSwaps[originalIngredientId];
+            return newSwaps;
+        });
+    };
+
+    const executeSwap = (ing: any) => {
+        if (!ing.subGroupId) {
+            toast.error("No substitution group found for this item.");
+            return;
+        }
+
+        const groupIngredients = taxonomyIngredients.filter(t => 
+            t.subGroupId === ing.subGroupId && t.id !== ing.ingredientId
+        );
+
+        const availableSubs = groupIngredients.filter(gIng =>
+            pantryItems.some(pItem => pItem.ingredientId === gIng.id)
+        );
+
+        if (availableSubs.length === 0) {
+            toast.error("No valid substitutes found in your pantry.");
+            return;
+        }
+
+        if (availableSubs.length === 1) {
+            handleSwap(ing.id, { name: availableSubs[0].name, ingredientId: availableSubs[0].id });
+            toast.success(`Automatically swapped for ${availableSubs[0].name}`);
+        } else {
+            setSwapTarget(ing);
+            setSwapOptions(availableSubs);
+            setSwapModalOpen(true);
+        }
+    };
 
     const handlePrint = () => {
         window.print();
@@ -241,8 +311,23 @@ const RecipeDetail = () => {
 
     const steps = recipe.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
 
+    const effectiveIngredients = recipe?.ingredients?.map((ing: any) => {
+        const activeSwap = activeSwaps[ing.id];
+        if (activeSwap) {
+            return {
+                ...ing,
+                originalName: ing.name,
+                name: activeSwap.name,
+                ingredientId: activeSwap.ingredientId || activeSwap.id,
+                isSwapped: true,
+                inPantry: true,
+            };
+        }
+        return ing;
+    }) || [];
+
     // Pre-format ingredients for Cook Mode
-    const formattedIngredients = recipe.ingredients?.map((item: any) => {
+    const formattedIngredients = effectiveIngredients.map((item: any) => {
         const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
         return {
             id: item.id,
@@ -250,7 +335,7 @@ const RecipeDetail = () => {
             modifier: item.modifier,
             displayAmount: `${amount} ${unit}`.trim()
         };
-    }) || [];
+    });
 
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white">
@@ -446,6 +531,17 @@ const RecipeDetail = () => {
                                         {showStaples ? 'Showing All Staples' : 'Hiding Common Staples'}
                                     </button>
                                 }
+                                {isAuthenticated &&
+                                    <button
+                                        onClick={() => setAllowSubstitutions(!allowSubstitutions)}
+                                        className={`w-full text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${allowSubstitutions
+                                                ? 'bg-blue-50 text-blue-600 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 shadow-sm'
+                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-white border border-gray-200 dark:border-gray-800 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {allowSubstitutions ? '💡 Smart Subs: ON' : '🚫 Smart Subs: OFF'}
+                                    </button>
+                                }
                                 <button
                                     onClick={() => {
                                         setMeasurementSystem(prev => {
@@ -478,14 +574,15 @@ const RecipeDetail = () => {
                         )}
 
                         <ul className="space-y-3 print:space-y-1">
-                            {recipe.ingredients.map((item: any) => {
+                            {effectiveIngredients.map((item: any) => {
                                 const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
                                 return (
                                     <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
+                                        
                                         <div className="flex items-center gap-3 w-full pr-2">
-                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
+                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : (allowSubstitutions && item.isSubstituted) ? 'bg-blue-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-gray-800 dark:text-white text-sm print:text-black print:text-sm truncate sm:whitespace-normal">
+                                                <p className={`font-bold text-sm print:text-black print:text-sm truncate sm:whitespace-normal ${item.isSwapped ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-white'}`}>
                                                     {item.name}
                                                     {item.modifier && (
                                                         <span className="text-gray-500 dark:text-gray-400 font-medium">, {item.modifier.toLowerCase()}</span>
@@ -494,13 +591,42 @@ const RecipeDetail = () => {
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
                                                     {amount} {unit}
                                                 </p>
+                                                {/* Show original ingredient if swapped */}
+                                                {item.isSwapped && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-through mt-0.5 print:hidden">
+                                                        Originally: {item.originalName}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
-                                        {isAuthenticated &&
-                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md shrink-0 print:hidden ${item.inPantry ? 'text-green-600 bg-green-50' : (showStaples || !item.isStaple) ? 'text-orange-500 bg-orange-50 dark:bg-orange-500/15' : 'hidden'}`}>
-                                                {item.inPantry ? 'In Pantry' : 'Missing'}
-                                            </span>
-                                        }
+                                        
+                                        <div className="flex items-center gap-2 shrink-0 print:hidden">
+                                            {/* Swap Actions */}
+                                            {item.isSwapped ? (
+                                                <button 
+                                                    onClick={() => handleUndoSwap(item.id)}
+                                                    className="text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                                                >
+                                                    Undo Swap
+                                                </button>
+                                            ) : (isAuthenticated && allowSubstitutions && item.isSubstituted && !item.inPantry) ? (
+                                                <button 
+                                                    onClick={async () => executeSwap(item)}
+                                                    className="text-[9px] font-black uppercase tracking-widest bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400 px-2 py-1 rounded-md hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-colors"
+                                                >
+                                                    Swap
+                                                </button>
+                                            ) : null}
+
+                                            {/* Status Badge */}
+                                            {isAuthenticated &&
+                                                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${item.inPantry ? 'text-green-600 bg-green-50' :
+                                                        (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                            'text-orange-500 bg-orange-50 dark:bg-orange-500/15'}`}>
+                                                    {item.inPantry ? 'In Pantry' : (allowSubstitutions && item.isSubstituted) ? 'Sub Available' : 'Missing'}
+                                                </span>
+                                            }
+                                        </div>
                                     </li>
                                 )
                             })}
@@ -633,6 +759,40 @@ const RecipeDetail = () => {
                     checkedIngredients={checkedIngredients}
                     setCheckedIngredients={setCheckedIngredients}
                 />
+            )}
+            {swapModalOpen && swapTarget && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+                    <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 p-6 animate-in fade-in zoom-in-95 duration-200">
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Choose Substitute</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">
+                            You have multiple options for <span className="font-bold text-gray-700 dark:text-gray-300">{swapTarget.name}</span>. Which would you like to use?
+                        </p>
+
+                        <div className="space-y-2">
+                            {swapOptions.map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => {
+                                        handleSwap(swapTarget.id, { name: opt.name, ingredientId: opt.id });
+                                        setSwapModalOpen(false);
+                                        toast.success(`Swapped for ${opt.name}`);
+                                    }}
+                                    className="w-full text-left px-5 py-4 bg-gray-50 dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:border-orange-200 dark:hover:border-orange-500/30 border border-gray-100 dark:border-gray-700 rounded-2xl font-bold text-gray-800 dark:text-gray-200 transition-all flex justify-between items-center group"
+                                >
+                                    {opt.name}
+                                    <span className="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">Swap ➔</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setSwapModalOpen(false)}
+                            className="w-full mt-6 py-3 font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

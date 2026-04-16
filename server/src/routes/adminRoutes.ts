@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments, createModifier, deleteModifier } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments, createModifier, deleteModifier, createIngredientCategory, updateIngredientCategory, deleteIngredientCategory, getSubstitutions, createSubstitutionGroup, updateSubstitutionGroup, deleteSubstitutionGroup } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -31,10 +31,21 @@ router.post('/categories/:categoryId/subcategories', createSubcategory);
 router.put('/subcategories/:id', updateSubcategory);
 router.delete('/subcategories/:id', deleteSubcategory);
 
-// Ingredient Management
+// Ingredient Categories
+router.post('/ingredient-categories', createIngredientCategory);
+router.put('/ingredient-categories/:id', updateIngredientCategory);
+router.delete('/ingredient-categories/:id', deleteIngredientCategory);
+
+// Ingredients
 router.post('/ingredients', createIngredient);
 router.put('/ingredients/:id', updateIngredient);
 router.delete('/ingredients/:id', deleteIngredient);
+
+// Substitutions
+router.get('/substitutions', getSubstitutions);
+router.post('/substitutions', createSubstitutionGroup);
+router.put('/substitutions/:id', updateSubstitutionGroup);
+router.delete('/substitutions/:id', deleteSubstitutionGroup);
 
 // Tag Management
 router.post('/tags', createTag);

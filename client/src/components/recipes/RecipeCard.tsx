@@ -10,16 +10,19 @@ interface RecipeCardProps {
     recipe: any;
     initialFavorite: boolean;
     showStaples?: boolean;
+    allowSubstitutions?: boolean;
 }
 
-const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) => {
+const RecipeCard = ({ recipe, initialFavorite, showStaples, allowSubstitutions }: RecipeCardProps) => {
     const [isFavorite, setIsFavorite] = React.useState(initialFavorite);
     const { user, isAuthenticated } = useAuth();
     const userId = user?.id;
 
     const missingIngredients = recipe.ingredients?.filter((ing: any) =>
-        !ing.inPantry && (showStaples || !ing.isStaple)
-    ) || []; const missingCount = missingIngredients.length;
+        !ing.inPantry && (allowSubstitutions ? !ing.isSubstituted : true) && (showStaples || !ing.isStaple)
+    ) || [];
+    
+    const missingCount = missingIngredients.length;
 
     // Calculate Average Rating
     const ratings = recipe.comments?.filter((c: any) => c.rating) || [];
@@ -45,11 +48,13 @@ const RecipeCard = ({ recipe, initialFavorite, showStaples }: RecipeCardProps) =
     };
 
     const handleAddMissingToCart = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevents opening the modal when adding to cart
+        e.stopPropagation();
         const items = missingIngredients.map((ing: any) => ({
             ingredientId: ing.ingredientId,
             name: ing.name,
-            amount: `${ing.amount} ${ing.unit?.abbreviation || ''}`.trim()
+            quantity: ing.amount,
+            unit: `${ing.unit?.abbreviation || ''}`.trim(),
+            unitId: ing.unit?.id || null
         }));
         await addIngredientsToShoppingList(items);
     };

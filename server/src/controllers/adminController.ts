@@ -12,10 +12,10 @@ export const getSystemStats = async (req: AuthRequest, res: Response) => {
             prisma.ingredient.count()
         ]);
 
-        return sendSuccess(res, { 
-            users: userCount, 
-            recipes: recipeCount, 
-            ingredients: ingredientCount 
+        return sendSuccess(res, {
+            users: userCount,
+            recipes: recipeCount,
+            ingredients: ingredientCount
         }, "Stats fetched successfully");
     } catch (error: any) {
         return sendError(res, error.message, 500);
@@ -110,7 +110,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         return sendSuccess(res, updatedUser, "User updated successfully");
     } catch (error: any) {
         console.error("Error updating user:", error);
-        
+
         // P2002 is Prisma's error code for a Unique Constraint violation
         if (error.code === 'P2002') {
             return sendError(res, "That email is already in use by another account.", 400);
@@ -136,7 +136,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
         return sendSuccess(res, null, "User deleted successfully");
     } catch (error: any) {
         console.error("Error deleting user:", error);
-        
+
         // P2003 is Prisma's error code for a Foreign Key constraint failure
         if (error.code === 'P2003') {
             return sendError(res, "Cannot delete user because they have authored recipes or posted comments. Delete their content first.", 400);
@@ -218,7 +218,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
 // --- SUBCATEGORY CRUD ---
 export const updateSubcategory = async (req: Request, res: Response) => {
-        const id = req.params.id as string;
+    const id = req.params.id as string;
 
     try {
         const { name } = req.body;
@@ -243,51 +243,103 @@ export const deleteSubcategory = async (req: Request, res: Response) => {
     }
 };
 
-// --- INGREDIENT CRUD ---
-export const createIngredient = async (req: AuthRequest, res: Response) => {
+// --- INGREDIENT CATEGORIES ---
+export const createIngredientCategory = async (req: Request, res: Response) => {
     try {
-        const { name, isStaple } = req.body;
-        const ingredient = await prisma.ingredient.create({
-            data: { 
-                name, 
-                isStaple: isStaple || false 
-            }
-        });
+        const category = await prisma.ingredientCategory.create({ data: { name: req.body.name } });
+        res.json({ status: 'success', data: category });
+    } catch (error) { res.status(500).json({ status: 'error', message: 'Failed to create' }); }
+};
 
-        return sendSuccess(res, ingredient, "Ingredient created");
-    } catch (error) {
-        // This catch block handles the Prisma error if creation fails
-        return sendError(res, "Failed to create ingredient", 500, error);
-    }
+export const updateIngredientCategory = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        const category = await prisma.ingredientCategory.update({
+            where: { id: id }, data: { name: req.body.name }
+        });
+        res.json({ status: 'success', data: category });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+export const deleteIngredientCategory = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        await prisma.ingredientCategory.delete({ where: { id: id } });
+        res.json({ status: 'success' });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+// --- INGREDIENTS ---
+export const createIngredient = async (req: Request, res: Response) => {
+    try {
+        const { name, categoryId, isDefaultStaple } = req.body;
+        const ingredient = await prisma.ingredient.create({
+            data: { name, categoryId: categoryId || null, isDefaultStaple }
+        });
+        res.json({ status: 'success', data: ingredient });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
 };
 
 export const updateIngredient = async (req: Request, res: Response) => {
-    const id = req.params.id as string;
     try {
-        const { name, isStaple } = req.body;
-        
+        const id = req.params.id as string;
+        const { name, categoryId, isDefaultStaple } = req.body;
         const ingredient = await prisma.ingredient.update({
             where: { id: id },
-            data: { 
-                name,
-                ...(isStaple !== undefined && { isStaple: Boolean(isStaple) })
-            }
+            data: { name, categoryId: categoryId || null, isDefaultStaple }
         });
-        return sendSuccess(res, ingredient, "Ingredient updated");
-    } catch (error) {
-        return sendError(res, "Failed to update ingredient", 500, error);
-    }
+        res.json({ status: 'success', data: ingredient });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
 };
 
 export const deleteIngredient = async (req: Request, res: Response) => {
-    const id = req.params.id as string;
     try {
+        const id = req.params.id as string;
         await prisma.ingredient.delete({ where: { id: id } });
-        return sendSuccess(res, null, "Ingredient deleted");
-    } catch (error: any) {
-        if (error.code === 'P2003') return sendError(res, "Cannot delete: Ingredient is used in recipes or pantries.", 400);
-        return sendError(res, "Failed to delete ingredient", 500, error);
-    }
+        res.json({ status: 'success' });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+// --- SUBSTITUTION GROUPS ---
+export const getSubstitutions = async (req: Request, res: Response) => {
+    try {
+        const groups = await prisma.substitutionGroup.findMany({ include: { ingredients: true } });
+        res.json({ status: 'success', data: groups });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+export const createSubstitutionGroup = async (req: Request, res: Response) => {
+    try {
+        const group = await prisma.substitutionGroup.create({
+            data: {
+                name: req.body.name,
+                ingredients: { connect: req.body.ingredientIds.map((id: string) => ({ id })) }
+            }
+        });
+        res.json({ status: 'success', data: group });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+export const updateSubstitutionGroup = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        const group = await prisma.substitutionGroup.update({
+            where: { id: id },
+            data: {
+                name: req.body.name,
+                ingredients: { set: req.body.ingredientIds.map((id: string) => ({ id })) }
+            }
+        });
+        res.json({ status: 'success', data: group });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
+};
+
+export const deleteSubstitutionGroup = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        await prisma.substitutionGroup.delete({ where: { id: id } });
+        res.json({ status: 'success' });
+    } catch (error) { res.status(500).json({ status: 'error' }); }
 };
 
 export const getAllRecipes = async (req: Request, res: Response) => {
@@ -344,17 +396,17 @@ export const getAllRecipes = async (req: Request, res: Response) => {
             prisma.recipe.count({ where: finalWhere })
         ]);
 
-        res.status(200).json({ 
-            status: 'success', 
+        res.status(200).json({
+            status: 'success',
             data: {
                 recipes,
-                pagination: { 
-                    total: totalCount, 
-                    page, 
-                    limit, 
-                    totalPages: Math.ceil(totalCount / limit) 
+                pagination: {
+                    total: totalCount,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(totalCount / limit)
                 }
-            } 
+            }
         });
     } catch (error) {
         console.error("Failed to fetch recipes:", error);
@@ -378,12 +430,12 @@ export const deleteRecipe = async (req: Request, res: Response) => {
 export const createTag = async (req: Request, res: Response) => {
     try {
         const { name, code } = req.body;
-        
+
         // Ensure the code is uppercase
         const newTag = await prisma.tag.create({
-            data: { 
-                name, 
-                code: code.toUpperCase().trim() 
+            data: {
+                name,
+                code: code.toUpperCase().trim()
             }
         });
 
@@ -419,9 +471,9 @@ export const createUnit = async (req: Request, res: Response) => {
         const { name, abbreviation } = req.body;
 
         const newUnit = await prisma.unit.create({
-            data: { 
-                name, 
-                abbreviation: abbreviation.toLowerCase().trim() 
+            data: {
+                name,
+                abbreviation: abbreviation.toLowerCase().trim()
             }
         });
 
@@ -454,13 +506,13 @@ export const deleteUnit = async (req: Request, res: Response) => {
 export const createModifier = async (req: Request, res: Response) => {
     try {
         const { name } = req.body;
-        
+
         if (!name || name.trim() === '') {
             return res.status(400).json({ status: 'error', message: 'Modifier name is required.' });
         }
 
         const newModifier = await prisma.modifier.create({
-            data: { 
+            data: {
                 // Capitalize the first letter for consistency (e.g., "chopped" -> "Chopped")
                 name: name.trim().charAt(0).toUpperCase() + name.trim().slice(1)
             }

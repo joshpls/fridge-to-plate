@@ -61,6 +61,7 @@ model Household {
   recipes     Recipe[]          @relation("HouseholdRecipes")
   users       User[]
   favorites   Favorite[]        @relation("HouseholdFavorites")
+  staples     HouseholdStaple[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -92,12 +93,48 @@ model HouseholdInvite {
   createdAt DateTime  @default(now())
 }
 
+model IngredientCategory {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  order       Int          @default(0) // Control display order (e.g., Produce first)
+  ingredients Ingredient[]
+}
+
+// Smart Substitution Groups (e.g., "Neutral Oils", "Citrus")
+model SubstitutionGroup {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  ingredients Ingredient[]
+}
+
 model Ingredient {
   id                String             @id @default(uuid())
   name              String             @unique
-  isStaple          Boolean            @default(false)
+  isDefaultStaple   Boolean            @default(false)
+  
+  categoryId        String?
+  category          IngredientCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  subGroupId        String?
+  subGroup          SubstitutionGroup?  @relation(fields: [subGroupId], references: [id], onDelete: SetNull)
+
   pantryItems       PantryItem[]
   recipeIngredients RecipeIngredient[]
+  householdStaples  HouseholdStaple[]  // [NEW]
+
+  @@index([categoryId])
+  @@index([subGroupId])
+}
+
+model HouseholdStaple {
+  id           String     @id @default(uuid())
+  householdId  String
+  ingredientId String
+  
+  household    Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, ingredientId])
 }
 
 model PantryItem {
@@ -105,16 +142,22 @@ model PantryItem {
   householdId  String
   ingredientId String
 
-  addedById String?
-  addedBy   User?   @relation("AddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  addedById    String?
+  addedBy      User?   @relation("AddedBy", fields: [addedById], references: [id], onDelete: SetNull)
 
-  household  Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Float?
+  unitId       String?
+  unit         Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  expiresAt    DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  household    Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   @@unique([householdId, ingredientId])
+  @@index([householdId, expiresAt])
 }
 
 model Recipe {
@@ -183,6 +226,7 @@ model Unit {
   name              String             @unique
   abbreviation      String?
   recipeIngredients RecipeIngredient[]
+  pantryItems       PantryItem[]
 }
 
 model RecipeIngredient {

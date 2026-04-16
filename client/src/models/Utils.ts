@@ -38,6 +38,10 @@ export interface FilterBarProps {
     showStaples: boolean;
     setShowStaples: (val: boolean) => void;
 
+    // Substitutions
+    allowSubstitutions: boolean;
+    setAllowSubstitutions: (val: boolean) => void;
+
     // Scope
     scope: 'all' | 'household' | 'mine';
     setScope?: (val: any) => void;

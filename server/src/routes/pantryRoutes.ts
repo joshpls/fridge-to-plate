@@ -5,10 +5,10 @@ import { getPantry, savePantry, bulkAddToPantry } from '../controllers/pantryCon
 
 const router = express.Router();
 
-router.use(requireAuth); // Apply to all routes in this file
+router.use(requireAuth);
 
 router.get('/', getPantry);
-router.post('/', savePantry); // Replaces the whole pantry
-router.post('/bulk', bulkAddToPantry); // Appends to the pantry
+router.post('/', savePantry);
+router.post('/bulk', bulkAddToPantry);
 
 export default router;

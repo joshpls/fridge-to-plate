@@ -13,11 +13,14 @@ export const FilterBar = ({
     favoritesOnly, setFavoritesOnly,
     sortOrder, setSortOrder,
     showStaples, setShowStaples,
+    allowSubstitutions, setAllowSubstitutions,
     onClearFilters,
     matchOnly, setMatchOnly,
     scope, setScope
 }: FilterBarProps) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(() => (matchOnly || showStaples || !allowSubstitutions || favoritesOnly ||
+        selectedTags.length > 0 || includeIngredients.length > 0 ||
+        excludeIngredients.length > 0 || selectedSubcategory !== ''));
     const { isAuthenticated } = useAuth();
 
     const availableSubcategories = taxonomy?.categories?.find(
@@ -153,6 +156,15 @@ export const FilterBar = ({
                                 >
                                     {!showStaples ? '🙈 No Staples' : '👀 Staples'}
                                 </button>
+                            <button
+                                onClick={() => setAllowSubstitutions(!allowSubstitutions)}
+                                className={`col-span-1 w-full sm:w-auto px-3 md:px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold flex justify-center items-center gap-1.5 transition-all whitespace-nowrap ${allowSubstitutions
+                                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-md border-transparent'
+                                        : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 hover:dark:bg-gray-700'
+                                    }`}
+                            >
+                                {allowSubstitutions ? '💡 Smart Subs: ON' : '🚫 Exact Match'}
+                            </button>
                             </>
                         }
 

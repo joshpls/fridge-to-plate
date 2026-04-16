@@ -12,7 +12,8 @@ export interface Category {
 export interface ShoppingListItem {
     ingredientId: string;
     name: string;
-    amount: string;
+    quantity: string;
+    unit: string;
     bought: boolean;
 }
 
@@ -22,6 +23,8 @@ export interface TaxonomyData {
     units: any[];
     ingredients: any[];
     modifiers: any[];
+    ingredientCategories:any[];
+    substitutionGroups:any[];
 }
 
 export interface Ingredient {

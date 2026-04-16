@@ -13,11 +13,11 @@ export const slugify = (text: string): string => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start
-    .replace(/-+$/, '');            // Trim - from end
+    .replace(/\s+/g, '-')           
+    .replace(/[^\w\-]+/g, '')       
+    .replace(/\-\-+/g, '-')         
+    .replace(/^-+/, '')             
+    .replace(/-+$/, '');            
 };
 
 /**
@@ -31,34 +31,61 @@ export const generateUniqueSlug = (name: string): string => {
   return `${baseSlug}-${suffix}`;
 };
 
-export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), showStaples: boolean = false) => {
+export const mapRecipeToDto = (
+  recipe: any, 
+  pantryIds: Set<string> = new Set(), 
+  pantrySubGroups: Set<string> = new Set(),
+  householdStapleIds: Set<string> = new Set(),
+  showStaples: boolean = false,
+  allowSubstitutions: boolean = true
+) => {
   if (!recipe) return null;
 
-  // 1. Map and Flatten Ingredients
-  const ingredients = recipe.ingredients?.map((ri: any) => ({
-    id: ri.id,
-    ingredientId: ri.ingredientId,
-    name: ri.ingredient.name,
-    isStaple: ri.ingredient.isStaple,
-    amount: ri.amount,
-    unit: ri.unit ? {
-      id: ri.unit.id,
-      name: ri.unit.name,
-      abbreviation: ri.unit.abbreviation
-    } : null,
-    modifierId: ri.modifierId,
-    modifier: ri.modifier ? ri.modifier.name : null,
-    inPantry: pantryIds.has(ri.ingredientId)
-  })) || [];
+  // Map and Flatten Ingredients (with Smart Substitutions & Hybrid Staples)
+  const ingredients = recipe.ingredients?.map((ri: any) => {
+    // An item is available if it's physically in the pantry OR if it's a household staple
+    const isPhysicallyOwned = pantryIds.has(ri.ingredientId);
+    const isPersonalStaple = householdStapleIds.has(ri.ingredientId);
+    const inPantry = isPhysicallyOwned || isPersonalStaple;
 
+    // Check if missing but a valid substitute exists in the pantry
+    const isSubstituted = !inPantry && !!ri.ingredient.subGroupId && pantrySubGroups.has(ri.ingredient.subGroupId);
+
+    const isGlobalStaple = ri.ingredient.isDefaultStaple;
+    const isStaple = isGlobalStaple || isPersonalStaple;
+
+    return {
+      id: ri.id,
+      ingredientId: ri.ingredientId,
+      name: ri.ingredient.name,
+      subGroupId: ri.ingredient.subGroupId,
+      isStaple,
+      isGlobalStaple,
+      isPersonalStaple,
+      amount: ri.amount,
+      unit: ri.unit ? {
+        id: ri.unit.id,
+        name: ri.unit.name,
+        abbreviation: ri.unit.abbreviation
+      } : null,
+      modifierId: ri.modifierId,
+      modifier: ri.modifier ? ri.modifier.name : null,
+      inPantry,
+      isSubstituted
+    };
+  }) || [];
+
+  // Calculate Missing Ingredients
   const missingIngredients = ingredients.filter((i: any) => {
       if (i.inPantry) return false;
+      if (allowSubstitutions && i.isSubstituted) return false;
       if (!showStaples && i.isStaple) return false;
       return true;
   });
 
   const totalIngredients = ingredients.length;
   
+  // Match percentage now benefits from substitutions!
   const matchPercentage = totalIngredients > 0 
     ? Math.round(((totalIngredients - missingIngredients.length) / totalIngredients) * 100)
     : 0;
@@ -72,20 +99,15 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), 
     notes: recipe.notes,
     visibility: recipe.visibility,
     
-    // Times & Servings
     prepTime: recipe.prepTime || 0,
     cookTime: recipe.cookTime || 0,
     totalTime: recipe.totalTime || (recipe.prepTime || 0) + (recipe.cookTime || 0),
     servings: recipe.servings || 1,
     imageUrl: recipe.imageUrl,
-
-    // Nutrition (JSON)
     nutrition: recipe.nutrition || {},
-
     sourceName: recipe.sourceName,
     sourceUrl: recipe.sourceUrl,
 
-    // Author (Sanitized)
     author: recipe.author ? {
       id: recipe.author.id,
       email: recipe.author.email,
@@ -95,7 +117,6 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), 
       handle: recipe.author.email.split('@')[0]
     } : null,
 
-    // Category & Subcategory (Objects)
     category: recipe.category ? {
       id: recipe.category.id,
       name: recipe.category.name
@@ -106,20 +127,17 @@ export const mapRecipeToDto = (recipe: any, pantryIds: Set<string> = new Set(), 
       name: recipe.subcategory.name
     } : null,
 
-    // Tags
     tags: recipe.tags?.map((t: any) => ({
       id: t.id,
       name: t.name,
       code: t.code
     })) || [],
 
-    // Flattened Ingredients & Computed Fields
     ingredients,
     missingIngredients, 
     missingCount: missingIngredients.length,
     matchPercentage,
     
-    // Favorites & Comments
     isFavorite: !!recipe.favorites?.length,
     comments: recipe.comments?.map((comment: any) => ({
       ...comment,

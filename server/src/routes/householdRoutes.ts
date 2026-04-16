@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { getHousehold, inviteMember, joinHousehold, updateName,leaveHousehold, removeMember, getMyInvites, rejectInvite, revokeInvite } from '../controllers/householdController.js';
+import { getHousehold, inviteMember, joinHousehold, updateName,leaveHousehold, removeMember, getMyInvites, rejectInvite, revokeInvite, getStaples, toggleStaple } from '../controllers/householdController.js';
 const router = express.Router();
 
 router.use(requireAuth);
@@ -17,5 +17,9 @@ router.post('/join', joinHousehold);
 router.get('/invites/me', getMyInvites);
 router.post('/invites/reject', rejectInvite);
 router.post('/invites/revoke', revokeInvite);
+
+// Staples
+router.get('/staples', getStaples);
+router.post('/staples/toggle', toggleStaple);
 
 export default router;

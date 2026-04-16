@@ -101,3 +101,24 @@ export const revokeInvite = async (req: AuthRequest, res: Response) => {
         return sendError(res, err.message, 400); 
     }
 };
+
+export const getStaples = async (req: AuthRequest, res: Response) => {
+    try {
+        const staples = await householdService.getHouseholdStaples(req.user!.activeHouseholdId);
+        return sendSuccess(res, staples, "Staples retrieved successfully");
+    } catch (err: any) { 
+        return sendError(res, err.message, 400); 
+    }
+};
+
+export const toggleStaple = async (req: AuthRequest, res: Response) => {
+    try {
+        const { ingredientId } = req.body;
+        if (!ingredientId) return sendError(res, "Ingredient ID is required", 400);
+
+        const result = await householdService.toggleHouseholdStaple(req.user!.activeHouseholdId, ingredientId);
+        return sendSuccess(res, result, "Staple toggled successfully");
+    } catch (err: any) { 
+        return sendError(res, err.message, 400); 
+    }
+};

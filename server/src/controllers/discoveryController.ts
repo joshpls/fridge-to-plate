@@ -31,6 +31,7 @@ export const getDiscoveryBootstrap = async (req: AuthRequest, res: Response) => 
 
         const [
             categories, tags, units, ingredients, modifiers,
+            ingredientCategories, substitutionGroups, 
             matchData
         ] = await Promise.all([
             // --- TAXONOMY ---
@@ -42,19 +43,24 @@ export const getDiscoveryBootstrap = async (req: AuthRequest, res: Response) => 
             prisma.unit.findMany({ orderBy: { name: 'asc' } }),
             prisma.ingredient.findMany({ orderBy: { name: 'asc' } }),
             prisma.modifier.findMany({ orderBy: { name: 'asc' } }),
+            prisma.ingredientCategory.findMany({ orderBy: { order: 'asc' } }),
+            prisma.substitutionGroup.findMany({ orderBy: { name: 'asc' } }),
 
             // --- RECIPES ---
             recipeService.getMatches(
                 userId,
                 activeHouseholdId,
-                {}, // Default filters (sorts by match % automatically if userId exists)
+                {}, 
                 { page: 1, limit: 12 }
             )
         ]);
 
         // Assemble the DTO
         const discoveryDTO = {
-            taxonomy: { categories, tags, units, ingredients, modifiers },
+            taxonomy: { 
+                categories, tags, units, ingredients, modifiers,
+                ingredientCategories, substitutionGroups
+            },
             recipes: matchData.recipes,
             totalRecipes: matchData.totalCount
         };
