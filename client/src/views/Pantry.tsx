@@ -53,7 +53,7 @@ const Pantry = () => {
         const loadInitialData = async () => {
             try {
                 setLoading(true);
-                
+
                 // Fetch Taxonomy and Pantry simultaneously
                 const [tax, pantryData] = await Promise.all([
                     taxonomyService.getTaxonomy(),
@@ -62,7 +62,7 @@ const Pantry = () => {
 
                 if (tax) setTaxonomy(tax);
 
-                // Fetch new household staples array
+                // Fetch household staples array
                 let staplesList: string[] = [];
                 try {
                     const staplesRes = await fetchWithAuth(`${API_BASE}/household/staples`);
@@ -72,17 +72,14 @@ const Pantry = () => {
                             staplesList = sData.data;
                         }
                     }
-                } catch(e) { 
-                    console.error("Failed to fetch household staples", e); 
+                } catch (e) {
+                    console.error("Failed to fetch household staples", e);
                 }
 
                 setHouseholdStaples(staplesList);
 
-                if (pantryData && tax) {
-                    // Safe guard against array vs object structure
-                    const itemsArray = Array.isArray(pantryData) ? pantryData : pantryData.items || [];
-                    
-                    const mappedItems: PantryItemUI[] = itemsArray.map((item: any) => ({
+                if (Array.isArray(pantryData) && tax) {
+                    const mappedItems: PantryItemUI[] = pantryData.map((item: any) => ({
                         ingredientId: item.ingredientId,
                         name: item.ingredient?.name || 'Unknown',
                         categoryId: item.ingredient?.categoryId || null,
@@ -99,6 +96,8 @@ const Pantry = () => {
                 console.error("Initialization failed:", err);
             } finally {
                 setLoading(false);
+                // Delay setting initialLoadDone to prevent the sync useEffect 
+                // from firing immediately after the state is set.
                 setTimeout(() => { initialLoadDone.current = true; }, 500);
             }
         };
@@ -139,7 +138,7 @@ const Pantry = () => {
                 }));
 
                 // Update standard cache format
-                pantryService.optimisticUpdate({ items: cacheItems });
+                pantryService.optimisticUpdate(cacheItems);
                 refreshPantryCount();
             } catch (err) {
                 console.error("Failed to sync pantry:", err);

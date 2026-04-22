@@ -6,6 +6,7 @@ const KEYS = {
     TAXONOMY: 'f2p_taxonomy_cache',
     PANTRY: 'f2p_pantry_cache',
     FILTERBAR: 'f2p_discovery_filters',
+    DISCOVERY_STATE: 'f2p_discovery_state',
 };
 
 export const storageService = {
@@ -84,8 +85,19 @@ export const storageService = {
 
         // Pantry
         getPantry: () => storageService.cache.get<any[]>(KEYS.PANTRY),
-        setPantry: (data: any[]) => storageService.cache.set(KEYS.PANTRY, data),
-        clearPantry: () => sessionStorage.removeItem(KEYS.PANTRY),
+        setPantry: (data: any[]) => {storageService.cache.set(KEYS.PANTRY, data); storageService.cache.clearDiscoveryState()},
+        clearPantry: () => {sessionStorage.removeItem(KEYS.PANTRY); storageService.cache.clearDiscoveryState()},
+
+        // Recipe
+        getRecipe: (slug: string, userId?: string | null) =>
+            storageService.cache.get<any>(`f2p_recipe_${slug}_${userId || 'guest'}`),
+        setRecipe: (slug: string, data: any, userId?: string | null) =>
+            storageService.cache.set(`f2p_recipe_${slug}_${userId || 'guest'}`, data),
+
+        // Discovery Scroll & Pagination Restoration
+        getDiscoveryState: () => storageService.cache.get<{ recipes: any[]; page: number; hasMore: boolean; scrollY: number }>(KEYS.DISCOVERY_STATE),
+        setDiscoveryState: (state: { recipes: any[]; page: number; hasMore: boolean; scrollY: number }) => storageService.cache.set(KEYS.DISCOVERY_STATE, state),
+        clearDiscoveryState: () => sessionStorage.removeItem(KEYS.DISCOVERY_STATE),
 
         clearAll: () => sessionStorage.clear()
     }

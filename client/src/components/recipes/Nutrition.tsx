@@ -23,7 +23,7 @@ const Nutrition = ({ nutrition }: NutritionProps) => {
     return <span className="font-black text-gray-900 dark:text-white">{value}</span>;
   };
 
-  // Define a priority order for the main stats you want at the top
+  // Priority order for the main stats
   const priority = ['calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar'];
   
   const sortedKeys = Object.keys(nutrition).sort((a, b) => {

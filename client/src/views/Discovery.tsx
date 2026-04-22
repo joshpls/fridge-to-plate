@@ -1,5 +1,4 @@
-// client/src/views/Discovery.tsx
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import RecipeCard from '../components/recipes/RecipeCard';
 import { RecipeModal } from '../components/recipes/RecipeModal';
@@ -9,9 +8,12 @@ import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useDiscoveryFilters } from '../hooks/useDiscoveryFilters';
+import { storageService } from '../services/storageService';
+import { useAuth } from '../context/AuthContext'; // [NEW] Added to track auth state
 
-const Discovery = () => {
+const Discovery: React.FC = () => {
     const filters = useDiscoveryFilters();
+    const { user } = useAuth(); // [NEW] Get current user
     
     const [recipes, setRecipes] = useState<any[]>([]);
     const [taxonomy, setTaxonomy] = useState<any>(null);
@@ -22,11 +24,14 @@ const Discovery = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    
+    // Restoration States
+    const [isRestoring, setIsRestoring] = useState(true);
+    const restoredPageRef = useRef<number | null>(null);
 
     const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 });
     const isInitialMount = useRef(true);
 
-    // Serialize filters to easily track changes
     const filtersStr = JSON.stringify({
         searchQuery: filters.searchQuery, 
         selectedCategory: filters.selectedCategory, 
@@ -39,18 +44,89 @@ const Discovery = () => {
         showStaples: filters.showStaples, 
         allowSubstitutions: filters.allowSubstitutions, 
         matchOnly: filters.matchOnly, 
-        scope: filters.scope
+        scope: filters.scope,
+        userId: user?.id 
     });
 
     const lastFiltersRef = useRef(filtersStr);
 
     useEffect(() => {
+        const loadTaxonomy = async () => {
+            try {
+                const taxData = await taxonomyService.getTaxonomy();
+                if (taxData) setTaxonomy(taxData);
+            } catch (err) {
+                console.error("Failed to load taxonomy", err);
+            }
+        };
+        if (!taxonomy) loadTaxonomy();
+    }, [taxonomy]);
+
+    // --- RESTORE STATE ON MOUNT ---
+    useLayoutEffect(() => {
+        const cachedState = storageService.cache.getDiscoveryState();
+        
+        if (cachedState && cachedState.recipes.length > 0) {
+            setRecipes(cachedState.recipes);
+            setPage(cachedState.page || 1);
+            setHasMore(cachedState.hasMore ?? true);
+            
+            restoredPageRef.current = cachedState.page || 1; 
+            
+            requestAnimationFrame(() => {
+                window.scrollTo(0, cachedState.scrollY);
+            });
+        }
+        setIsRestoring(false);
+    }, []);
+
+    // --- SAVE STATE CONTINUOUSLY ---
+    useEffect(() => {
+        if (!isRestoring && recipes.length > 0) {
+            storageService.cache.setDiscoveryState({
+                recipes,
+                page,
+                hasMore,
+                scrollY: window.scrollY
+            });
+        }
+    }, [recipes, page, hasMore, isRestoring]);
+
+    useEffect(() => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+        const handleScroll = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                const currentState = storageService.cache.getDiscoveryState();
+                if (currentState) {
+                    storageService.cache.setDiscoveryState({ ...currentState, scrollY: window.scrollY });
+                }
+            }, 150); 
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => { window.removeEventListener('scroll', handleScroll); if (timeoutId) clearTimeout(timeoutId); };
+    }, []);
+
+    // --- FETCHING DATA ---
+    useEffect(() => {
+        if (isRestoring) return; 
+
         let isSubscribed = true;
         const isNewSearch = lastFiltersRef.current !== filtersStr;
         lastFiltersRef.current = filtersStr;
 
-        if (isNewSearch && page !== 1) {
-            setPage(1);
+        if (isNewSearch) {
+            storageService.cache.clearDiscoveryState(); // Wipe cache on new filter or Auth change
+            if (page !== 1) {
+                setPage(1);
+                return;
+            }
+        }
+
+        // Skip network fetch if we JUST restored this exact page from cache
+        if (!isNewSearch && restoredPageRef.current === page) {
+            restoredPageRef.current = null;
+            setLoading(false);
             return;
         }
 
@@ -66,13 +142,13 @@ const Discovery = () => {
                     filters.excludeIngredients.length === 0 && !filters.favoritesOnly &&
                     filters.sortOrder === 'asc' && !filters.showStaples && !filters.matchOnly && filters.scope === 'all';
 
-                // --- BOOTSTRAP (Fast Initial Load) ---
+                // --- BOOTSTRAP ---
                 if (isInitialMount.current && isDefaultSearch && page === 1) {
                     const res = await fetchWithAuth(`${API_BASE}/discovery/bootstrap`);
                     const result = await res.json();
 
                     if (isSubscribed && result.status === 'success') {
-                        setTaxonomy(result.data.taxonomy);
+                        if (!taxonomy) setTaxonomy(result.data.taxonomy);
                         setRecipes(result.data.recipes);
                         setHasMore(result.data.totalRecipes > result.data.recipes.length);
                         isInitialMount.current = false;
@@ -82,12 +158,7 @@ const Discovery = () => {
 
                 isInitialMount.current = false;
 
-                // SPECIFIC FETCHING ---
-                if (!taxonomy) {
-                    const taxData = await taxonomyService.getTaxonomy();
-                    if (isSubscribed && taxData) setTaxonomy(taxData);
-                }
-
+                // --- SPECIFIC FETCHING ---
                 const params = new URLSearchParams({
                     page: page.toString(), limit: '12', sort: filters.sortOrder
                 });
@@ -129,14 +200,22 @@ const Discovery = () => {
 
         loadData();
         return () => { isSubscribed = false; };
-    }, [page, filtersStr]); 
+    }, [page, filtersStr, isRestoring, taxonomy]); // Added taxonomy dependency
 
+    // Trigger next page on scroll
     useEffect(() => {
         if (inView && hasMore && !loadingMore && !loading) {
             setPage(prev => prev + 1);
         }
     }, [inView, hasMore, loadingMore, loading]);
 
+    // Handle closing the modal and updating the local array if favorite was toggled
+    const handleCloseModal = () => {
+        if (selectedRecipe) {
+            setRecipes(prev => prev.map(r => r.id === selectedRecipe.id ? { ...r, isFavorite: selectedRecipe.isFavorite } : r));
+        }
+        setSelectedRecipe(null);
+    };
 
     return (
         <div className="p-6 max-w-7xl mx-auto pb-20">
@@ -172,7 +251,11 @@ const Discovery = () => {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {recipes.map((recipe: any) => (
-                        <div key={recipe.slug} onClick={() => setSelectedRecipe(recipe)}>
+                        <div 
+                            key={recipe.slug} 
+                            onClick={() => setSelectedRecipe(recipe)} 
+                            className="cursor-pointer"
+                        >
                             <RecipeCard recipe={recipe} initialFavorite={recipe.isFavorite || false} showStaples={filters.showStaples} allowSubstitutions={filters.allowSubstitutions}/>
                         </div>
                     ))}
@@ -205,7 +288,8 @@ const Discovery = () => {
                 </div>
             )}
 
-            {selectedRecipe && <RecipeModal recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />}
+            {selectedRecipe && <RecipeModal recipe={selectedRecipe} onClose={handleCloseModal} />}
+            
             {!selectedRecipe && <FloatingAddButton />}
         </div>
     );

@@ -17,6 +17,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import { SourceAttribution } from '../components/recipes/RenderSourceAttribution';
 import { taxonomyService } from '../services/taxonomyService';
 import { pantryService } from '../services/pantryService';
+import { storageService } from '../services/storageService';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -63,13 +64,23 @@ const RecipeDetail = () => {
     useEffect(() => {
         const fetchDetail = async () => {
             try {
+                if (!slug) return;
+                
+                const cached = storageService.cache.getRecipe(slug, userId);
+                if (cached) {
+                    setRecipe(cached);
+                    setLoading(false);
+                    return;
+                }
+
                 const [recipeRes] = await Promise.all([
-                    fetchWithAuth(`${API_BASE}/recipes/${slug}?userId=${userId}`)
+                    fetchWithAuth(`${API_BASE}/recipes/${slug}?userId=${userId || ''}`)
                 ]);
 
                 const recipeResult = await recipeRes.json();
 
                 if (recipeResult.status === 'success') {
+                    storageService.cache.setRecipe(slug, recipeResult.data, userId);
                     setRecipe(recipeResult.data);
                     setCheckedIngredients(new Set());
                 }
