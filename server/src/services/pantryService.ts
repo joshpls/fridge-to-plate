@@ -57,3 +57,12 @@ export const appendToHouseholdPantry = async (householdId: string, items: any[],
 
     return true;
 };
+
+export const removeMultipleFromHouseholdPantry = async (householdId: string, ingredientIds: string[]) => {
+    await prisma.pantryItem.deleteMany({
+        where: {
+            householdId: householdId,
+            ingredientId: { in: ingredientIds }
+        }
+    });
+};

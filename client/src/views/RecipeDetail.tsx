@@ -7,7 +7,7 @@ import { CookMode } from '../components/recipes/CookMode';
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer, Flame, Play, Heart } from 'lucide-react';
+import { Printer, Play, Heart, Check } from 'lucide-react'; // Added Check icon
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
@@ -18,6 +18,7 @@ import { SourceAttribution } from '../components/recipes/RenderSourceAttribution
 import { taxonomyService } from '../services/taxonomyService';
 import { pantryService } from '../services/pantryService';
 import { storageService } from '../services/storageService';
+import { refreshPantryCount } from '../utils/events';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -151,8 +152,11 @@ const RecipeDetail = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            pantryService.getPantry().then(res => {
-                if (res && res.items) setPantryItems(res.items);
+            pantryService.getPantry().then((res: any) => {
+                if (res) {
+                    const itemsArray = Array.isArray(res) ? res : res.items || [];
+                    setPantryItems(itemsArray);
+                }
             });
             taxonomyService.getTaxonomy().then(res => {
                 if (res && res.ingredients) setTaxonomyIngredients(res.ingredients);
@@ -337,6 +341,71 @@ const RecipeDetail = () => {
         return ing;
     }) || [];
 
+    // Complete Recipe Logic
+    const usedPantryIngredients = effectiveIngredients.filter((ing: any) => ing.inPantry);
+    const canComplete = usedPantryIngredients.length > 0;
+
+    const handleCompleteRecipe = async () => {
+        const usedIngredientIds = usedPantryIngredients.map((ing: any) => ing.ingredientId);
+        
+        if (usedIngredientIds.length === 0) return;
+
+        const isConfirmed = await confirm({
+            title: "Complete Recipe?",
+            message: `This will remove ${usedIngredientIds.length} used ingredient(s) from your pantry. Are you sure?`,
+            confirmText: "Yes, complete it"
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const response = await fetchWithAuth(`${API_BASE}/pantry/bulk-remove`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ingredientIds: usedIngredientIds })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                toast.success("Recipe completed! Pantry updated.");
+                
+                // Update local pantry state to reflect removal
+                const updatedPantry = pantryItems.filter(p => !usedIngredientIds.includes(p.ingredientId));
+                setPantryItems(updatedPantry);
+                
+                // Update the recipe state to turn the inPantry dots back to orange
+                setRecipe((prev: any) => ({
+                    ...prev,
+                    ingredients: prev.ingredients.map((ing: any) => ({
+                        ...ing,
+                        inPantry: usedIngredientIds.includes(ing.ingredientId) ? false : ing.inPantry
+                    }))
+                }));
+                
+                // Clear active swaps
+                const newSwaps = { ...activeSwaps };
+                let swapsChanged = false;
+                for (const key in newSwaps) {
+                    if (usedIngredientIds.includes(newSwaps[key].ingredientId)) {
+                        delete newSwaps[key];
+                        swapsChanged = true;
+                    }
+                }
+                if (swapsChanged) setActiveSwaps(newSwaps);
+                
+                // Sync cache and invalidate discovery 
+                storageService.cache.setPantry(updatedPantry);
+                refreshPantryCount();
+            } else {
+                toast.error(result.message || "Failed to update pantry");
+            }
+        } catch (err) {
+            console.error("Failed to complete recipe:", err);
+            toast.error("An error occurred while updating the pantry.");
+        }
+    };
+
     // Pre-format ingredients for Cook Mode
     const formattedIngredients = effectiveIngredients.map((item: any) => {
         const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
@@ -400,19 +469,30 @@ const RecipeDetail = () => {
                         {recipe.name}
                     </h1>
 
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center">
-                        {/* {isLocked && (
+                    {/* {isLocked && (
                             <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 dark:bg-orange-500/15 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
                                 <Flame size={16} className="animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
                             </div>
                         )} */}
+
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center flex-wrap justify-center md:justify-start">
                         <button
                             onClick={() => setIsCookModeOpen(true)}
                             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/30 active:scale-95 shrink-0"
                         >
                             <Play size={18} className="fill-current" /> Start Cooking
                         </button>
+
+                        {isAuthenticated && canComplete && (
+                            <button
+                                onClick={handleCompleteRecipe}
+                                title="Complete and use up pantry ingredients"
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-green-600 dark:bg-green-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-green-700 transition-all shadow-lg shadow-green-500/30 active:scale-95 shrink-0"
+                            >
+                                <Check size={18} className="stroke-[3]" /> Finish Recipe
+                            </button>
+                        )}
 
                         <div className="w-full sm:w-auto">
                             <ShareButton
@@ -772,7 +852,7 @@ const RecipeDetail = () => {
                 />
             )}
             {swapModalOpen && swapTarget && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 p-6 animate-in fade-in zoom-in-95 duration-200">
                         <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Choose Substitute</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">

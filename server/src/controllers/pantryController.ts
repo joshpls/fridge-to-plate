@@ -18,7 +18,7 @@ export const savePantry = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const householdId = req.user!.activeHouseholdId;
-    const { items } = req.body; // [UPDATED] Changed from ingredientIds to items
+    const { items } = req.body;
 
     if (!Array.isArray(items)) {
       return sendError(res, "items must be an array of objects", 400);
@@ -47,3 +47,22 @@ export const bulkAddToPantry = async (req: AuthRequest, res: Response) => {
     return sendError(res, "Failed to bulk add pantry items", 500, error);
   }
 };
+
+export const bulkRemoveFromPantry = async (req: AuthRequest, res: Response) => {
+  try {
+    const householdId = req.user!.activeHouseholdId;
+    const { ingredientIds } = req.body;
+
+    if (!Array.isArray(ingredientIds)) {
+      return sendError(res, "ingredientIds must be an array of strings", 400);
+    }
+
+    // You will need to ensure this service method exists in pantryService.ts
+    await pantryService.removeMultipleFromHouseholdPantry(householdId, ingredientIds);
+    
+    return sendSuccess(res, null, "Items removed from household pantry successfully");
+  } catch (error) {
+    return sendError(res, "Failed to bulk remove pantry items", 500, error);
+  }
+};
+
