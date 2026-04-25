@@ -60,6 +60,18 @@ export interface IngredientRow {
   removeIngredientRow: (index: number) => void;
 };
 
+export interface PantryItemUI {
+    ingredientId: string;
+    name: string;
+    categoryId: string | null;
+    isDefaultStaple: boolean;
+    isHouseholdStaple: boolean;
+    quantity: number | '';
+    unitId: string;
+    expiresAt: string; 
+    addedBy?: string;
+};
+
 export interface ConfirmOptions {
     title?: string;
     message: string;

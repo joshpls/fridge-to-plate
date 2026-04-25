@@ -490,7 +490,7 @@ const RecipeDetail = () => {
                                 title="Complete and use up pantry ingredients"
                                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-green-600 dark:bg-green-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-green-700 transition-all shadow-lg shadow-green-500/30 active:scale-95 shrink-0"
                             >
-                                <Check size={18} className="stroke-[3]" /> Finish Recipe
+                                <Check size={18} className="stroke-3" /> Finish Recipe
                             </button>
                         )}
 
@@ -671,7 +671,7 @@ const RecipeDetail = () => {
                                     <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
                                         
                                         <div className="flex items-center gap-3 w-full pr-2">
-                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry ? 'bg-green-500' : (allowSubstitutions && item.isSubstituted) ? 'bg-blue-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
+                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry || (!showStaples && item.isStaple) ? 'bg-green-500' : (allowSubstitutions && item.isSubstituted) ? 'bg-blue-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
                                             <div className="min-w-0 flex-1">
                                                 <p className={`font-bold text-sm print:text-black print:text-sm truncate sm:whitespace-normal ${item.isSwapped ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-white'}`}>
                                                     {item.name}
@@ -714,7 +714,7 @@ const RecipeDetail = () => {
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${item.inPantry ? 'text-green-600 bg-green-50' :
                                                         (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' :
                                                             'text-orange-500 bg-orange-50 dark:bg-orange-500/15'}`}>
-                                                    {item.inPantry ? 'In Pantry' : (allowSubstitutions && item.isSubstituted) ? 'Sub Available' : 'Missing'}
+                                                    {item.inPantry ? 'In Pantry' : (allowSubstitutions && item.isSubstituted) ? 'Sub Available' : (!showStaples && item.isStaple) ? '' : 'Missing'}
                                                 </span>
                                             }
                                         </div>

@@ -11,18 +11,7 @@ import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
 import { PantryControls } from '../components/pantry/PantryControls';
 import toast from 'react-hot-toast';
-
-interface PantryItemUI {
-    ingredientId: string;
-    name: string;
-    categoryId: string | null;
-    isDefaultStaple: boolean;
-    isHouseholdStaple: boolean;
-    quantity: number | '';
-    unitId: string;
-    expiresAt: string; 
-    addedBy?: string;
-}
+import type { PantryItemUI } from '../models/Utils';
 
 const Pantry = () => {
     const navigate = useNavigate();
