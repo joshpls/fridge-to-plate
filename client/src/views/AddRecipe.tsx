@@ -6,6 +6,8 @@ import { taxonomyService } from '../services/taxonomyService';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
+import { SortableSectionHeader } from '../components/recipes/SortableSectionHeader';
+import { rehydrateIngredients, dehydrateIngredients } from '../utils/recipeUtils';
 import { initialRecipe, Visibility, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 import { AddNutrition } from '../components/recipes/AddNutrition';
 
@@ -22,7 +24,7 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 
 const AddRecipe = () => {
@@ -41,23 +43,15 @@ const AddRecipe = () => {
     const isSubmittedRef = useRef<boolean>(false);
     
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 5,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
     useEffect(() => {
         const initializeForm = async () => {
             try {
                 const taxonomy = await taxonomyService.getTaxonomy(true);
-                if (taxonomy) {
-                    setTaxonomy(taxonomy);
-                }
+                if (taxonomy) setTaxonomy(taxonomy);
 
                 if (slug) {
                     const res = await fetchWithAuth(`${API_BASE}/recipes/${slug}?userId=${userId}`);
@@ -70,7 +64,7 @@ const AddRecipe = () => {
                         originalImageUrlRef.current = r.imageUrl || '';
                         currentImageUrlRef.current = r.imageUrl || '';
 
-                        console.log("recipe result: ", result);
+                        const uiIngredients = rehydrateIngredients(r.ingredients, true);
 
                         setFormData({
                             id: r.id,
@@ -87,13 +81,7 @@ const AddRecipe = () => {
                             sourceName: r.sourceName || '',
                             sourceUrl: r.sourceUrl || '',
                             tagIds: r.tags?.map((t: any) => t.id) || [],
-                            ingredients: r.ingredients?.map((i: any) => ({
-                                id: i.id || Math.random().toString(36).substring(7), // Ensure existing ingredients get IDs
-                                ingredientId: i.ingredientId,
-                                amount: i.amount,
-                                unitId: i.unit?.id || '',
-                                modifierId: i.modifierId || ''
-                            })) || [{ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' }],
+                            ingredients: uiIngredients, 
                             nutrition: {
                                 calories: fetchedNutrition.calories || '',
                                 protein: fetchedNutrition.protein || '',
@@ -137,48 +125,36 @@ const AddRecipe = () => {
     const handleNutritionChange = (field: string, value: string, isFatSubfield: boolean = false) => {
         setFormData(prev => {
             if (isFatSubfield) {
-                return {
-                    ...prev,
-                    nutrition: {
-                        ...prev.nutrition,
-                        fat: {
-                            ...(prev.nutrition.fat || {}),
-                            [field]: value
-                        }
-                    }
-                };
+                return { ...prev, nutrition: { ...prev.nutrition, fat: { ...(prev.nutrition.fat || {}), [field]: value } } };
             }
-            return {
-                ...prev,
-                nutrition: {
-                    ...prev.nutrition,
-                    [field]: field === 'calories' ? (value === '' ? '' : Number(value)) : value,
-                }
-            };
+            return { ...prev, nutrition: { ...prev.nutrition, [field]: field === 'calories' ? (value === '' ? '' : Number(value)) : value } };
         });
     };
 
     const toggleTag = (tagId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            tagIds: prev.tagIds.includes(tagId)
-                ? prev.tagIds.filter(id => id !== tagId)
-                : [...prev.tagIds, tagId]
-        }));
+        setFormData(prev => ({ ...prev, tagIds: prev.tagIds.includes(tagId) ? prev.tagIds.filter(id => id !== tagId) : [...prev.tagIds, tagId] }));
     };
 
     const handleIngredientChange = (index: number, field: string, value: string) => {
         const newIngredients = [...formData.ingredients];
-        newIngredients[index] = {
-            ...newIngredients[index],
-            [field]: field === 'amount' ? (value === '' ? '' : Number(value)) : value
-        };
+        newIngredients[index] = { ...newIngredients[index], [field]: field === 'amount' ? (value === '' ? '' : Number(value)) : value };
         setFormData(prev => ({ ...prev, ingredients: newIngredients }));
     };
 
-    const addIngredientRow = () => setFormData(prev => ({ 
-        ...prev, 
-        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' }]
+    const handleHeaderChange = (index: number, value: string) => {
+        const newIngredients = [...formData.ingredients];
+        newIngredients[index] = { ...newIngredients[index], name: value };
+        setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+    };
+
+    const addSectionHeader = () => setFormData(prev => ({
+        ...prev,
+        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), isHeader: true, name: '', sectionName: '', ingredientId: '', amount: '', unitId: '', modifierId: '' }]
+    }));
+
+    const addIngredientRow = () => setFormData(prev => ({
+        ...prev,
+        ingredients: [...prev.ingredients, { id: Math.random().toString(36).substring(7), ingredientId: '', name: '', sectionName: '', amount: '', unitId: '', modifierId: '' }]
     }));
     
     const removeIngredientRow = (index: number) => setFormData(prev => ({ 
@@ -188,17 +164,11 @@ const AddRecipe = () => {
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-
         if (over && active.id !== over.id) {
             setFormData((prev) => {
                 const oldIndex = prev.ingredients.findIndex((item) => item.id === active.id);
                 const newIndex = prev.ingredients.findIndex((item) => item.id === over.id);
-
-                return {
-                    ...prev,
-                    // arrayMove is a dnd-kit utility to swap positions
-                    ingredients: arrayMove(prev.ingredients, oldIndex, newIndex),
-                };
+                return { ...prev, ingredients: arrayMove(prev.ingredients, oldIndex, newIndex) };
             });
         }
     };
@@ -207,20 +177,12 @@ const AddRecipe = () => {
         setIsUploading(true);
         const uploadData = new FormData();
         uploadData.append('image', file);
-
         try {
-            const res = await fetchWithAuth(`${API_BASE}/upload`, {
-                method: 'POST',
-                body: uploadData
-            });
+            const res = await fetchWithAuth(`${API_BASE}/upload`, { method: 'POST', body: uploadData });
             const result = await res.json();
             if (result.status === 'success') {
                 if (currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
-                    fetchWithAuth(`${API_BASE}/upload`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageUrl: currentImageUrlRef.current })
-                    }).catch(console.error);
+                    fetchWithAuth(`${API_BASE}/upload`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageUrl: currentImageUrlRef.current }) }).catch(console.error);
                 }
                 currentImageUrlRef.current = result.imageUrl;
                 setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
@@ -247,15 +209,10 @@ const AddRecipe = () => {
             for (const item of items) {
                 if (item.type.startsWith('image/')) {
                     const file = item.getAsFile();
-                    if (file) {
-                        e.preventDefault();
-                        uploadFileToServer(file);
-                        break;
-                    }
+                    if (file) { e.preventDefault(); uploadFileToServer(file); break; }
                 }
             }
         };
-
         window.addEventListener('paste', handlePaste);
         return () => window.removeEventListener('paste', handlePaste);
     }, []);
@@ -263,13 +220,9 @@ const AddRecipe = () => {
     useEffect(() => {
         return () => {
             if (!isSubmittedRef.current && currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
-                
                 fetch(`${API_BASE}/upload`, {
                     method: 'DELETE',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}` 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` },
                     body: JSON.stringify({ imageUrl: currentImageUrlRef.current }),
                     keepalive: true 
                 }).catch(() => {});
@@ -299,12 +252,12 @@ const AddRecipe = () => {
         isSubmittedRef.current = true;
 
         try {
+            const finalIngredients = dehydrateIngredients(formData.ingredients);
+
             const cleanedData = {
                 ...formData,
                 nutrition: cleanNutritionData(formData.nutrition),
-                ingredients: formData.ingredients
-                                .filter(ing => ing.ingredientId && ing.amount && ing.unitId)
-                                .map(({ id, ...rest }) => rest)
+                ingredients: finalIngredients
             };
 
             const isEdit = !!formData.id;
@@ -338,7 +291,7 @@ const AddRecipe = () => {
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4 sm:p-6 pb-32 animate-in fade-in">
             
-            <div className="sticky top-16 pt-4 pb-4 mb-6 sm:mb-8 z-55 bg-white dark:bg-gray-950 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="sticky top-16 pt-4 pb-4 mb-6 sm:mb-8 z-50 bg-white dark:bg-gray-950 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         {isEditMode ? 'Edit Recipe' : 'Draft Recipe'}
@@ -353,7 +306,6 @@ const AddRecipe = () => {
             </div>
 
             <div className="space-y-6 sm:space-y-10">
-                {/* Basic Information */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
                     <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">1. Basics</h2>
 
@@ -430,7 +382,6 @@ const AddRecipe = () => {
                     </div>
                 </section>
 
-                {/* Classification */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
                     <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">2. Classification</h2>
 
@@ -463,64 +414,69 @@ const AddRecipe = () => {
                     </div>
                 </section>
 
-                {/* Timing & Yield */}
                 <section className="bg-orange-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
                     <h2 className="text-lg sm:text-xl font-black text-orange-900 border-b-2 border-orange-200/50 dark:border-gray-400 dark:text-gray-200 pb-2">3. Time & Yield</h2>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         <div>
                             <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Prep Time (min)</label>
-                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Cook Time (min)</label>
-                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Servings</label>
-                            <input type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-100 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Yields (Servings) *</label>
+                            <input required type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
                         </div>
                     </div>
                 </section>
 
-                {/* Ingredients (DND Implementation) */}
-                <section className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-4 sm:space-y-6">
-                    <div className="flex justify-between items-end border-b-2 border-gray-200 dark:border-gray-400 pb-2 px-2 sm:px-0">
-                        <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200">4. Ingredients *</h2>
-                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-200 uppercase tracking-widest">{formData.ingredients.length} Items</span>
-                    </div>
+                <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
+                    <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">4. Ingredients</h2>
 
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={formData.ingredients.map(ing => ing.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={formData.ingredients.map(i => i.id)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-3">
-                                {formData.ingredients.map((ing, index) => (
-                                    <SortableIngredientRow
-                                        key={ing.id}
-                                        id={ing.id}
-                                        index={index}
-                                        ingredient={ing}
-                                        taxonomy={taxonomy}
-                                        handleIngredientChange={handleIngredientChange}
-                                        removeIngredientRow={removeIngredientRow}
-                                    />
-                                ))}
+                                {formData.ingredients.map((ing, index) => {
+                                    if (ing.isHeader) {
+                                        return (
+                                            <SortableSectionHeader
+                                                key={ing.id}
+                                                id={ing.id}
+                                                title={ing.name || ''}
+                                                onChange={(val: string) => handleHeaderChange(index, val)}
+                                                onRemove={() => removeIngredientRow(index)}
+                                            />
+                                        );
+                                    }
+                                    return (
+                                        <SortableIngredientRow
+                                            key={ing.id}
+                                            id={ing.id}
+                                            ingredient={ing}
+                                            index={index}
+                                            taxonomy={taxonomy}
+                                            handleIngredientChange={handleIngredientChange}
+                                            removeIngredientRow={removeIngredientRow}
+                                        />
+                                    );
+                                })}
                             </div>
                         </SortableContext>
                     </DndContext>
-
-                    <button type="button" onClick={addIngredientRow} className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-500 dark:text-gray-400 font-bold hover:bg-white dark:bg-gray-900 hover:border-orange-300 hover:text-orange-600 transition-all">
-                        + Add Another Ingredient
-                    </button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button type="button" onClick={addIngredientRow} className="w-full sm:w-auto bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-bold hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm">
+                            + Add Ingredient
+                        </button>
+                        <button type="button" onClick={addSectionHeader} className="w-full sm:w-auto bg-orange-50 dark:bg-orange-500/10 border-2 border-orange-200 dark:border-orange-500/30 text-orange-700 dark:text-orange-400 px-6 py-3 rounded-xl font-bold hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-all shadow-sm">
+                            🏷️ Add Section Header
+                        </button>
+                    </div>
                 </section>
 
-                {/* Instructions & Notes */}
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
                     <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">5. Directions</h2>
 
@@ -569,11 +525,7 @@ const AddRecipe = () => {
                     </div>
                 </section>
 
-                {/* Nutrition (Optional & Expandable) */}
-                <AddNutrition
-                    nutrition={formData.nutrition}
-                    handleNutritionChange={handleNutritionChange}
-                />
+                <AddNutrition nutrition={formData.nutrition} handleNutritionChange={handleNutritionChange} />
             </div>
         </form>
     );

@@ -59,7 +59,7 @@ export const SortableIngredientRow = ({
       </div>
 
       {/* Bottom Row on Mobile / Right Side on Desktop */}
-      <div className="flex items-center gap-2 pl-7 sm:pl-0 w-full sm:w-auto">
+      <div className="flex items-center gap-2 pl-1 sm:pl-0 w-full sm:w-auto">
         <input
             required
             type="number"

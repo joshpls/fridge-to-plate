@@ -36,7 +36,6 @@ const fallbackIncludes = {
     }
 };
 
-// [NEW] Helper to massively speed up context retrieval across all routes
 const getUserHouseholdContext = async (activeHouseholdId?: string) => {
     if (!activeHouseholdId) {
         return { pantryIds: new Set<string>(), pantrySubGroups: new Set<string>(), householdStapleIds: new Set<string>() };
@@ -61,7 +60,6 @@ const getUserHouseholdContext = async (activeHouseholdId?: string) => {
 };
 
 export const createRecipe = async (userId: string, activeHouseholdId: string, data: any) => {
-    // ... (Keep existing createRecipe logic exactly the same) ...
     return await prisma.$transaction(async (tx) => {
         const categoryExists = await tx.category.findUnique({ where: { id: data.categoryId } });
         if (!categoryExists) throw new Error(`Category not found.`);
@@ -91,6 +89,7 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
               create: data.ingredients.map((ing: any, index: number) => ({
                 amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
                 order: index,
+                sectionName: ing.sectionName,
                 ingredient: { connect: { id: ing.ingredientId } },
                 unit: { connect: { id: ing.unitId } },
                 ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})
@@ -102,7 +101,6 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
 };
 
 export const updateRecipe = async (recipeId: string, userId: string, data: any, userRole: string) => {
-    // ... (Keep existing updateRecipe logic exactly the same) ...
     return await prisma.$transaction(async (tx) => {
         const existingRecipe = await tx.recipe.findUnique({ where: { id: recipeId } });
         if (!existingRecipe || (existingRecipe.authorId !== userId && userRole !== 'ADMIN')) {
@@ -135,6 +133,7 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
               create: data.ingredients.map((ing: any, index: number) => ({
                 amount: Number(ing.amount),
                 order: index,
+                sectionName: ing.sectionName,
                 ingredient: { connect: { id: ing.ingredientId } },
                 unit: { connect: { id: ing.unitId } },
                 ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})
@@ -204,7 +203,6 @@ export const getMatches = async (
 
   const finalWhere = whereClause.AND.length > 0 ? whereClause : {};
 
-  // Fetch recipes and contextual data concurrently
   const [allRecipes, context] = await Promise.all([
     prisma.recipe.findMany({
         where: finalWhere,
@@ -282,7 +280,6 @@ export const getAuthoredRecipes = async (userId: string, activeHouseholdId?: str
 };
 
 export const toggleRecipeFavorite = async (userId: string, activeHouseholdId: string, recipeSlug: string) => {
-    // ... (Keep existing toggle logic exactly the same) ...
     const recipe = await prisma.recipe.findUnique({ where: { slug: recipeSlug }, select: { id: true } });
     if (!recipe) throw new Error('Recipe not found');
   

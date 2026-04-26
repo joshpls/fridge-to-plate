@@ -9,10 +9,11 @@ import { Heart, X } from 'lucide-react';
 
 interface RecipeModalProps {
     recipe: any;
+    showStaples: boolean;
     onClose: () => void;
 }
 
-export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
+export const RecipeModal = ({ recipe, showStaples, onClose }: RecipeModalProps) => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const [isFavorite, setIsFavorite] = useState(recipe.isFavorite);
@@ -148,9 +149,9 @@ export const RecipeModal = ({ recipe, onClose }: RecipeModalProps) => {
                                         <div className="flex items-start sm:items-center gap-2 pr-2">
                                             {/* Green checkmark if in pantry, Red dot if missing */}
                                             {isAuthenticated && (
-                                                <span className={`w-2 h-2 rounded-full mt-1.5 sm:mt-0 shrink-0 ${item.inPantry || item.isStaple ? 'bg-green-500' : 'bg-red-400'}`}></span>
+                                                <span className={`w-2 h-2 rounded-full mt-1.5 sm:mt-0 shrink-0 ${item.inPantry || (!showStaples && item.isStaple) ? 'bg-green-500' : 'bg-red-400'}`}></span>
                                             )}
-                                            <span className={`font-medium text-sm sm:text-base leading-snug ${item.inPantry || item.isStaple ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                                            <span className={`font-medium text-sm sm:text-base leading-snug ${item.inPantry || (!showStaples && item.isStaple) ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 {item.name}
                                                 {item.modifier && <span className="text-gray-400 font-normal">, {item.modifier.toLowerCase()}</span>}
                                             </span>

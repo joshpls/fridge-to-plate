@@ -288,7 +288,7 @@ const Discovery: React.FC = () => {
                 </div>
             )}
 
-            {selectedRecipe && <RecipeModal recipe={selectedRecipe} onClose={handleCloseModal} />}
+            {selectedRecipe && <RecipeModal recipe={selectedRecipe} showStaples={filters.showStaples} onClose={handleCloseModal} />}
             
             {!selectedRecipe && <FloatingAddButton />}
         </div>

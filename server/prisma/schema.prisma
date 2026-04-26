@@ -235,6 +235,7 @@ model RecipeIngredient {
   ingredientId String
   unitId       String
   amount       Float
+  sectionName  String?
   order        Int    @default(0)
 
   modifierId String?

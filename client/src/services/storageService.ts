@@ -85,14 +85,20 @@ export const storageService = {
 
         // Pantry
         getPantry: () => storageService.cache.get<any[]>(KEYS.PANTRY),
-        setPantry: (data: any[]) => {storageService.cache.set(KEYS.PANTRY, data); storageService.cache.clearDiscoveryState()},
-        clearPantry: () => {sessionStorage.removeItem(KEYS.PANTRY); storageService.cache.clearDiscoveryState()},
+        setPantry: (data: any[]) => {storageService.cache.set(KEYS.PANTRY, data); storageService.cache.clearDiscoveryState(), storageService.cache.clearAllRecipes()},
+        clearPantry: () => {sessionStorage.removeItem(KEYS.PANTRY); storageService.cache.clearDiscoveryState(), storageService.cache.clearAllRecipes()},
 
         // Recipe
         getRecipe: (slug: string, userId?: string | null) =>
             storageService.cache.get<any>(`f2p_recipe_${slug}_${userId || 'guest'}`),
         setRecipe: (slug: string, data: any, userId?: string | null) =>
             storageService.cache.set(`f2p_recipe_${slug}_${userId || 'guest'}`, data),
+        clearRecipe: (slug: string, userId?: string | null) => {sessionStorage.removeItem(`f2p_recipe_${slug}_${userId || 'guest'}`)},
+        clearAllRecipes: () => {
+            Object.keys(sessionStorage)
+                .filter(key => key.startsWith('f2p_recipe_'))
+                .forEach(key => sessionStorage.removeItem(key));
+        },
 
         // Discovery Scroll & Pagination Restoration
         getDiscoveryState: () => storageService.cache.get<{ recipes: any[]; page: number; hasMore: boolean; scrollY: number }>(KEYS.DISCOVERY_STATE),

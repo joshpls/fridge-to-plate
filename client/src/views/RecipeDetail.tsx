@@ -7,18 +7,18 @@ import { CookMode } from '../components/recipes/CookMode';
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer, Play, Heart, Check } from 'lucide-react'; // Added Check icon
+import { Printer, Play, Heart, Check } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useConfirm } from '../context/ConfirmContext';
-// import { useWakeLock } from '../hooks/useWakeLock';
 import { SourceAttribution } from '../components/recipes/RenderSourceAttribution';
 import { taxonomyService } from '../services/taxonomyService';
 import { pantryService } from '../services/pantryService';
 import { storageService } from '../services/storageService';
 import { refreshPantryCount } from '../utils/events';
+import { rehydrateIngredients } from '../utils/recipeUtils'; // [NEW] Imported
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -32,11 +32,6 @@ const RecipeDetail = () => {
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
-    // const prefs = user?.preferences
-    //     ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences)
-    //     : { cookMode: true, autoTTS: false };
-
-    // const { isLocked } = useWakeLock(prefs.cookMode);
 
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
@@ -207,9 +202,7 @@ const RecipeDetail = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
     const handleDeleteRecipe = async () => {
         const isConfirmed = await confirm({
@@ -222,9 +215,7 @@ const RecipeDetail = () => {
         if (!isConfirmed) return;
 
         try {
-            await fetchWithAuth(`${API_BASE}/recipes/${recipe.id}`, {
-                method: 'DELETE'
-            });
+            await fetchWithAuth(`${API_BASE}/recipes/${recipe.id}`, { method: 'DELETE' });
             navigate('/discovery');
         } catch (err) {
             console.error(err);
@@ -242,18 +233,13 @@ const RecipeDetail = () => {
         try {
             const res = await fetchWithAuth(`${API_BASE}/recipes/${recipe.id}/comments`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json' 
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: newComment, rating: newRating, userId })
             });
             const result = await res.json();
             
             if (result.status === 'success') {
-                setRecipe({
-                    ...recipe,
-                    comments: [result.data, ...recipe.comments]
-                });
+                setRecipe({ ...recipe, comments: [result.data, ...recipe.comments] });
                 toast.success("Review posted!");
                 setNewComment('');
                 setNewRating(5);
@@ -277,13 +263,10 @@ const RecipeDetail = () => {
         if (!isConfirmed) return;
 
         try {
-            const response = await fetchWithAuth(`${API_BASE}/recipes/comments/${commentId}`, {
-                method: 'DELETE',
-            });
+            const response = await fetchWithAuth(`${API_BASE}/recipes/comments/${commentId}`, { method: 'DELETE' });
 
             if (response.ok) {
                 toast.success('Review deleted successfully');
-                
                 setRecipe((prevRecipe: any) => ({
                     ...prevRecipe,
                     comments: prevRecipe.comments.filter((c: any) => c.id !== commentId)
@@ -305,9 +288,7 @@ const RecipeDetail = () => {
         }
         
         try {
-            const response = await fetchWithAuth(`${API_BASE}/recipes/${recipe.slug}/favorite`, {
-                method: 'POST',
-            });
+            const response = await fetchWithAuth(`${API_BASE}/recipes/${recipe.slug}/favorite`, { method: 'POST' });
             const result = await response.json();
             
             if (result.status === 'success') {
@@ -326,6 +307,7 @@ const RecipeDetail = () => {
 
     const steps = recipe.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
 
+    // Process ingredients and then hydrate UI headers
     const effectiveIngredients = recipe?.ingredients?.map((ing: any) => {
         const activeSwap = activeSwaps[ing.id];
         if (activeSwap) {
@@ -341,13 +323,15 @@ const RecipeDetail = () => {
         return ing;
     }) || [];
 
-    // Complete Recipe Logic
-    const usedPantryIngredients = effectiveIngredients.filter((ing: any) => ing.inPantry);
+    // Inflate flat array with Section Headers for visual grouping
+    const displayList = rehydrateIngredients(effectiveIngredients, false);
+
+    // Filter headers out when dealing with purely functional logic
+    const usedPantryIngredients = displayList.filter((item: any) => !item.isHeader && item.inPantry);
     const canComplete = usedPantryIngredients.length > 0;
 
     const handleCompleteRecipe = async () => {
         const usedIngredientIds = usedPantryIngredients.map((ing: any) => ing.ingredientId);
-        
         if (usedIngredientIds.length === 0) return;
 
         const isConfirmed = await confirm({
@@ -370,11 +354,9 @@ const RecipeDetail = () => {
             if (result.status === 'success') {
                 toast.success("Recipe completed! Pantry updated.");
                 
-                // Update local pantry state to reflect removal
                 const updatedPantry = pantryItems.filter(p => !usedIngredientIds.includes(p.ingredientId));
                 setPantryItems(updatedPantry);
                 
-                // Update the recipe state to turn the inPantry dots back to orange
                 setRecipe((prev: any) => ({
                     ...prev,
                     ingredients: prev.ingredients.map((ing: any) => ({
@@ -383,7 +365,6 @@ const RecipeDetail = () => {
                     }))
                 }));
                 
-                // Clear active swaps
                 const newSwaps = { ...activeSwaps };
                 let swapsChanged = false;
                 for (const key in newSwaps) {
@@ -394,7 +375,6 @@ const RecipeDetail = () => {
                 }
                 if (swapsChanged) setActiveSwaps(newSwaps);
                 
-                // Sync cache and invalidate discovery 
                 storageService.cache.setPantry(updatedPantry);
                 refreshPantryCount();
             } else {
@@ -407,10 +387,19 @@ const RecipeDetail = () => {
     };
 
     // Pre-format ingredients for Cook Mode
-    const formattedIngredients = effectiveIngredients.map((item: any) => {
+    const formattedIngredients = displayList.map((item: any) => {
+        if (item.isHeader) {
+            return {
+                id: item.id,
+                isHeader: true,
+                name: item.name
+            };
+        }
+
         const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
         return {
             id: item.id,
+            isHeader: false,
             name: item.name,
             modifier: item.modifier,
             displayAmount: `${amount} ${unit}`.trim()
@@ -469,13 +458,6 @@ const RecipeDetail = () => {
                         {recipe.name}
                     </h1>
 
-                    {/* {isLocked && (
-                            <div className="hidden md:flex items-center gap-1.5 text-orange-500 bg-orange-50 dark:bg-orange-500/15 px-3 py-2 rounded-xl border border-orange-100 mr-2" title="Cook Mode Active: Screen will stay on">
-                                <Flame size={16} className="animate-pulse" />
-                                <span className="text-xs font-black uppercase tracking-widest">Cook Mode</span>
-                            </div>
-                        )} */}
-
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center flex-wrap justify-center md:justify-start">
                         <button
                             onClick={() => setIsCookModeOpen(true)}
@@ -487,7 +469,6 @@ const RecipeDetail = () => {
                         {isAuthenticated && canComplete && (
                             <button
                                 onClick={handleCompleteRecipe}
-                                title="Complete and use up pantry ingredients"
                                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-green-600 dark:bg-green-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-green-700 transition-all shadow-lg shadow-green-500/30 active:scale-95 shrink-0"
                             >
                                 <Check size={18} className="stroke-3" /> Finish Recipe
@@ -510,7 +491,7 @@ const RecipeDetail = () => {
                             onClick={handlePrint}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
                         >
-                            <Printer size={18} /> Print Sheet
+                            <Printer size={18} /> Print
                         </button>
                     </div>
                 </div>
@@ -524,10 +505,7 @@ const RecipeDetail = () => {
                     {(recipe.sourceName || recipe.sourceUrl) && (
                         <>
                             <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
-                            <SourceAttribution
-                                sourceName={recipe.sourceName}
-                                sourceUrl={recipe.sourceUrl}
-                            />
+                            <SourceAttribution sourceName={recipe.sourceName} sourceUrl={recipe.sourceUrl} />
                         </>
                     )}
 
@@ -550,7 +528,7 @@ const RecipeDetail = () => {
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start px-4 md:px-0">
                     {recipe && (
-                        <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:bg-white print:text-black print:border print:border-black print:shadow-none print:px-3 print:py-1">
+                        <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:hidden">
                             {recipe?.matchPercentage}% Match
                         </span>
                     )}
@@ -592,7 +570,7 @@ const RecipeDetail = () => {
                     <section>
                         <div className="flex flex-col gap-4 mb-6 print:mb-3">
                             <h2 className="text-2xl font-black flex items-center gap-2 print:text-xl">
-                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 px-3 py-1 rounded-full print:border print:border-gray-200 print:text-black print:bg-white ">{recipe.ingredients?.length} Items</span>
+                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 px-3 py-1 rounded-full print:border print:border-gray-200 print:text-black print:bg-white ">{displayList.filter((i: any) => !i.isHeader).length} Items</span>
                             </h2>
                             
                             {/* Multiplier & Toggle Staples */}
@@ -665,7 +643,18 @@ const RecipeDetail = () => {
                         )}
 
                         <ul className="space-y-3 print:space-y-1">
-                            {effectiveIngredients.map((item: any) => {
+                            {displayList.map((item: any) => {
+                                if (item.isHeader) {
+                                    if (!item.name) return null; // Don't render empty sections
+                                    return (
+                                        <li key={item.id} className="pt-4 pb-1">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                                                {item.name}
+                                            </h3>
+                                        </li>
+                                    );
+                                }
+
                                 const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
                                 return (
                                     <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
@@ -712,7 +701,7 @@ const RecipeDetail = () => {
                                             {/* Status Badge */}
                                             {isAuthenticated &&
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${item.inPantry ? 'text-green-600 bg-green-50' :
-                                                        (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                        (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : (!showStaples && item.isStaple) ? 'bg-none dark:bg-none' :
                                                             'text-orange-500 bg-orange-50 dark:bg-orange-500/15'}`}>
                                                     {item.inPantry ? 'In Pantry' : (allowSubstitutions && item.isSubstituted) ? 'Sub Available' : (!showStaples && item.isStaple) ? '' : 'Missing'}
                                                 </span>
@@ -852,7 +841,7 @@ const RecipeDetail = () => {
                 />
             )}
             {swapModalOpen && swapTarget && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 p-6 animate-in fade-in zoom-in-95 duration-200">
                         <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Choose Substitute</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">

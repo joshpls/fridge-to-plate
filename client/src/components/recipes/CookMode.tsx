@@ -9,8 +9,9 @@ interface CookModeProps {
     instructions: string[];
     ingredients: Array<{
         id: string;
+        isHeader?: boolean;
         name: string;
-        displayAmount: string;
+        displayAmount?: string;
         modifier?: string;
     }>;
     onClose: () => void;
@@ -179,27 +180,50 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                         </div>
                     ) : (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 cursor-auto">
-                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-8">Ingredients Checklist</h3>
-                            <div className="space-y-4">
-                                {ingredients.map((ing) => (
-                                    <li key={ing.id} className="flex items-center gap-3 p-4 border-b dark:border-gray-800 list-none">
-                                        <input
-                                            type="checkbox"
-                                            className="w-6 h-6 rounded-lg border-2 border-orange-500 checked:bg-orange-500"
-                                            checked={checkedIngredients.has(ing.id)}
-                                            onChange={() => toggleIngredient(ing.id)}
-                                        />
-                                        <div className="flex flex-col">
-                                            <div>
-                                            <span className={checkedIngredients.has(ing.id) ? 'line-through text-gray-400' : ''}>
-                                                <span className="font-bold">{ing.displayAmount}</span> {ing.name}
-                                            </span>
-                                            {ing.modifier && <span className="text-xs text-gray-400 font-medium italic">, {ing.modifier}</span>}
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-6">Ingredients Checklist</h3>
+                            <ul className="space-y-2">
+                                {ingredients.map((ing) => {
+                                    if (ing.isHeader) {
+                                        if (!ing.name) return null;
+                                        return (
+                                            <li key={ing.id} className="pt-6 pb-2 list-none">
+                                                <h4 className="text-sm font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                                                    {ing.name}
+                                                </h4>
+                                            </li>
+                                        );
+                                    }
+
+                                    return (
+                                        <li 
+                                            key={ing.id} 
+                                            onClick={() => toggleIngredient(ing.id)}
+                                            className="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer list-none group"
+                                        >
+                                            <div className="shrink-0 flex items-center justify-center">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-6 h-6 rounded-lg border-2 border-orange-500 checked:bg-orange-500 pointer-events-none"
+                                                    checked={checkedIngredients.has(ing.id)}
+                                                    readOnly // The li click handles the state change
+                                                />
                                             </div>
-                                        </div>
-                                    </li>
-                                ))}
-                            </div>
+                                            <div className="flex flex-col">
+                                                <div>
+                                                    <span className={`transition-all ${checkedIngredients.has(ing.id) ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                                        <span className="font-bold">{ing.displayAmount}</span> {ing.name}
+                                                    </span>
+                                                    {ing.modifier && (
+                                                        <span className={`text-xs font-medium italic ${checkedIngredients.has(ing.id) ? 'text-gray-400/50' : 'text-gray-400'}`}>
+                                                            , {ing.modifier}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
                     )}
                 </div>
