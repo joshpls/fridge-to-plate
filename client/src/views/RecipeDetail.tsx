@@ -453,47 +453,45 @@ const RecipeDetail = () => {
 
             {/* Main Header Info */}
             <header className="mb-10 text-center md:text-left print:text-left print:mb-6">
-                <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-6 mb-6">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
-                        {recipe.name}
-                    </h1>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight mb-6 print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
+                    {recipe.name}
+                </h1>
 
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 print:hidden items-center flex-wrap justify-center md:justify-start">
+                <div className="flex flex-col sm:flex-row gap-3 w-full print:hidden items-center flex-wrap justify-center md:justify-start mb-8">
+                    <button
+                        onClick={() => setIsCookModeOpen(true)}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600/40 dark:bg-red-500/40 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
+                    >
+                        <Play size={18} className="fill-current" /> Start Cooking
+                    </button>
+
+                    {isAuthenticated && canComplete && (
                         <button
-                            onClick={() => setIsCookModeOpen(true)}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/30 active:scale-95 shrink-0"
+                            onClick={handleCompleteRecipe}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600/40 dark:bg-green-500/40 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
                         >
-                            <Play size={18} className="fill-current" /> Start Cooking
+                            <Check size={18} className="stroke-3" /> Finish Recipe
                         </button>
+                    )}
 
-                        {isAuthenticated && canComplete && (
-                            <button
-                                onClick={handleCompleteRecipe}
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-4 bg-green-600 dark:bg-green-500 text-white rounded-xl font-black text-sm md:text-base hover:bg-green-700 transition-all shadow-lg shadow-green-500/30 active:scale-95 shrink-0"
-                            >
-                                <Check size={18} className="stroke-3" /> Finish Recipe
-                            </button>
-                        )}
-
-                        <div className="w-full sm:w-auto">
-                            <ShareButton
-                                title={recipe.name}
-                                text={
-                                    `Check out this ${recipe.name} recipe on Fridge To Plate!\n\n` +
-                                    `⏱️ Total Time: ${recipe.totalTime ? recipe.totalTime + 'm' : 'N/A'}\n` +
-                                    `🏷️ Tags: ${recipe.tags?.map((t: any) => t.name).join(', ') || 'None'}\n\n` +
-                                    `${recipe.summary ? recipe.summary : ''}`
-                                }
-                            />
-                        </div>
-
-                        <button
-                            onClick={handlePrint}
-                            className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
-                        >
-                            <Printer size={18} /> Print
-                        </button>
+                    <div className="w-full sm:w-auto">
+                        <ShareButton
+                            title={recipe.name}
+                            text={
+                                `Check out this ${recipe.name} recipe on Fridge To Plate!\n\n` +
+                                `⏱️ Total Time: ${recipe.totalTime ? recipe.totalTime + 'm' : 'N/A'}\n` +
+                                `🏷️ Tags: ${recipe.tags?.map((t: any) => t.name).join(', ') || 'None'}\n\n` +
+                                `${recipe.summary ? recipe.summary : ''}`
+                            }
+                        />
                     </div>
+
+                    <button
+                        onClick={handlePrint}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-orange-500/10 text-gray-800 dark:text-orange-400 border-2 border-gray-200 dark:border-orange-500/20 dark:hover:text-orange-500 rounded-xl font-bold text-sm hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm active:scale-95 shrink-0 w-full sm:w-auto"
+                    >
+                        <Printer size={18} /> Print
+                    </button>
                 </div>
 
                 {/* Metadata Row */}
