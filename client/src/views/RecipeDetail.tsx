@@ -377,6 +377,7 @@ const RecipeDetail = () => {
                 
                 storageService.cache.setPantry(updatedPantry);
                 refreshPantryCount();
+                setCheckedIngredients(new Set());
             } else {
                 toast.error(result.message || "Failed to update pantry");
             }
@@ -839,7 +840,7 @@ const RecipeDetail = () => {
                 />
             )}
             {swapModalOpen && swapTarget && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
                     <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 p-6 animate-in fade-in zoom-in-95 duration-200">
                         <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Choose Substitute</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">
