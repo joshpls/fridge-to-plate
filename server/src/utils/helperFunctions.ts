@@ -46,7 +46,7 @@ export const mapRecipeToDto = (
     // An item is available if it's physically in the pantry OR if it's a household staple
     const isPhysicallyOwned = pantryIds.has(ri.ingredientId);
     const isPersonalStaple = householdStapleIds.has(ri.ingredientId);
-    const inPantry = isPhysicallyOwned || isPersonalStaple;
+    const inPantry = isPhysicallyOwned;
 
     // Check if missing but a valid substitute exists in the pantry
     const isSubstituted = !inPantry && !!ri.ingredient.subGroupId && pantrySubGroups.has(ri.ingredient.subGroupId);
@@ -57,6 +57,7 @@ export const mapRecipeToDto = (
     return {
       id: ri.id,
       ingredientId: ri.ingredientId,
+      sectionName: ri.sectionName,
       name: ri.ingredient.name,
       subGroupId: ri.ingredient.subGroupId,
       isStaple,
