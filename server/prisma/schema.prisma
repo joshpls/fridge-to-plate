@@ -35,6 +35,14 @@ model User {
   lastName  String?
   alias     String?
 
+  isEmailVerified      Boolean   @default(false)
+  
+  verifyToken          String?   @unique
+  verifyTokenExpires   DateTime?
+  
+  resetPasswordToken   String?   @unique
+  resetPasswordExpires DateTime?
+
   activeHouseholdId String?
   activeHousehold   Household? @relation(fields: [activeHouseholdId], references: [id])
 

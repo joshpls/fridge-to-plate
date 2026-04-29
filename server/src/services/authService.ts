@@ -18,7 +18,7 @@ export const registerUser = async (data: any) => {
     const result = await prisma.$transaction(async (tx) => {
         const role = (await tx.user.count()) === 0 ? 'ADMIN' : 'USER';
 
-        // Create the base User
+        // Create the base User with verification tokens
         const user = await tx.user.create({
             data: {
                 email: data.email.toLowerCase(),
@@ -27,6 +27,8 @@ export const registerUser = async (data: any) => {
                 lastName: data.lastName, 
                 alias: data.alias,
                 role: role,
+                verifyToken: data.verifyToken,
+                verifyTokenExpires: data.verifyTokenExpires
             }
         });
 
@@ -62,25 +64,85 @@ export const registerUser = async (data: any) => {
 };
 
 export const validateLogin = async (data: any) => {
-    // Find the user
     const user = await prisma.user.findUnique({
         where: { email: data.email.toLowerCase() }
     });
 
-    if (!user) {
-        throw new Error('Invalid email or password.');
+    if (!user) throw new Error('Invalid email or password.');
+
+    // Block login if email is not verified
+    if (!user.isEmailVerified) {
+        throw new Error('Please verify your email before logging in. Check your inbox.');
     }
 
-    // Compare the plain-text password with the stored hash
     const isValid = await bcrypt.compare(data.password, user.password);
+    if (!isValid) throw new Error('Invalid email or password.');
 
-    if (!isValid) {
-        throw new Error('Invalid email or password.');
-    }
-
-    // Strip the password before returning
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
+};
+
+// --- NEW METHODS FOR EMAIL VERIFICATION & RESET ---
+
+export const verifyUserEmail = async (hashedToken: string) => {
+    const user = await prisma.user.findFirst({
+        where: {
+            verifyToken: hashedToken,
+            verifyTokenExpires: { gt: new Date() }
+        }
+    });
+
+    if (!user) throw new Error('Token is invalid or has expired.');
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            isEmailVerified: true,
+            verifyToken: null,
+            verifyTokenExpires: null,
+        }
+    });
+
+    return true;
+};
+
+export const setResetPasswordToken = async (email: string, hashedToken: string, expiresAt: Date) => {
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (!user) return null; // We return null instead of throwing to prevent email enumeration
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: expiresAt
+        }
+    });
+
+    return user;
+};
+
+export const resetUserPassword = async (hashedToken: string, newPassword: string) => {
+    const user = await prisma.user.findFirst({
+        where: {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { gt: new Date() }
+        }
+    });
+
+    if (!user) throw new Error('Token is invalid or has expired.');
+
+    const newHashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            password: newHashedPassword,
+            resetPasswordToken: null,
+            resetPasswordExpires: null
+        }
+    });
+
+    return true;
 };
 
 export const updatePassword = async (userId: string, currentPass: string, newPass: string) => {

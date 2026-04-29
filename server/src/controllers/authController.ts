@@ -1,25 +1,20 @@
 import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import * as authService from '../services/authService.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
 import { prisma } from '../config/db.js';
 
-// Generate Access Token (Short lived)
+// Import our new utility and service
+import { generateSecureToken } from '../utils/cryptoUtils.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
+
 const generateAccessToken = (userId: string, role: string): string => {
-    return jwt.sign(
-        { id: userId, role },
-        process.env.JWT_SECRET as string,
-        { expiresIn: '15m' } 
-    );
+    return jwt.sign({ id: userId, role }, process.env.JWT_SECRET as string, { expiresIn: '15m' });
 };
 
-// Generate Refresh Token (Long lived)
 const generateRefreshToken = (userId: string, role: string): string => {
-    return jwt.sign(
-        { id: userId, role },
-        process.env.JWT_REFRESH_SECRET as string,
-        { expiresIn: '7d' } 
-    );
+    return jwt.sign({ id: userId, role }, process.env.JWT_REFRESH_SECRET as string, { expiresIn: '7d' });
 };
 
 const setRefreshCookie = (res: Response, token: string) => {
@@ -39,17 +34,25 @@ export const register = async (req: Request, res: Response) => {
             return res.status(400).json({ status: 'error', message: 'Email and password are required.' });
         }
 
-        const user = await authService.registerUser({ email, password, firstName, lastName, alias });
-        const accessToken = generateAccessToken(user.id, user.role);
-        const refreshToken = generateRefreshToken(user.id, user.role);
-        
-        setRefreshCookie(res, refreshToken);
+        // Generate email verification token
+        const { rawToken, hashedToken } = generateSecureToken();
+        const verifyTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+        // Pass tokens to service
+        const user = await authService.registerUser({ 
+            email, password, firstName, lastName, alias,
+            verifyToken: hashedToken,
+            verifyTokenExpires
+        });
+        
+        // Send email asynchronously
+        sendVerificationEmail(email, rawToken).catch(err => console.error("Email error:", err));
+
+        // Note: Removed auto-login (token generation) since they must verify first.
         return res.status(201).json({
             status: 'success',
-            accessToken,
             data: user,
-            message: 'Registration successful'
+            message: 'Registration successful. Please check your email to verify your account.'
         });
     } catch (error: any) {
         return res.status(400).json({ status: 'error', message: error.message });
@@ -78,6 +81,63 @@ export const login = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         return res.status(401).json({ status: 'error', message: error.message });
+    }
+};
+
+// --- NEW CONTROLLERS ---
+
+export const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ status: 'error', message: 'Token is required' });
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        await authService.verifyUserEmail(hashedToken);
+
+        return res.status(200).json({ status: 'success', message: 'Email verified successfully. You can now log in.' });
+    } catch (error: any) {
+        return res.status(400).json({ status: 'error', message: error.message });
+    }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ status: 'error', message: 'Email is required' });
+
+        const { rawToken, hashedToken } = generateSecureToken();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        const user = await authService.setResetPasswordToken(email, hashedToken, expiresAt);
+
+        if (user) {
+            sendPasswordResetEmail(user.email, rawToken).catch(err => console.error("Email error:", err));
+        }
+
+        // Always return success to prevent email enumeration
+        return res.status(200).json({ status: 'success', message: 'If an account exists, a reset link was sent.' });
+    } catch (error: any) {
+        return res.status(500).json({ status: 'error', message: 'Failed to process request.' });
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) {
+            return res.status(400).json({ status: 'error', message: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ status: 'error', message: 'Password must be at least 6 characters.' });
+        }
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        await authService.resetUserPassword(hashedToken, newPassword);
+
+        return res.status(200).json({ status: 'success', message: 'Password reset successfully. You can now log in.' });
+    } catch (error: any) {
+        return res.status(400).json({ status: 'error', message: error.message });
     }
 };
 

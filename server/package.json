@@ -21,6 +21,7 @@
     "multer": "^2.1.1",
     "pg": "^8.11.11",
     "rate-limiter-flexible": "^11.0.0",
+    "resend": "^6.12.2",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
