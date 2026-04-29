@@ -158,7 +158,9 @@ export const getMatches = async (
     includeIngredients?: string; excludeIngredients?: string; 
     favoritesOnly?: string; matchOnly?: string; showStaples?: string; allowSubstitutions?: string;
     scope?: 'all' | 'household' | 'mine';
-    sort?: 'asc' | 'desc';
+    sort?: string;
+    minRating?: string;
+    maxTime?: string;
   },
   pagination?: { page: number, limit: number }
 ) => {
@@ -218,12 +220,52 @@ export const getMatches = async (
     mapRecipeToDto(recipe, context.pantryIds, context.pantrySubGroups, context.householdStapleIds, showStaplesBool, allowSubsBool)
   );
 
-  if (filters?.matchOnly === 'true') mappedRecipes = mappedRecipes.filter((r: any) => r.matchPercentage === 100);
+  // --- IN-MEMORY FILTERS ---
+  if (filters?.matchOnly === 'true') {
+      mappedRecipes = mappedRecipes.filter((r: any) => r.matchPercentage === 100);
+  }
 
-  const sortDirection = filters?.sort === 'desc' ? -1 : 1;
+  if (filters?.minRating) {
+      const min = parseFloat(filters.minRating);
+      mappedRecipes = mappedRecipes.filter((r: any) => r.avgRating >= min);
+  }
+
+  if (filters?.maxTime) {
+      const max = parseInt(filters.maxTime);
+      if (!isNaN(max)) {
+          // If total time is 0/null, assume it's unlisted and exclude it if user specifically wants under X minutes. 
+          mappedRecipes = mappedRecipes.filter((r: any) => r.totalTime > 0 && r.totalTime <= max);
+      }
+  }
+
+  // --- SORTING ---
   mappedRecipes.sort((a: any, b: any) => {
-      if (userId && b.matchPercentage !== a.matchPercentage) return b.matchPercentage - a.matchPercentage;
-      return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) * sortDirection;
+      // 1. Best Match (Prioritize what they can cook)
+      if (filters?.sort === 'match' && userId) {
+          if (b.matchPercentage !== a.matchPercentage) return b.matchPercentage - a.matchPercentage;
+          // Fallback to alphabetical if match % is tied
+          return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      }
+
+      // 2. Rating Sorts
+      if (filters?.sort === 'rating_desc') {
+          if (b.avgRating !== a.avgRating) return b.avgRating - a.avgRating;
+          // Fallback to match percentage if ratings are tied
+          return userId ? (b.matchPercentage - a.matchPercentage) : a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      }
+      if (filters?.sort === 'rating_asc') {
+          if (b.avgRating !== a.avgRating) return a.avgRating - b.avgRating;
+          return userId ? (b.matchPercentage - a.matchPercentage) : a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      }
+
+      // 3. Alphabetical Sorts (asc / desc)
+      const sortDirection = filters?.sort === 'desc' ? -1 : 1;
+      const nameCompare = a.name.toLowerCase().localeCompare(b.name.toLowerCase()) * sortDirection;
+      
+      if (nameCompare !== 0) return nameCompare;
+      
+      // Ultimate fallback
+      return userId ? (b.matchPercentage - a.matchPercentage) : 0;
   });
 
   const totalCount = mappedRecipes.length;

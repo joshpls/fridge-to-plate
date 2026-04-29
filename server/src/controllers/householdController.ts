@@ -14,6 +14,14 @@ export const getHousehold = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const toggleMemberRole = async (req: AuthRequest, res: Response) => {
+    try {
+        const { targetUserId } = req.body;
+        await householdService.toggleMemberRole(req.user!.id, req.user!.activeHouseholdId, targetUserId);
+        return sendSuccess(res, null, "Household member role updated");
+    } catch (err: any) { return sendError(res, err.message, 400); }
+};
+
 export const inviteMember = async (req: AuthRequest, res: Response) => {
     try {
         const { email } = req.body; 

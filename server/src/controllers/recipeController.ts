@@ -35,7 +35,7 @@ export const getMatches = async (req: Request, res: Response) => {
     const { 
       categoryId, subcategoryId, search, tags, includeIngredients, 
       excludeIngredients, favoritesOnly, matchOnly, showStaples, allowSubstitutions,
-      sort, page, limit, scope 
+      sort, page, limit, scope, minRating, maxTime
     } = req.query;
     
     const filters = {
@@ -50,7 +50,9 @@ export const getMatches = async (req: Request, res: Response) => {
       showStaples: showStaples as string,
       allowSubstitutions: allowSubstitutions as string,
       scope: scope as 'all' | 'household' | 'mine',
-      sort: sort as 'asc' | 'desc',
+      sort: sort as string,
+      minRating: minRating as string,
+      maxTime: maxTime as string
     };
     
     const pagination = {

@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { getHousehold, inviteMember, joinHousehold, updateName,leaveHousehold, removeMember, getMyInvites, rejectInvite, revokeInvite, getStaples, toggleStaple } from '../controllers/householdController.js';
+import { getHousehold, inviteMember, joinHousehold, updateName,leaveHousehold, removeMember, getMyInvites, rejectInvite, revokeInvite, getStaples, toggleStaple, toggleMemberRole } from '../controllers/householdController.js';
 const router = express.Router();
 
 router.use(requireAuth);
@@ -9,6 +9,7 @@ router.use(requireAuth);
 router.get('/', getHousehold);
 router.patch('/name', updateName);
 router.post('/leave', leaveHousehold);
+router.post('/toggle-role', toggleMemberRole);
 router.post('/remove-member', removeMember);
 
 // Invites

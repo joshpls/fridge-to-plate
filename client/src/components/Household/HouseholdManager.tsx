@@ -99,6 +99,20 @@ export const HouseholdManager = () => {
         } catch (err) { toast.error("Failed to remove member"); }
     };
 
+    const handleToggleRole = async (targetUserId: string) => {
+        try {
+            await fetchWithAuth(`${API_BASE}/household/toggle-role`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetUserId })
+            });
+            toast.success("Member role updated");
+            fetchAllData();
+        } catch (err) { 
+            toast.error("Failed to update member role"); 
+        }
+    };
+
     const handleLeaveHousehold = async () => {
         if (!confirm("Are you sure you want to leave this household? You will be placed in a new personal household.")) return;
         try {
@@ -208,7 +222,15 @@ export const HouseholdManager = () => {
                             </div>
                             
                             <div className="flex gap-2 w-full sm:w-auto">
-                                {isPrivileged && m.user.id !== user?.id && (
+                                {myRole === 'OWNER' && m.user.id !== user?.id && m.role !== 'OWNER' && (
+                                    <button 
+                                        onClick={() => handleToggleRole(m.user.id)} 
+                                        className="flex-1 sm:flex-none text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 px-3 py-2 sm:py-1 rounded-lg font-bold transition-colors"
+                                    >
+                                        {m.role === 'ADMIN' ? 'Demote to Member' : 'Promote to Admin'}
+                                    </button>
+                                )}
+                                {isPrivileged && m.user.id !== user?.id && m.role !== 'OWNER' && (
                                     <button onClick={() => handleRemoveMember(m.user.id)} className="flex-1 sm:flex-none text-xs text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-2 sm:py-1 rounded-lg font-bold transition-colors">
                                         Remove Member
                                     </button>

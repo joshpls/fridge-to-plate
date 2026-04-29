@@ -91,6 +91,12 @@ export const mapRecipeToDto = (
     ? Math.round(((totalIngredients - missingIngredients.length) / totalIngredients) * 100)
     : 0;
 
+  // Calculate Average Rating
+  const validComments = recipe.comments?.filter((c: any) => c.rating > 0) || [];
+  const avgRating = validComments.length > 0 
+    ? Number((validComments.reduce((acc: number, c: any) => acc + c.rating, 0) / validComments.length).toFixed(1))
+    : 0;
+
   return {
     id: recipe.id,
     name: recipe.name,
@@ -139,6 +145,7 @@ export const mapRecipeToDto = (
     missingCount: missingIngredients.length,
     matchPercentage,
     
+    avgRating,
     isFavorite: !!recipe.favorites?.length,
     comments: recipe.comments?.map((comment: any) => ({
       ...comment,

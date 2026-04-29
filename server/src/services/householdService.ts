@@ -72,6 +72,35 @@ export const getHouseholdDetails = async (householdId: string) => {
     });
 };
 
+export const toggleMemberRole = async (ownerId: string, householdId: string, targetUserId: string) => {
+    return await prisma.$transaction(async (tx) => {
+        // Verify the requester is the OWNER of this household
+        const owner = await tx.householdMember.findUnique({
+            where: { userId_householdId: { userId: ownerId, householdId } }
+        });
+
+        if (!owner || owner.role !== 'OWNER') {
+            throw new Error("Unauthorized. Only the owner can change roles.");
+        }
+
+        // Find the target user's membership record
+        const targetMember = await tx.householdMember.findUnique({
+            where: { userId_householdId: { userId: targetUserId, householdId } }
+        });
+
+        if (!targetMember) throw new Error("Target user is not in this household");
+        if (targetMember.role === 'OWNER') throw new Error("Cannot change the role of the household owner.");
+
+        // Toggle their role strictly on the HouseholdMember record
+        await tx.householdMember.update({
+            where: { userId_householdId: { userId: targetUserId, householdId } },
+            data: { role: targetMember.role === 'MEMBER' ? 'ADMIN' : 'MEMBER' }
+        });
+
+        return true;
+    });
+};
+
 export const createInvite = async (householdId: string, email: string) => {
     if (!email) throw new Error("An email address is required to send an invitation.");
 

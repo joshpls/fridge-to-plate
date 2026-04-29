@@ -45,7 +45,9 @@ const Discovery: React.FC = () => {
         allowSubstitutions: filters.allowSubstitutions, 
         matchOnly: filters.matchOnly, 
         scope: filters.scope,
-        userId: user?.id 
+        userId: user?.id,
+        minRating: filters.minRating,
+        maxTime: filters.maxTime
     });
 
     const lastFiltersRef = useRef(filtersStr);
@@ -140,7 +142,8 @@ const Discovery: React.FC = () => {
                     filters.searchQuery === '' && filters.selectedCategory === '' && filters.selectedSubcategory === '' &&
                     filters.selectedTags.length === 0 && filters.includeIngredients.length === 0 &&
                     filters.excludeIngredients.length === 0 && !filters.favoritesOnly &&
-                    filters.sortOrder === 'asc' && !filters.showStaples && !filters.matchOnly && filters.scope === 'all';
+                    filters.sortOrder === 'asc' && !filters.showStaples && !filters.matchOnly && filters.scope === 'all' &&
+                    filters.minRating === '' && filters.maxTime === '';
 
                 // --- BOOTSTRAP ---
                 if (isInitialMount.current && isDefaultSearch && page === 1) {
@@ -174,6 +177,8 @@ const Discovery: React.FC = () => {
                 if (filters.showStaples) params.append('showStaples', 'true');
                 if (filters.allowSubstitutions === false) params.append('allowSubstitutions', 'false');
                 if (filters.scope !== 'all') params.append('scope', filters.scope);
+                if (filters.minRating) params.append('minRating', filters.minRating);
+                if (filters.maxTime) params.append('maxTime', filters.maxTime);
 
                 const response = await fetchWithAuth(`${API_BASE}/recipes/matches?${params.toString()}`);
                 const result = await response.json();
@@ -241,6 +246,10 @@ const Discovery: React.FC = () => {
                 matchOnly={filters.matchOnly} setMatchOnly={filters.setMatchOnly}
                 scope={filters.scope} setScope={filters.setScope} 
                 onClearFilters={filters.handleClearFilters}
+                minRating={filters.minRating}
+                setMinRating={filters.setMinRating}
+                maxTime={filters.maxTime}
+                setMaxTime={filters.setMaxTime}
             />
 
             {/* Grid */}

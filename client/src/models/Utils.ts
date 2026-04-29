@@ -27,8 +27,8 @@ export interface FilterBarProps {
     // Toggles
     favoritesOnly: boolean;
     setFavoritesOnly: (val: boolean) => void;
-    sortOrder: 'asc' | 'desc';
-    setSortOrder: (val: 'asc' | 'desc') => void;
+    sortOrder: string;
+    setSortOrder: (val: string) => void;
 
     onClearFilters?: () => void,
     matchOnly?: boolean,
@@ -45,6 +45,14 @@ export interface FilterBarProps {
     // Scope
     scope: 'all' | 'household' | 'mine';
     setScope?: (val: any) => void;
+
+    // Rating
+    minRating: string;
+    setMinRating: (val: string) => void;
+
+    // Max Cook Time
+    maxTime: string;
+    setMaxTime: (val: string) => void;
 }
 
 export interface NutritionProps {
