@@ -33,6 +33,7 @@ const AddRecipe = () => {
     const { slug } = useParams<{ slug: string }>(); 
     const { user } = useAuth();
     const userId = user?.id;
+    const isAdmin = user?.role === 'ADMIN';
     
     const [formData, setFormData] = useState<RecipeFormData>(initialRecipe);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
@@ -171,6 +172,40 @@ const AddRecipe = () => {
                 const newIndex = prev.ingredients.findIndex((item) => item.id === over.id);
                 return { ...prev, ingredients: arrayMove(prev.ingredients, oldIndex, newIndex) };
             });
+        }
+    };
+
+    const handleCreateNewIngredient = async (name: string, index: number) => {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/admin/ingredients`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, isDefaultStaple: false })
+            });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                const newIngredient = result.data;
+                
+                setTaxonomy(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        ingredients: [...prev.ingredients, newIngredient].sort((a, b) => a.name.localeCompare(b.name))
+                    };
+                });
+                
+                handleIngredientChange(index, 'ingredientId', newIngredient.id);
+                toast.success(`Added ingredient: ${name}`);
+                return true;
+            } else {
+                toast.error('Failed to create ingredient on server.');
+                return false;
+            }
+        } catch (err) {
+            console.error('Error creating ingredient:', err);
+            toast.error('Network error while creating ingredient.');
+            return false;
         }
     };
 
@@ -474,6 +509,8 @@ const uploadFileToServer = async (file: File) => {
                                             taxonomy={taxonomy}
                                             handleIngredientChange={handleIngredientChange}
                                             removeIngredientRow={removeIngredientRow}
+                                            isAdmin={isAdmin}
+                                            onCreateNewIngredient={handleCreateNewIngredient}
                                         />
                                     );
                                 })}
