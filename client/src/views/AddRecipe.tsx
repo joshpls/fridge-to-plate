@@ -173,30 +173,42 @@ const AddRecipe = () => {
         }
     };
 
-    const uploadFileToServer = async (file: File) => {
-        setIsUploading(true);
-        const uploadData = new FormData();
-        uploadData.append('image', file);
-        try {
-            const res = await fetchWithAuth(`${API_BASE}/upload`, { method: 'POST', body: uploadData });
-            const result = await res.json();
-            if (result.status === 'success') {
-                if (currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
-                    fetchWithAuth(`${API_BASE}/upload`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageUrl: currentImageUrlRef.current }) }).catch(console.error);
-                }
-                currentImageUrlRef.current = result.imageUrl;
-                setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
-            } else {
-                toast.error("Upload failed: " + result.message);
+const uploadFileToServer = async (file: File) => {
+    setIsUploading(true);
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+    try {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(`${API_BASE}/upload`, { 
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: uploadData 
+        });
+        
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+            if (currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
+                fetchWithAuth(`${API_BASE}/upload`, { 
+                    method: 'DELETE', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ imageUrl: currentImageUrlRef.current }) 
+                }).catch(console.error);
             }
-        } catch (err) {
-            console.error("Failed to upload", err);
-            toast.error("Network Error during upload.");
-        } finally {
-            setIsUploading(false);
+            currentImageUrlRef.current = result.imageUrl;
+            setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
+        } else {
+            toast.error("Upload failed: " + result.message);
         }
-    };
-
+    } catch (err) {
+        console.error("Failed to upload", err);
+        toast.error("Network Error during upload.");
+    } finally {
+        setIsUploading(false);
+    }
+};
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) uploadFileToServer(file);

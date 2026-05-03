@@ -38,6 +38,20 @@ export const storageService = {
             storageService.shopping.save(updatedList);
         },
 
+        updateItem: (item: ShoppingListItem) => {
+            const list = storageService.shopping.get();
+            const index = list.findIndex(i => i.ingredientId === item.ingredientId);
+            
+            if (index >= 0) {
+                list[index] = item;
+            } else {
+                list.push(item);
+            }
+
+            localStorage.setItem(KEYS.SHOPPING, JSON.stringify(list));
+            window.dispatchEvent(new Event('shoppingListUpdated'));
+        },
+
         toggleBought: (ingredientId: string) => {
             const list = storageService.shopping.get();
             const updatedList = list.map(item =>

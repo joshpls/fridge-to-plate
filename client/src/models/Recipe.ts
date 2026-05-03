@@ -14,6 +14,7 @@ export interface ShoppingListItem {
     name: string;
     quantity: string;
     unit: string;
+    unitId: string | null;
     bought: boolean;
 }
 
