@@ -26,6 +26,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
+import { storageService } from '../services/storageService';
 
 const AddRecipe = () => {
     const navigate = useNavigate();
@@ -282,7 +283,8 @@ const uploadFileToServer = async (file: File) => {
             });
 
             if (response.ok) {
-                navigate('/discovery'); 
+                storageService.cache.clearDiscoveryState();
+                navigate('/discovery');
             } else {
                 toast.error(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);
             }
