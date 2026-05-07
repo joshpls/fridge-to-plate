@@ -18,7 +18,7 @@ import { taxonomyService } from '../services/taxonomyService';
 import { pantryService } from '../services/pantryService';
 import { storageService } from '../services/storageService';
 import { refreshPantryCount } from '../utils/events';
-import { rehydrateIngredients } from '../utils/recipeUtils'; // [NEW] Imported
+import { formatDecimalToQuantity, rehydrateIngredients } from '../utils/recipeUtils';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -97,27 +97,35 @@ const RecipeDetail = () => {
         : null;
 
     const formatIngredientAmount = (baseAmount: number, baseUnitName: string) => {
-        const scaled = baseAmount * multiplier;
+    // baseAmount is ALWAYS the original DB amount. We scale it safely here.
+    const scaled = baseAmount * multiplier;
 
-        if (measurementSystem === 'original' || !baseUnitName) {
-            const finalNum = Number.isInteger(scaled) ? scaled : parseFloat(scaled.toFixed(2));
-            return { amount: finalNum, unit: baseUnitName || '' };
-        }
+    // 1. If Original system OR no unit exists, format nicely with fractions
+    if (measurementSystem === 'original' || !baseUnitName) {
+        return { 
+            amount: formatDecimalToQuantity(scaled), 
+            unit: baseUnitName || '' 
+        };
+    }
 
-        const converted = convertUnit(scaled, baseUnitName, measurementSystem);
+    const converted = convertUnit(scaled, baseUnitName, measurementSystem);
 
-        if (converted.amount === scaled) {
-            const finalNum = Number.isInteger(scaled) ? scaled : parseFloat(scaled.toFixed(2));
-            return { amount: finalNum, unit: converted.unit };
-        }
+    // 2. If the conversion algorithm didn't change anything (e.g., unit is "pinch" or "slice")
+    if (converted.amount === scaled) {
+        return { 
+            amount: formatDecimalToQuantity(scaled), 
+            unit: converted.unit 
+        };
+    }
 
-        let finalAmountStr = converted.amount.toFixed(1);
-        if (finalAmountStr.endsWith('.0')) {
-            finalAmountStr = finalAmountStr.slice(0, -2);
-        }
+    // 3. For Metric/Imperial conversions, decimals make more sense than fractions
+    let finalAmountStr = converted.amount.toFixed(1);
+    if (finalAmountStr.endsWith('.0')) {
+        finalAmountStr = finalAmountStr.slice(0, -2);
+    }
 
-        return { amount: finalAmountStr, unit: converted.unit };
-    };
+    return { amount: finalAmountStr, unit: converted.unit };
+};
 
     const addToShoppingList = async () => {
         const itemsToAdd = missingIngredients.map((item: any) => {

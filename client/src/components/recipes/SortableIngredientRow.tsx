@@ -4,6 +4,7 @@ import { GripVertical, X, Plus, Check } from 'lucide-react';
 import { useState } from 'react';
 import { IngredientAutocomplete } from './IngredientAutocomplete';
 import type { IngredientRow } from '../../models/Utils';
+import { QuantityInput } from './QuantityInput';
 
 // Extend the interface to include our new admin props
 interface SortableRowProps extends IngredientRow {
@@ -64,40 +65,40 @@ export const SortableIngredientRow = ({
         </div>
 
         <div className="flex-1 min-w-0 z-50 flex items-center gap-1 sm:gap-2">
-            {isCreating ? (
-                <div className="flex-1 flex gap-1 items-center bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border-2 border-orange-400 shadow-sm overflow-hidden">
-                    <input 
-                        type="text" 
-                        autoFocus
-                        disabled={isSaving}
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        placeholder="New ingredient name..."
-                        className="flex-1 bg-transparent px-2 py-1 outline-none text-sm font-bold text-gray-700 dark:text-gray-200 min-w-[100px]"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); handleSaveNew(); }
-                            if (e.key === 'Escape') setIsCreating(false);
-                        }}
-                    />
-                    <button 
-                        type="button" 
-                        onClick={handleSaveNew} 
-                        disabled={isSaving || !newName.trim()}
-                        className="p-1.5 text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 rounded-lg transition-colors shrink-0"
-                        title="Save Ingredient"
-                    >
-                        {isSaving ? <span className="animate-pulse">...</span> : <Check size={16}/>}
-                    </button>
-                    <button 
-                        type="button" 
-                        onClick={() => setIsCreating(false)} 
-                        disabled={isSaving}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors shrink-0"
-                        title="Cancel"
-                    >
-                        <X size={16}/>
-                    </button>
-                </div>
+          {isCreating ? (
+            <div className="flex-1 flex gap-1 items-center bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border-2 border-orange-400 shadow-sm overflow-hidden">
+              <input
+                type="text"
+                autoFocus
+                disabled={isSaving}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="New ingredient name..."
+                className="flex-1 bg-transparent px-2 py-1 outline-none text-sm font-bold text-gray-700 dark:text-gray-200 min-w-[100px]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleSaveNew(); }
+                  if (e.key === 'Escape') setIsCreating(false);
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveNew}
+                disabled={isSaving || !newName.trim()}
+                className="p-1.5 text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 rounded-lg transition-colors shrink-0"
+                title="Save Ingredient"
+              >
+                {isSaving ? <span className="animate-pulse">...</span> : <Check size={16} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCreating(false)}
+                disabled={isSaving}
+                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors shrink-0"
+                title="Cancel"
+              >
+                <X size={16} />
+              </button>
+            </div>
             ) : (
                 <>
                     <div className="flex-1 min-w-0">
@@ -133,21 +134,18 @@ export const SortableIngredientRow = ({
 
       {/* Bottom Row on Mobile / Right Side on Desktop */}
       <div className="flex items-center gap-2 pl-1 sm:pl-0 w-full sm:w-auto">
-        <input
-            required
-            type="number"
-            step="0.01"
-            placeholder="Qty"
+        <QuantityInput
             value={ingredient.amount}
-            onChange={(e) => handleIngredientChange(index, 'amount', e.target.value)}
-            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-center min-w-[60px]"
+            onChange={(val) => handleIngredientChange(index, 'amount', val)}
+            placeholder="Qty"
+            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white text-center min-w-[60px]"
         />
 
         <select
             required
             value={ingredient.unitId}
             onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[80px]"
+            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white cursor-pointer min-w-[80px]"
         >
             <option value="" disabled>Unit</option>
             {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
@@ -156,7 +154,7 @@ export const SortableIngredientRow = ({
         <select
             value={ingredient.modifierId || ''}
             onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
-            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 cursor-pointer min-w-[100px]"
+            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white cursor-pointer min-w-[100px]"
         >
             <option value="">(None)</option>
             {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}

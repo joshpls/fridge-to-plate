@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchWithAuth } from '../../utils/apiClient';
 import toast from 'react-hot-toast';
 import { Heart, X } from 'lucide-react';
+import { formatDecimalToQuantity } from '../../utils/recipeUtils';
 
 interface RecipeModalProps {
     recipe: any;
@@ -157,7 +158,7 @@ export const RecipeModal = ({ recipe, showStaples, onClose }: RecipeModalProps) 
                                             </span>
                                         </div>
                                         <span className="text-gray-400 font-bold text-[10px] sm:text-xs uppercase tracking-wider bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md shrink-0 mt-0.5 sm:mt-0">
-                                            {item.amount} {item.unit?.abbreviation || ''}
+                                            {formatDecimalToQuantity(item.amount)} {item.unit?.abbreviation || ''}
                                         </span>
                                     </li>
                                 ))}

@@ -139,7 +139,7 @@ const AddRecipe = () => {
 
     const handleIngredientChange = (index: number, field: string, value: string) => {
         const newIngredients = [...formData.ingredients];
-        newIngredients[index] = { ...newIngredients[index], [field]: field === 'amount' ? (value === '' ? '' : Number(value)) : value };
+        newIngredients[index] = { ...newIngredients[index], [field]: value };
         setFormData(prev => ({ ...prev, ingredients: newIngredients }));
     };
 
@@ -319,6 +319,7 @@ const uploadFileToServer = async (file: File) => {
 
             if (response.ok) {
                 storageService.cache.clearDiscoveryState();
+                if (isEdit && slug) storageService.cache.clearRecipe(slug, userId);
                 navigate('/discovery');
             } else {
                 toast.error(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);

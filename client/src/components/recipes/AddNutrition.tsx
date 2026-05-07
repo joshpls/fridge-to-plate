@@ -119,6 +119,7 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                                     { label: 'Potassium', key: 'potassium', placeholder: 'e.g. 1705mg' },
                                     { label: 'Calcium', key: 'calcium', placeholder: 'e.g. 240mg' },
                                     { label: 'Iron', key: 'iron', placeholder: 'e.g. 14mg' },
+                                    { label: 'Zinc', key: 'zinc', placeholder: 'e.g. 14mg' },
                                 ].map(min => (
                                     <div key={min.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-2 rounded-lg">
                                         <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{min.label}</label>
@@ -133,7 +134,9 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
                             <div className="space-y-3">
                                 {[
                                     { label: 'Vitamin A', key: 'vitaminA', placeholder: 'e.g. 1667IU' },
-                                    { label: 'Vitamin C', key: 'vitaminC', placeholder: 'e.g. 83mg' }
+                                    { label: 'Vitamin B6', key: 'vitaminB6', placeholder: 'e.g. 1667IU' },
+                                    { label: 'Vitamin C', key: 'vitaminC', placeholder: 'e.g. 83mg' },
+                                    { label: 'Vitamin E', key: 'vitaminE', placeholder: 'e.g. 1667IU' },
                                 ].map(vit => (
                                     <div key={vit.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-2 rounded-lg">
                                         <label className="w-full sm:w-32 text-xs sm:text-sm font-bold text-gray-600">{vit.label}</label>
