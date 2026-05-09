@@ -78,6 +78,7 @@ const AddRecipe = () => {
                             prepTime: r.prepTime || '',
                             cookTime: r.cookTime || '',
                             servings: r.servings || '',
+                            method: r.method || '',
                             instructions: r.instructions || '',
                             notes: r.notes || '',
                             sourceName: r.sourceName || '',
@@ -464,21 +465,54 @@ const uploadFileToServer = async (file: File) => {
                     </div>
                 </section>
 
-                <section className="bg-orange-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
-                    <h2 className="text-lg sm:text-xl font-black text-orange-900 border-b-2 border-orange-200/50 dark:border-gray-400 dark:text-gray-200 pb-2">3. Time & Yield</h2>
+                <section className="bg-orange-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-orange-100 dark:border-gray-800/50 space-y-6">
+                    <h2 className="text-lg sm:text-xl font-black text-orange-900 border-b-2 border-orange-200/50 dark:border-gray-400 dark:text-gray-200 pb-2">3. Method, Time & Yield</h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                        <div>
-                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Prep Time (min)</label>
-                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Primary Method</label>
+                            <input 
+                                type="text" 
+                                name="method" 
+                                list="cooking-methods"
+                                value={formData.method || ''} 
+                                onChange={handleChange} 
+                                placeholder="e.g. Baking, Grilling"
+                                className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white" 
+                            />
+                            <datalist id="cooking-methods">
+                                <option value="Baking" />
+                                <option value="Barbecuing" />
+                                <option value="Boiling" />
+                                <option value="Braising" />
+                                <option value="Broiling" />
+                                <option value="Deep Frying" />
+                                <option value="Grilling" />
+                                <option value="Pan Frying" />
+                                <option value="Poaching" />
+                                <option value="Pressure Cooking" />
+                                <option value="Roasting" />
+                                <option value="Sauteing" />
+                                <option value="Simmering" />
+                                <option value="Slow Cooking" />
+                                <option value="Smoking" />
+                                <option value="Sous Vide" />
+                                <option value="Steaming" />
+                                <option value="Stewing" />
+                                <option value="Stir-frying" />
+                            </datalist>
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Cook Time (min)</label>
-                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                        <div className="col-span-1">
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Prep (min)</label>
+                            <input type="number" name="prepTime" value={formData.prepTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white" />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Yields (Servings) *</label>
-                            <input required type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900" />
+                        <div className="col-span-1">
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Cook (min)</label>
+                            <input type="number" name="cookTime" value={formData.cookTime} onChange={handleChange} min="0" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-sm font-bold text-orange-800 dark:text-gray-400 mb-2">Yields *</label>
+                            <input required type="number" name="servings" value={formData.servings} onChange={handleChange} min="1" className="w-full p-3.5 sm:p-4 rounded-xl border-2 border-orange-200 dark:border-gray-800 focus:border-orange-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white" />
                         </div>
                     </div>
                 </section>

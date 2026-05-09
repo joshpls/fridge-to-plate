@@ -110,6 +110,7 @@ export const mapRecipeToDto = (
     cookTime: recipe.cookTime || 0,
     totalTime: recipe.totalTime || (recipe.prepTime || 0) + (recipe.cookTime || 0),
     servings: recipe.servings || 1,
+    method: recipe.method,
     imageUrl: recipe.imageUrl,
     nutrition: recipe.nutrition || {},
     sourceName: recipe.sourceName,

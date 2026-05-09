@@ -73,6 +73,7 @@ export interface RecipeFormData {
     prepTime: number | '';
     cookTime: number | '';
     servings: number | '';
+    method?: string;
     instructions: string;
     notes: string;
     tagIds: string[];
@@ -85,9 +86,8 @@ export interface RecipeFormData {
 
 export const initialRecipe: RecipeFormData = {
     name: '', imageUrl: '', summary: '', categoryId: '', subcategoryId: '',
-    prepTime: '', cookTime: '', servings: '', instructions: '', notes: '',
+    prepTime: '', cookTime: '', servings: '', method: '', instructions: '', notes: '',
     tagIds: [],
-    // Initial id is generated
     ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', name: '', sectionName: '', amount: '', unitId: '', modifierId: '' }],
     nutrition: { 
         calories: '', protein: '', carbohydrates: '', 

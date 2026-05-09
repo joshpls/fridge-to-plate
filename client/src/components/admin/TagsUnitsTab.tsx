@@ -254,7 +254,7 @@ export const TagsUnitsTab = () => {
                         <div key={unit.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800/50 hover:border-orange-200 transition-colors group">
                             <div className="flex items-center gap-3">
                                 <span className="font-bold text-gray-700 dark:text-gray-300">{unit.name}</span>
-                                <span className="text-gray-400 text-xs font-bold uppercase tracking-widest bg-gray-200/50 px-2 py-1 rounded-md">{unit.abbreviation}</span>
+                                <span className="text-gray-400 dark:text-gray-300 text-xs font-bold uppercase tracking-widest bg-gray-200/50 px-2 py-1 rounded-md">{unit.abbreviation}</span>
                             </div>
                             <button 
                                 onClick={() => handleDeleteUnit(unit.id)}

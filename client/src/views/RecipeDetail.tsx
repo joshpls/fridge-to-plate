@@ -224,6 +224,7 @@ const RecipeDetail = () => {
 
         try {
             await fetchWithAuth(`${API_BASE}/recipes/${recipe.id}`, { method: 'DELETE' });
+            storageService.cache.clearDiscoveryState();
             navigate('/discovery');
         } catch (err) {
             console.error(err);
@@ -508,7 +509,6 @@ const RecipeDetail = () => {
                     <span className="flex items-center gap-1.5">
                         👨‍🍳 By <span className="text-gray-900 dark:text-gray-200 print:text-black">{authorName}</span>
                     </span>
-
                     {(recipe.sourceName || recipe.sourceUrl) && (
                         <>
                             <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
@@ -548,18 +548,28 @@ const RecipeDetail = () => {
             </header>
 
             {/* Metadata Hero Bar*/}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-3xl p-4 sm:p-6 print:bg-transparent print:border-gray-200 print:rounded-none print:grid-cols-4 print:p-4 print:mb-6">
+            <div className={`grid grid-cols-2 gap-4 sm:gap-6 mb-10 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-3xl p-4 sm:p-6 print:bg-transparent print:border-gray-200 print:rounded-none print:p-4 print:mb-6 ${recipe.method ? 'md:grid-cols-3 lg:grid-cols-5 print:grid-cols-5' : 'md:grid-cols-4 print:grid-cols-4'}`}>
+                
+                {recipe.method && (
+                    <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start col-span-2 md:col-span-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Method</span>
+                        <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl capitalize leading-tight truncate max-w-full">
+                            {recipe.method}
+                        </span>
+                    </div>
+                )}
+
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
                     <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Prep Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
                     <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Cook Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
                     <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Total Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
                 </div>
                 <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
                     <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Yields</span>

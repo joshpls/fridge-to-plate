@@ -172,6 +172,7 @@ model Recipe {
   cookTime  Int?
   totalTime Int?
   servings  Int  @default(1)
+  method    String?
 
   notes     String? @db.Text
   nutrition Json?
