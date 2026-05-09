@@ -3,9 +3,9 @@
 ### A full-stack, self-hosted platform designed for seamless recipe exploration and intelligent pantry tracking. This application bridges the gap between "What should I cook?" and "What do I actually have in my kitchen?"
 ## 🚀 Overview
 
-Dicovery/Pantry/Recipe            |  Preferences/Household/Admin
+Dicovery/Pantry/Recipe           |  Admin/Preferences/Household
 :-------------------------:|:-------------------------:
-![](fridge2plate_example_1.png)  |  ![](fridge2plate_example_2.png)
+<img src="fridge2plate_example_1.png" width="400"> | <img src="fridge2plate_example_2.png" width="400">
 
 ### This project is a TypeScript-driven ecosystem consisting of a high-performance React frontend and a robust Node.js/Express backend. It features a unique "Pantry Matching" engine that analyzes recipe requirements against a user's real-time inventory.
 ## Core Features
@@ -15,6 +15,8 @@ Dicovery/Pantry/Recipe            |  Preferences/Household/Admin
 - **Pantry Integration:** Automated "Missing Ingredient" calculation and one-click "Add to Shopping List" functionality.
 
 - **Social & Personalization:** User profiles with customizable aliases, recipe favoriting, and a nested comment/rating system.
+
+- **Household Integration:** User's can create a household and add others to it which allows users to all share the same pantry & household specific recipes.
 
 - **Admin Power-User Suite:** Dedicated dashboard for managing global taxonomies (categories/ingredients) and user roles.
 
@@ -47,7 +49,7 @@ Dicovery/Pantry/Recipe            |  Preferences/Household/Admin
 
 - **Nginx Proxy Manager:** Reverse proxy handling SSL/TLS termination and DDNS.
 
-- **Hardware:** Optimized to run on a Raspberry Pi Zero 2 W.
+- **Hardware:** Optimized to run on a Raspberry Pi.
 
 - **Security Suite:** * bcrypt for salted password hashing.
 
