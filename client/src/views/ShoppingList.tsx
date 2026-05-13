@@ -11,6 +11,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import { pantryService } from '../services/pantryService';
 import { refreshPantryCount } from '../utils/events';
 import { taxonomyService } from '../services/taxonomyService';
+import { QuantityInput } from '../components/recipes/QuantityInput';
 
 const ShoppingList = () => {
     const { confirm } = useConfirm();
@@ -241,12 +242,10 @@ const ShoppingList = () => {
                                 {editingId === item.ingredientId ? (
                                     <div className="flex flex-1 items-center gap-2 mr-4" onClick={(e) => e.stopPropagation()}>
                                         <p className="font-bold text-gray-800 dark:text-gray-300 whitespace-nowrap hidden sm:block w-1/3 truncate">{item.name}</p>
-                                        <input 
-                                            type="number" 
-                                            min="0"
+                                        <QuantityInput
                                             value={editForm.quantity}
-                                            // onChange={e => updateItem(item.ingredientId, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
-                                            onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
+                                            onChange={(value) => setEditForm({ ...editForm, quantity: value })}
+                                            placeholder="Qty"
                                             className="w-16 sm:w-20 px-2 py-1 bg-gray-100 dark:bg-gray-800 border-none rounded text-gray-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-orange-500 outline-none"
                                             autoFocus
                                         />

@@ -178,6 +178,7 @@ export const RecipesTab = () => {
                                         <div className="flex items-center gap-1">Author <ArrowUpDown size={12} /></div>
                                     </th>
                                     <th className="p-4">Category</th>
+                                    <th className="p-4">Visibility</th>
                                     <th className="p-4 cursor-pointer hover:text-gray-900 dark:text-white" onClick={() => toggleSort('createdAt')}>
                                         <div className="flex items-center gap-1">Created <ArrowUpDown size={12} /></div>
                                     </th>
@@ -202,6 +203,7 @@ export const RecipesTab = () => {
                                                 <span className="text-[10px] text-gray-400 uppercase">{recipe.subcategory?.name || ''}</span>
                                             </div>
                                         </td>
+                                        <td className="p-4 text-gray-600 font-bold uppercase truncate max-w-[10px]">{recipe.visibility}</td>
                                         <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                             {new Date(recipe.createdAt).toLocaleDateString()}
                                         </td>
@@ -234,6 +236,9 @@ export const RecipesTab = () => {
                                     <div className="flex flex-col gap-1">
                                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-2 py-1 rounded-md inline-block w-max">
                                             {recipe.category?.name || 'Uncategorized'}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase">
+                                            {recipe.visibility}
                                         </span>
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                                             {new Date(recipe.createdAt).toLocaleDateString()}

@@ -18,7 +18,7 @@ export const IngredientsTab = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
 
-    // --- New Filter & Sort State ---
+    // --- Filter & Sort State ---
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -252,7 +252,7 @@ export const IngredientsTab = () => {
                                 className="w-full sm:w-48 pl-9 pr-8 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-orange-500 transition-all text-sm font-medium appearance-none cursor-pointer text-gray-700 dark:text-gray-200"
                             >
                                 <option value="ALL">All Categories</option>
-                                <option value="UNCATEGORIZED">Uncategorized Only</option>
+                                <option value="UNCATEGORIZED">Uncategorized</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>

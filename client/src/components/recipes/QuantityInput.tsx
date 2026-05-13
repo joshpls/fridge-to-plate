@@ -7,6 +7,7 @@ interface QuantityInputProps {
     className?: string;
     disabled?: boolean;
     required?: boolean;
+    autoFocus?: boolean;
 }
 
 export const QuantityInput = ({ 
@@ -15,7 +16,8 @@ export const QuantityInput = ({
     placeholder, 
     className, 
     disabled,
-    required
+    required,
+    autoFocus
 }: QuantityInputProps) => {
     const [displayValue, setDisplayValue] = useState(value?.toString() || '');
 
@@ -60,6 +62,7 @@ export const QuantityInput = ({
             disabled={disabled}
             required={required}
             autoComplete="off"
+            autoFocus={autoFocus}
         />
     );
 };

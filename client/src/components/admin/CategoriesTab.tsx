@@ -71,6 +71,8 @@ export const CategoriesTab = () => {
                 ));
                 setNewSubcatName('');
                 setActiveCategoryId(null);
+            } else {
+                toast.error(result.message);
             }
         } catch (err) {
             console.error(err);
@@ -94,9 +96,12 @@ export const CategoriesTab = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
             });
+            const result = await res.json();
             if (res.ok) {
                 taxonomyService.invalidateCache();
                 loadData(true);
+            } else {
+                toast.error(result.message);
             }
         } catch (err) { console.error(err); }
     };

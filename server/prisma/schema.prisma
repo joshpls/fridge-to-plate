@@ -209,10 +209,12 @@ model Category {
 
 model Subcategory {
   id         String   @id @default(uuid())
-  name       String   @unique
+  name       String
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   recipes    Recipe[]
+
+  @@unique([name, categoryId])
 }
 
 model Tag {
