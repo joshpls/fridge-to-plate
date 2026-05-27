@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Sparkles, Clipboard, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Clipboard, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface SkippedItem {
@@ -7,134 +7,227 @@ interface SkippedItem {
     line: string;
 }
 
+interface MissingUnitItem {
+    ingredientName: string;
+    line: string;
+}
+
 interface RecipeImporterProps {
-    taxonomy: any; // Receives your loaded taxonomy data (ingredients, units, modifiers)
-    onImport: (parsedData: any, skipped: SkippedItem[]) => void;
+    taxonomy: any;
+    onImport: (parsedData: any, skipped: SkippedItem[], missingUnits: MissingUnitItem[]) => void;
 }
 
 export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [pasteText, setPasteText] = useState('');
     const [skippedItems, setSkippedItems] = useState<SkippedItem[]>([]);
+    const [missingUnitsList, setMissingUnitsList] = useState<MissingUnitItem[]>([]);
     const [hasImported, setHasImported] = useState(false);
 
     const handleParse = () => {
         if (!pasteText.trim()) {
-            toast.error('Please paste some recipe text first!');
+            toast.error('Please paste recipe text content!');
             return;
         }
 
-        const lines = pasteText.split('\n').map(l => l.trim()).filter(Boolean);
-        if (lines.length === 0) return;
+        const lines = pasteText.split('\n').map(l => l.trim());
+        const filteredLines = lines.filter(Boolean);
+        if (filteredLines.length === 0) return;
 
-        // Guess the title (First line is usually the title unless it's a menu button)
+        const fullText = pasteText;
+
+        // 1. Identify Title
         let title = '';
-        for (const line of lines) {
-            if (line.length > 3 && !/^(print|pin|share|★|\d|http)/i.test(line)) {
-                title = line;
+        let titleIndex = -1;
+        for (let i = 0; i < filteredLines.length; i++) {
+            if (filteredLines[i].length > 3 && !/^(print|pin|share|★|\d|http|course|cuisine|author|prep|cook|total|yield|category)/i.test(filteredLines[i])) {
+                title = filteredLines[i].replace(/\|.*$/, '').trim(); // strip site suffixes
+                titleIndex = i;
                 break;
             }
         }
 
-        let prepTime = '';
-        let cookTime = '';
-        let servings = '';
+        // 2. Extrapolate Description (Scanning lines immediately following the title)
+        let description = '';
+        if (titleIndex !== -1) {
+            for (let i = titleIndex + 1; i < Math.min(filteredLines.length, titleIndex + 6); i++) {
+                const line = filteredLines[i];
+                // Break loop if we hit common metadata, rating stars, or section headers
+                if (/^(prep|cook|total|yield|servings|ingredients|instructions|directions|course|cuisine|author|nutrition)/i.test(line) || 
+                    line.includes('★') || 
+                    /^\d+\.?\d*\s*from\s*\d+\s*reviews/i.test(line)) {
+                    break;
+                }
+                // If it looks like a substantive sentence, append it
+                if (line.length > 25 && !line.includes(':') && !line.includes('Author')) {
+                    description += (description ? ' ' : '') + line;
+                }
+            }
+        }
+
+        // 3. Meta Targets
+        let prepTime = fullText.match(/(?:Prep\s*Time|Prep)[:\s]*(\d+)/i)?.[1] || '';
+        let cookTime = fullText.match(/(?:Cook\s*Time|Cook)[:\s]*(\d+)/i)?.[1] || '';
+        let servings = fullText.match(/(?:Servings|Yield|Serves)[:\s]*(\d+(?:\s*-\s*\d+)?|\d+)/i)?.[1] || '';
+        let author = fullText.match(/(?:Author|Adapted\s*from)[:\s]*(.*)/i)?.[1] || '';
+        let method = fullText.match(/(?:Method)[:\s]*(.*)/i)?.[1] || '';
+        let extractedCategory = fullText.match(/(?:Category|Course)[:\s]*(.*)/i)?.[1] || '';
+        
+        let sourceUrl = '';
+        const urlMatch = fullText.match(/https?:\/\/[^\s]+/i);
+        if (urlMatch) {
+            sourceUrl = urlMatch[0];
+        } else if (fullText.includes('www.dotenvx.com')) {
+            sourceUrl = ''; // Safe filter
+        }
+
+        // Category matching
+        let matchedCategoryId = '';
+        if (extractedCategory && taxonomy?.recipeCategories) {
+            const foundCat = taxonomy.recipeCategories.find((c: any) => 
+                c.name.toLowerCase().includes(extractedCategory.trim().toLowerCase()) ||
+                extractedCategory.trim().toLowerCase().includes(c.name.toLowerCase())
+            );
+            if (foundCat) matchedCategoryId = foundCat.id;
+        }
+
+        // --- Nutrition Matrix ---
+        const nutrition: any = {
+            calories: '', carbohydrates: '', protein: '', fat: '', fiber: '', sugar: '', sodium: '', potassium: '',
+            vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: ''
+        };
+
+        const parseNutritionField = (regexes: RegExp[], targetKey: string, useString = false) => {
+            for (const rx of regexes) {
+                const match = fullText.match(rx);
+                if (match && match[1]) {
+                    nutrition[targetKey] = useString ? match[1].trim() : parseInt(match[1], 10);
+                    break;
+                }
+            }
+        };
+
+        parseNutritionField([/Calories[:\s]*(\d+)/i, /(\d+)\s*calories/i], 'calories');
+        parseNutritionField([/Carbohydrates[:\s]*(\d+)/i, /Carbs[:\s]*(\d+)/i], 'carbohydrates');
+        parseNutritionField([/Protein[:\s]*(\d+)/i], 'protein');
+        parseNutritionField([/(?:Total\s*)?Fat[:\s]*(\d+)/i], 'fat');
+        parseNutritionField([/Fiber[:\s]*(\d+)/i], 'fiber');
+        parseNutritionField([/Sugar[:\s]*(\d+)/i], 'sugar');
+        parseNutritionField([/Sodium[:\s]*(\d+)/i], 'sodium');
+        parseNutritionField([/Potassium[:\s]*(\d+)/i], 'potassium');
+        parseNutritionField([/Calcium[:\s]*(\d+)/i], 'calcium');
+        parseNutritionField([/Iron[:\s]*(\d+)/i], 'iron');
+        parseNutritionField([/Vitamin\s*A[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminA', true);
+        parseNutritionField([/Vitamin\s*B6[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminB6', true);
+        parseNutritionField([/Vitamin\s*C[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminC', true);
+        parseNutritionField([/Vitamin\s*E[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminE', true);
+        parseNutritionField([/Saturated\s*Fat[:\s]*(\d+)/i], 'saturatedFat');
+        parseNutritionField([/Polyunsaturated\s*Fat[:\s]*(\d+)/i], 'polyunsaturatedFat');
+        parseNutritionField([/Monounsaturated\s*Fat[:\s]*(\d+)/i], 'monounsaturatedFat');
+        parseNutritionField([/Trans\s*Fat[:\s]*(\d+)/i], 'transFat');
+
+
+        // --- Arrays ---
         const parsedInstructions: string[] = [];
-        const parsedNutrition: any = { calories: '', carbohydrates: '', protein: '', fat: '' };
+        const parsedNotes: string[] = [];
         const parsedIngredients: any[] = [];
         const unparsed: SkippedItem[] = [];
+        const missingUnits: MissingUnitItem[] = [];
 
-        // Parsing state machine
-        let currentSection = 'Main Ingredients';
-        let currentMode: 'NONE' | 'INGREDIENTS' | 'INSTRUCTIONS' | 'NUTRITION' = 'NONE';
+        let currentSection = 'Ingredients';
+        let currentMode: 'NONE' | 'INGREDIENTS' | 'INSTRUCTIONS' | 'NOTES' = 'NONE';
 
-        // Direct scan for standard meta patterns across the full block
-        const textBlock = pasteText;
-        const pMatch = textBlock.match(/Prep\s*(?:Time)?[:\s]*(\d+)/i);
-        if (pMatch) prepTime = pMatch[1];
-        
-        const cMatch = textBlock.match(/Cook\s*(?:Time)?[:\s]*(\d+)/i);
-        if (cMatch) cookTime = cMatch[1];
+        // Pre-sort taxonomy units by length descending (so "fluid ounce" matches before "ounce")
+        const sortedUnits = [...(taxonomy?.units || [])].sort((a: any, b: any) => {
+            const aLen = Math.max(a.name?.length || 0, a.abbreviation?.length || 0);
+            const bLen = Math.max(b.name?.length || 0, b.abbreviation?.length || 0);
+            return bLen - aLen;
+        });
 
-        const sMatch = textBlock.match(/(?:Servings|Yield|Serves)[:\s]*(\d+)/i);
-        if (sMatch) servings = sMatch[1];
-
-        // Line-by-line loop for structured elements
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
+            const line = lines[i].trim();
+            if (!line) continue;
 
-            // Mode switches
-            if (/^Ingredients/i.test(line)) {
-                currentMode = 'INGREDIENTS';
-                continue;
-            }
-            if (/^(Instructions|Directions|Preparation|Method)/i.test(line)) {
-                currentMode = 'INSTRUCTIONS';
-                continue;
-            }
-            if (/^(Nutrition|Nutrition Information)/i.test(line)) {
-                currentMode = 'NUTRITION';
-                continue;
-            }
+            if (/^Ingredients/i.test(line)) { currentMode = 'INGREDIENTS'; continue; }
+            if (/^(Instructions|Directions|Preparation|Method)/i.test(line)) { currentMode = 'INSTRUCTIONS'; continue; }
+            if (/^(Notes|Recipe Notes)/i.test(line)) { currentMode = 'NOTES'; continue; }
+            if (/^(Nutrition|Nutrition Information)/i.test(line)) { currentMode = 'NONE'; continue; }
 
             if (currentMode === 'INGREDIENTS') {
-                // Identify subsection text headers (e.g., "Topping:", "For the pasta")
-                if (line.endsWith(':') || 
-                    /^(For the|Topping|Base|Sauce|Filling|Dressing)/i.test(line) || 
-                    (line.length < 30 && !/\d/.test(line) && line.toLowerCase() !== 'scale')
-                ) {
+                if (line.endsWith(':') || /^(For the|Topping|Base|Sauce|Filling|Dressing|For pasta)/i.test(line)) {
                     if (line.toLowerCase() !== 'scale') {
                         currentSection = line.replace(/:$/, '').trim();
                     }
                     continue;
                 }
-
                 if (line.toLowerCase() === 'scale') continue;
 
-                // Strip common bullet formats
                 const cleanLine = line.replace(/^[\s•\-\d\.]+\.\s+/, '').replace(/^[\s•\-\*]+/, '').trim();
-
-                // Regex matcher for [Amount] [Unit] [Ingredient text]
-                const qtyRegex = /^((?:\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+(?:\s*-\s*\d+)?))\s*(?:(cups?|c\b|tbsp?|tablespoons?|tsps?|teaspoons?|g|grams?|oz|ounces?|ml|milliliters?|lbs?|pounds?|can\b|cans\b|cloves?|stalks?|packages?|leaves?|slices?|jars?|bags?)\b)?\s*(.*)/i;
+                
+                // 1. Extract Quantity first (handles whole numbers, decimals, and fractions)
+                const qtyRegex = /^((?:\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+(?:\s*-\s*\d+)?))\s*(.*)/i;
                 const qtyMatch = cleanLine.match(qtyRegex);
 
-                let amount = '1';
-                let unitText = '';
-                let searchIngredientText = cleanLine;
+                let amount = '';
+                let restOfLine = cleanLine;
 
                 if (qtyMatch) {
-                    amount = qtyMatch[1] || '1';
-                    unitText = qtyMatch[2] || '';
-                    searchIngredientText = qtyMatch[3] || cleanLine;
+                    amount = qtyMatch[1].trim();
+                    restOfLine = qtyMatch[2].trim();
                 }
 
-                // Clean extraneous notes like trailing punctuation or parentheses tags
+                // 2. Dynamically extract Unit from taxonomy
+                let matchedUnit: any = null;
+                let searchIngredientText = restOfLine;
+
+                for (const u of sortedUnits) {
+                    const name = u.name?.toLowerCase() || '';
+                    const abbr = u.abbreviation?.toLowerCase() || '';
+                    
+                    // Generate plurals to check against the string
+                    const forms = [name, name + 's', name + 'es', abbr, abbr + 's'].filter(Boolean);
+                    
+                    let found = false;
+                    for (const form of forms) {
+                        // Regex matches whole word at the start of the remaining string
+                        const regex = new RegExp(`^${form}\\b`, 'i');
+                        if (regex.test(restOfLine)) {
+                            matchedUnit = u;
+                            searchIngredientText = restOfLine.replace(regex, '').trim();
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) break; // Break out of unit checking once we found a match
+                }
+
+                // Cleanup search text (remove commas, parentheses, etc)
                 searchIngredientText = searchIngredientText.replace(/\([^)]+\)/g, '').replace(/,\s*.*$/, '').trim().toLowerCase();
 
-                // Match against your client taxonomy
+                // 3. Match Ingredient Name
                 const matchedIngredient = taxonomy?.ingredients?.find((ing: any) => 
+                    searchIngredientText === ing.name.toLowerCase() ||
                     searchIngredientText.includes(ing.name.toLowerCase()) || 
                     ing.name.toLowerCase().includes(searchIngredientText)
-                );
-
-                const matchedUnit = unitText && taxonomy?.units?.find((u: any) => 
-                    u.name.toLowerCase().startsWith(unitText.toLowerCase()) ||
-                    u.abbreviation.toLowerCase() === unitText.toLowerCase()
                 );
 
                 const matchedModifier = taxonomy?.modifiers?.find((m: any) => 
                     cleanLine.toLowerCase().includes(m.name.toLowerCase())
                 );
 
-                // Requirements: If ingredient doesn't pop in, skip adding to live form rows
                 if (matchedIngredient) {
+                    // Track if the unit wasn't matched so the user knows they need to fill it in
+                    if (amount && !matchedUnit) {
+                        missingUnits.push({ ingredientName: matchedIngredient.name, line: cleanLine });
+                    }
+
                     parsedIngredients.push({
                         id: `imported-${Math.random().toString(36).substring(7)}`,
                         ingredientId: matchedIngredient.id,
-                        amount: amount,
-                        unitId: matchedUnit ? matchedUnit.id : (taxonomy?.units?.[0]?.id || ''),
+                        amount: amount || '1',
+                        unitId: matchedUnit ? matchedUnit.id : '', // Intentionally left blank to force user selection
                         modifierId: matchedModifier ? matchedModifier.id : '',
-                        sectionName: currentSection === 'Main Ingredients' ? '' : currentSection,
+                        sectionName: currentSection === 'Ingredients' ? '' : currentSection,
                     });
                 } else {
                     unparsed.push({ section: currentSection, line: line });
@@ -148,35 +241,34 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
                 }
             }
 
-            if (currentMode === 'NUTRITION') {
-                const calMatch = line.match(/Calories[:\s]*(\d+)/i);
-                if (calMatch) parsedNutrition.calories = parseInt(calMatch[1]);
-
-                const carbMatch = line.match(/(?:Carbohydrates|Carbs)[:\s]*(\d+)/i);
-                if (carbMatch) parsedNutrition.carbohydrates = parseInt(carbMatch[1]);
-
-                const proteinMatch = line.match(/Protein[:\s]*(\d+)/i);
-                if (proteinMatch) parsedNutrition.protein = parseInt(proteinMatch[1]);
-
-                const fatMatch = line.match(/(?:Total )?Fat[:\s]*(\d+)/i);
-                if (fatMatch) parsedNutrition.fat = parseInt(fatMatch[1]);
+            if (currentMode === 'NOTES') {
+                const cleanNote = line.replace(/^[\s•\-\*]+/, '').trim();
+                if (cleanNote && !/^(nutrition)/i.test(cleanNote)) {
+                    parsedNotes.push(cleanNote);
+                }
             }
         }
 
-        // Aggregate gathered fields
-        const finalizedData = {
+        const aggregatedResult = {
             name: title,
+            description: description,
             prepTime: prepTime,
             cookTime: cookTime,
             servings: servings,
+            originalAuthor: author.trim(),
+            sourceUrl: sourceUrl.trim(),
+            method: method.trim(),
+            categoryId: matchedCategoryId,
             instructions: parsedInstructions.join('\n\n'),
+            notes: parsedNotes.join('\n\n'),
             ingredients: parsedIngredients,
-            nutrition: parsedNutrition
+            nutrition
         };
 
         setSkippedItems(unparsed);
+        setMissingUnitsList(missingUnits);
         setHasImported(true);
-        onImport(finalizedData, unparsed);
+        onImport(aggregatedResult, unparsed, missingUnits);
         toast.success('Fields auto-populated from paste data!');
     };
 
@@ -199,15 +291,15 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
             {isOpen && (
                 <div className="mt-4 animate-in fade-in duration-200">
                     <p className="text-xs text-gray-400 font-medium mb-3">
-                        Copy a full page or a card from any recipe website and paste it directly below. We'll attempt to automatically map out titles, times, directions, and cross-reference ingredients against your database.
+                        Copy text details from standard recipe configurations. The importer auto-detects descriptions, macros, missing unit mismatches, custom notes sections, and system ingredients.
                     </p>
                     
                     <div className="relative">
                         <textarea
                             value={pasteText}
                             onChange={(e) => setPasteText(e.target.value)}
-                            placeholder="Paste full text here... (Including Title, Times, Ingredients, and Steps)"
-                            className="w-full h-40 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 focus:border-orange-500 outline-none font-medium text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                            placeholder="Paste text contents here..."
+                            className="w-full h-44 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 focus:border-orange-500 outline-none font-medium text-sm text-gray-700 dark:text-gray-300 transition-colors"
                         />
                         {pasteText && (
                             <button
@@ -226,23 +318,23 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
                         className="w-full mt-3 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl shadow-md flex items-center justify-center gap-2 text-sm sm:text-base active:scale-[0.99] transition-all"
                     >
                         <Clipboard className="w-4 h-4" />
-                        Parse Data & Fill Form
+                        Parse & Populate Content
                     </button>
 
-                    {/* Notice box stating what could not be automatically matched */}
                     {hasImported && (
                         <div className="mt-4 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-950/40">
                             <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
-                                <CheckCircle className="w-3.5 h-3.5 text-green-500" /> Import Summary
+                                <CheckCircle className="w-3.5 h-3.5 text-green-500" /> Synchronization Status Summary
                             </h4>
                             
-                            {skippedItems.length > 0 ? (
-                                <div className="space-y-2">
+                            {/* Skipped Ingredients Alert */}
+                            {skippedItems.length > 0 && (
+                                <div className="space-y-2 mb-3">
                                     <div className="flex gap-2 items-start bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-400 p-3 rounded-xl text-xs font-semibold leading-relaxed">
                                         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                         <div>
-                                            <strong className="font-bold block mb-0.5">Not all items could be populated:</strong>
-                                            The following items weren't found in your system inventory. Please add them or check your spelling manually:
+                                            <strong className="font-bold block mb-0.5">Unmapped items requiring review:</strong>
+                                            The items below didn't match anything in your ingredient database and were skipped. Please select or add them manually:
                                         </div>
                                     </div>
                                     
@@ -257,9 +349,35 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
                                         ))}
                                     </div>
                                 </div>
-                            ) : (
+                            )}
+
+                            {/* Missing Units Alert */}
+                            {missingUnitsList.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex gap-2 items-start bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-800 dark:text-blue-400 p-3 rounded-xl text-xs font-semibold leading-relaxed">
+                                        <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong className="font-bold block mb-0.5">Missing Units:</strong>
+                                            We found the ingredients below, but couldn't match their measurement unit. We added the ingredient, but left the unit blank for you to fill in:
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="max-h-36 overflow-y-auto border border-gray-200 dark:border-gray-800 rounded-xl divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900 text-xs text-gray-600 dark:text-gray-400 font-bold">
+                                        {missingUnitsList.map((item, idx) => (
+                                            <div key={idx} className="p-2 flex items-center justify-between gap-3">
+                                                <span className="truncate italic">{item.line}</span>
+                                                <span className="shrink-0 text-blue-600 dark:text-blue-400 font-black">
+                                                    {item.ingredientName}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {skippedItems.length === 0 && missingUnitsList.length === 0 && (
                                 <p className="text-xs text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
-                                    🎉 Perfect Sync! All listed fields and ingredients were successfully matched.
+                                    🎉 Perfect Sync! All components, ingredients, and units parsed successfully.
                                 </p>
                             )}
                         </div>

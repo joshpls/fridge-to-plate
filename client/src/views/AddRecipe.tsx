@@ -296,40 +296,65 @@ const uploadFileToServer = async (file: File) => {
         return cleaned;
     };
 
-    const handleAutoPopulateImport = (parsedData: any, skippedIngredients: any[]) => {
-        // Build the new recipe form fields
-        setFormData((prev: any) => {
-            // Option text building for skipped records if desired
-            let updatedDescription = prev.description || '';
+    const handleAutoPopulateImport = (parsedData: any, skippedIngredients: any[], missingUnits: any[]) => {
+        setFormData((prev: RecipeFormData) => {
+
+            let trackingNotes = parsedData.notes || '';
+
+            // Append unmapped items to the Notes section for reference
             if (skippedIngredients.length > 0) {
-                const skippedListString = skippedIngredients.map(i => `• [${i.section}] ${i.line}`).join('\n');
-                updatedDescription += `\n\n⚠️ Unmatched items to review:\n${skippedListString}`;
+                const skippedTextString = skippedIngredients.map(i => `• [${i.section}] ${i.line}`).join('\n');
+                trackingNotes += `\n\n⚠️ Unmapped ingredients requiring manual review:\n${skippedTextString}`;
+            }
+
+            // Append missing units to the Notes section as well
+            if (missingUnits.length > 0) {
+                const missingUnitsString = missingUnits.map(i => `• ${i.ingredientName} (Line: ${i.line})`).join('\n');
+                trackingNotes += `\n\n⚠️ Mapped ingredients missing a valid unit:\n${missingUnitsString}`;
             }
 
             return {
                 ...prev,
                 name: parsedData.name || prev.name,
-                description: updatedDescription,
+                summary: parsedData.description || prev.summary,
                 prepTime: parsedData.prepTime || prev.prepTime,
                 cookTime: parsedData.cookTime || prev.cookTime,
                 servings: parsedData.servings || prev.servings,
                 instructions: parsedData.instructions || prev.instructions,
+                // notes: trackingNotes.trim() || prev.notes,
+                notes: parsedData.notes || prev.notes,
+                sourceName: parsedData.originalAuthor || prev.sourceName,
+                sourceUrl: parsedData.sourceUrl || prev.sourceUrl,
+                method: parsedData.method || prev.method,
+                categoryId: parsedData.categoryId || prev.categoryId,
+
                 nutrition: {
                     ...prev.nutrition,
-                    calories: parsedData.nutrition.calories || prev.nutrition.calories,
-                    carbohydrates: parsedData.nutrition.carbohydrates || prev.nutrition.carbohydrates,
-                    protein: parsedData.nutrition.protein || prev.nutrition.protein,
-                    fat: parsedData.nutrition.fat || prev.nutrition.fat,
+                    calories: parsedData.nutrition.calories !== '' ? parsedData.nutrition.calories : prev.nutrition.calories,
+                    carbohydrates: parsedData.nutrition.carbohydrates !== '' ? parsedData.nutrition.carbohydrates : prev.nutrition.carbohydrates,
+                    protein: parsedData.nutrition.protein !== '' ? parsedData.nutrition.protein : prev.nutrition.protein,
+                    fat: {
+                        ...prev.nutrition.fat,
+                        total: parsedData.nutrition.fat !== '' ? parsedData.nutrition.fat : prev.nutrition.fat.total,
+                        saturatedFat: parsedData.nutrition.saturatedFat !== '' ? parsedData.nutrition.saturatedFat : prev.nutrition.fat.saturatedFat,
+                        polyunsaturatedFat: parsedData.nutrition.polyunsaturatedFat !== '' ? parsedData.nutrition.polyunsaturatedFat : prev.nutrition.fat.polyunsaturatedFat,
+                        monounsaturatedFat: parsedData.nutrition.monounsaturatedFat !== '' ? parsedData.nutrition.monounsaturatedFat : prev.nutrition.fat.monounsaturatedFat,
+                        transFat: parsedData.nutrition.transFat !== '' ? parsedData.nutrition.transFat : prev.nutrition.fat.transFat,
+                    },
+                    fiber: parsedData.nutrition.fiber !== '' ? parsedData.nutrition.fiber : prev.nutrition.fiber,
+                    sugar: parsedData.nutrition.sugar !== '' ? parsedData.nutrition.sugar : prev.nutrition.sugar,
+                    sodium: parsedData.nutrition.sodium !== '' ? parsedData.nutrition.sodium : prev.nutrition.sodium,
+                    potassium: parsedData.nutrition.potassium !== '' ? parsedData.nutrition.potassium : prev.nutrition.potassium,
+                    vitaminA: parsedData.nutrition.vitaminA || prev.nutrition.vitaminA,
+                    vitaminC: parsedData.nutrition.vitaminC || prev.nutrition.vitaminC,
+                    calcium: parsedData.nutrition.calcium !== '' ? parsedData.nutrition.calcium : prev.nutrition.calcium,
+                    iron: parsedData.nutrition.iron !== '' ? parsedData.nutrition.iron : prev.nutrition.iron,
                 }
             };
         });
 
-        // Hydrate matched ingredients array into the live UI draggable state list 
         if (parsedData.ingredients && parsedData.ingredients.length > 0) {
-            // If your code tracks ingredients separately, call its setter here:
-            // e.g., setIngredientsList(rehydrateIngredients(parsedData.ingredients));
-            // Or if it lives inside formData:
-            setFormData((prev: any) => ({
+            setFormData((prev: RecipeFormData) => ({
                 ...prev,
                 ingredients: rehydrateIngredients(parsedData.ingredients, true)
             }));
