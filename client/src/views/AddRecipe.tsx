@@ -10,6 +10,7 @@ import { SortableSectionHeader } from '../components/recipes/SortableSectionHead
 import { rehydrateIngredients, dehydrateIngredients } from '../utils/recipeUtils';
 import { initialRecipe, Visibility, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 import { AddNutrition } from '../components/recipes/AddNutrition';
+import { RecipeImporter } from '../components/recipes/RecipeImporter';
 
 import {
   DndContext,
@@ -295,6 +296,46 @@ const uploadFileToServer = async (file: File) => {
         return cleaned;
     };
 
+    const handleAutoPopulateImport = (parsedData: any, skippedIngredients: any[]) => {
+        // Build the new recipe form fields
+        setFormData((prev: any) => {
+            // Option text building for skipped records if desired
+            let updatedDescription = prev.description || '';
+            if (skippedIngredients.length > 0) {
+                const skippedListString = skippedIngredients.map(i => `• [${i.section}] ${i.line}`).join('\n');
+                updatedDescription += `\n\n⚠️ Unmatched items to review:\n${skippedListString}`;
+            }
+
+            return {
+                ...prev,
+                name: parsedData.name || prev.name,
+                description: updatedDescription,
+                prepTime: parsedData.prepTime || prev.prepTime,
+                cookTime: parsedData.cookTime || prev.cookTime,
+                servings: parsedData.servings || prev.servings,
+                instructions: parsedData.instructions || prev.instructions,
+                nutrition: {
+                    ...prev.nutrition,
+                    calories: parsedData.nutrition.calories || prev.nutrition.calories,
+                    carbohydrates: parsedData.nutrition.carbohydrates || prev.nutrition.carbohydrates,
+                    protein: parsedData.nutrition.protein || prev.nutrition.protein,
+                    fat: parsedData.nutrition.fat || prev.nutrition.fat,
+                }
+            };
+        });
+
+        // Hydrate matched ingredients array into the live UI draggable state list 
+        if (parsedData.ingredients && parsedData.ingredients.length > 0) {
+            // If your code tracks ingredients separately, call its setter here:
+            // e.g., setIngredientsList(rehydrateIngredients(parsedData.ingredients));
+            // Or if it lives inside formData:
+            setFormData((prev: any) => ({
+                ...prev,
+                ingredients: rehydrateIngredients(parsedData.ingredients, true)
+            }));
+        }
+    };
+
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -341,6 +382,11 @@ const uploadFileToServer = async (file: File) => {
 
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4 sm:p-6 pb-32 animate-in fade-in">
+
+            <RecipeImporter
+                taxonomy={taxonomy}
+                onImport={handleAutoPopulateImport}
+            />
             
             <div className="sticky top-16 pt-4 pb-4 mb-6 sm:mb-8 z-50 bg-white dark:bg-gray-950 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -355,6 +401,7 @@ const uploadFileToServer = async (file: File) => {
                     {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
                 </button>
             </div>
+            
 
             <div className="space-y-6 sm:space-y-10">
                 <section className="bg-gray-50 dark:bg-gray-800 p-5 sm:p-8 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 space-y-6">
