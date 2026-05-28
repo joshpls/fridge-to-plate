@@ -68,7 +68,7 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
         // 3. Meta Targets
         let prepTime = fullText.match(/(?:Prep\s*Time|Prep)[:\s]*(\d+)/i)?.[1] || '';
         let cookTime = fullText.match(/(?:Cook\s*Time|Cook)[:\s]*(\d+)/i)?.[1] || '';
-        let servings = fullText.match(/(?:Servings|Yield|Serves)[:\s]*(\d+(?:\s*-\s*\d+)?|\d+)/i)?.[1] || '';
+        let servings = fullText.match(/(?:Serving|Servings|Yield|Serves)[:\s]*(\d+(?:\s*-\s*\d+)?|\d+)/i)?.[1] || '';
         let author = fullText.match(/(?:Author|Adapted\s*from)[:\s]*(.*)/i)?.[1] || '';
         let method = fullText.match(/(?:Method)[:\s]*(.*)/i)?.[1] || '';
         let extractedCategory = fullText.match(/(?:Category|Course)[:\s]*(.*)/i)?.[1] || '';
@@ -97,34 +97,59 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
             vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: ''
         };
 
-        const parseNutritionField = (regexes: RegExp[], targetKey: string, useString = false) => {
+        const parseNutritionField = (regexes: RegExp[], targetKey: string) => {
             for (const rx of regexes) {
                 const match = fullText.match(rx);
                 if (match && match[1]) {
-                    nutrition[targetKey] = useString ? match[1].trim() : parseInt(match[1], 10);
+                    const rawValue = match[1].trim();
+                    
+                    if (targetKey === 'calories') {
+                        // Keep calories as a clean string/number without any units attached
+                        nutrition[targetKey] = rawValue;
+                    } else {
+                        // Extract and normalize the trailing unit string
+                        const rawUnit = match[2] ? match[2].trim().toLowerCase() : '';
+                        let standardAbbreviation = 'g'; // Standard metric macro fallback
+
+                        if (rawUnit.includes('milligram') || rawUnit.startsWith('mg')) {
+                            standardAbbreviation = 'mg';
+                        } else if (rawUnit.includes('gram') || rawUnit.startsWith('g')) {
+                            standardAbbreviation = 'g';
+                        } else if (rawUnit.includes('%') || rawUnit.includes('dv') || rawUnit.includes('percent')) {
+                            standardAbbreviation = '% DV';
+                        } else {
+                            // Smart fallback default configurations if no specific match is inferred
+                            if (['sodium'].includes(targetKey)) {
+                                standardAbbreviation = 'mg';
+                            } else if (targetKey.startsWith('vitamin') || ['calcium', 'iron', 'potassium', 'magnesium', 'zinc'].includes(targetKey)) {
+                                standardAbbreviation = '% DV';
+                            }
+                        }
+                        nutrition[targetKey] = `${rawValue}${standardAbbreviation}`;
+                    }
                     break;
                 }
             }
         };
 
-        parseNutritionField([/Calories[:\s]*(\d+)/i, /(\d+)\s*calories/i], 'calories');
-        parseNutritionField([/Carbohydrates[:\s]*(\d+)/i, /Carbs[:\s]*(\d+)/i], 'carbohydrates');
-        parseNutritionField([/Protein[:\s]*(\d+)/i], 'protein');
-        parseNutritionField([/(?:Total\s*)?Fat[:\s]*(\d+)/i], 'fat');
-        parseNutritionField([/Fiber[:\s]*(\d+)/i], 'fiber');
-        parseNutritionField([/Sugar[:\s]*(\d+)/i], 'sugar');
-        parseNutritionField([/Sodium[:\s]*(\d+)/i], 'sodium');
-        parseNutritionField([/Potassium[:\s]*(\d+)/i], 'potassium');
-        parseNutritionField([/Calcium[:\s]*(\d+)/i], 'calcium');
-        parseNutritionField([/Iron[:\s]*(\d+)/i], 'iron');
-        parseNutritionField([/Vitamin\s*A[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminA', true);
-        parseNutritionField([/Vitamin\s*B6[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminB6', true);
-        parseNutritionField([/Vitamin\s*C[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminC', true);
-        parseNutritionField([/Vitamin\s*E[:\s]*([0-9a-zA-Z\.\s]+)/i], 'vitaminE', true);
-        parseNutritionField([/Saturated\s*Fat[:\s]*(\d+)/i], 'saturatedFat');
-        parseNutritionField([/Polyunsaturated\s*Fat[:\s]*(\d+)/i], 'polyunsaturatedFat');
-        parseNutritionField([/Monounsaturated\s*Fat[:\s]*(\d+)/i], 'monounsaturatedFat');
-        parseNutritionField([/Trans\s*Fat[:\s]*(\d+)/i], 'transFat');
+        parseNutritionField([/Calories[:\s]*(\d+(?:\.\d+)?)/i, /(\d+(?:\.\d+)?)\s*calories/i], 'calories');
+        parseNutritionField([/Carbohydrates[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?|%)?/i, /Carbs[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?|%)?/i], 'carbohydrates');
+        parseNutritionField([/Protein[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'protein');
+        parseNutritionField([/(?:Total\s*)?Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'fat');
+        parseNutritionField([/Fiber[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'fiber');
+        parseNutritionField([/Sugar[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'sugar');
+        parseNutritionField([/Sodium[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|g|grams?)?/i], 'sodium');
+        parseNutritionField([/Potassium[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'potassium');
+        parseNutritionField([/Calcium[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'calcium');
+        parseNutritionField([/Iron[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'iron');
+        parseNutritionField([/Vitamin\s*A[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|iu|ui)?/i], 'vitaminA');
+        parseNutritionField([/Vitamin\s*B6[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|mg)?/i], 'vitaminB6');
+        parseNutritionField([/Vitamin\s*C[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|mg)?/i], 'vitaminC');
+        parseNutritionField([/Vitamin\s*E[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|mg)?/i], 'vitaminE');
+        parseNutritionField([/Saturated\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'saturatedFat');
+        parseNutritionField([/Polyunsaturated\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'polyunsaturatedFat');
+        parseNutritionField([/Monounsaturated\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'monounsaturatedFat');
+        parseNutritionField([/Trans\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'transFat');
 
 
         // --- Arrays ---
@@ -204,12 +229,30 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
                 // Cleanup search text (remove commas, parentheses, etc)
                 searchIngredientText = searchIngredientText.replace(/\([^)]+\)/g, '').replace(/,\s*.*$/, '').trim().toLowerCase();
 
-                // 3. Match Ingredient Name
-                const matchedIngredient = taxonomy?.ingredients?.find((ing: any) => 
-                    searchIngredientText === ing.name.toLowerCase() ||
-                    searchIngredientText.includes(ing.name.toLowerCase()) || 
-                    ing.name.toLowerCase().includes(searchIngredientText)
-                );
+                // 3. Match Ingredient Name prioritizing Exact match or Closest length match
+                const searchLower = searchIngredientText.trim();
+                let matchedIngredient = null;
+
+                if (taxonomy?.ingredients) {
+                    // Pass A: Try to find a strict, precise exact match first
+                    matchedIngredient = taxonomy.ingredients.find((ing: any) => 
+                        ing.name.toLowerCase() === searchLower
+                    );
+
+                    // Pass B: If no exact match found, query partial tokens and prefer the closest text length footprint
+                    if (!matchedIngredient) {
+                        const potentialMatches = taxonomy.ingredients.filter((ing: any) => {
+                            const ingNameLower = ing.name.toLowerCase();
+                            return searchLower.includes(ingNameLower) || ingNameLower.includes(searchLower);
+                        });
+
+                        if (potentialMatches.length > 0) {
+                            // Sort descending by name length (e.g. "Garlic Powder" matches before "Garlic")
+                            potentialMatches.sort((a: any, b: any) => b.name.length - a.name.length);
+                            matchedIngredient = potentialMatches[0];
+                        }
+                    }
+                }
 
                 const matchedModifier = taxonomy?.modifiers?.find((m: any) => 
                     cleanLine.toLowerCase().includes(m.name.toLowerCase())
