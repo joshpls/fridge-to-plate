@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Shield, Moon, Flame, KeyRound, Users, Volume2 } from 'lucide-react';
+import { User, Shield, Moon, Flame, KeyRound, Users, Volume2, Scale } from 'lucide-react';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { HouseholdManager } from '../components/Household/HouseholdManager';
@@ -17,7 +17,7 @@ const Profile = () => {
 
     // Form Data States
     const [profileData, setProfileData] = useState({ firstName: '', lastName: '', alias: '' });
-    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true, ttsVoice: 'female', autoTTS: false });
+    const [prefsData, setPrefsData] = useState({ darkMode: false, cookMode: true, ttsVoice: 'female', autoTTS: false, unitPreference: 'original' });
     const [securityData, setSecurityData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
     // Initialize from Context
@@ -36,7 +36,8 @@ const Profile = () => {
                     darkMode: p.darkMode || false,
                     cookMode: p.cookMode ?? true,
                     ttsVoice: p.ttsVoice || 'female',
-                    autoTTS: p.autoTTS || false
+                    autoTTS: p.autoTTS || false,
+                    unitPreference: p.unitPreference || 'original'
                 });
             }
         }
@@ -218,6 +219,22 @@ const Profile = () => {
                             >
                                 <option value="female">Female</option>
                                 <option value="male">Male</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                            <div>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><Scale size={16} className="text-orange-500"/> Default Unit System</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Choose how measurement units display automatically on recipes.</p>
+                            </div>
+                            <select
+                                value={prefsData.unitPreference}
+                                onChange={(e) => setPrefsData({ ...prefsData, unitPreference: e.target.value })}
+                                className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl font-bold outline-none focus:border-orange-500 text-gray-700 dark:text-gray-300 cursor-pointer"
+                            >
+                                <option value="original">Original</option>
+                                <option value="metric">Metric</option>
+                                <option value="us_customary">US Customary</option>
                             </select>
                         </div>
 

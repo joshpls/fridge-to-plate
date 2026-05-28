@@ -32,6 +32,9 @@ const RecipeDetail = () => {
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
     const userId = user?.id;
+    const prefs = user?.preferences 
+        ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences) 
+        : {};
 
     // Sidebar Controls State
     const [multiplier, setMultiplier] = useState(1);
@@ -43,7 +46,7 @@ const RecipeDetail = () => {
     const [newComment, setNewComment] = useState('');
     const [newRating, setNewRating] = useState<number>(5);
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-    const [measurementSystem, setMeasurementSystem] = useState<'original' | 'metric' | 'imperial'>('original');
+    const [measurementSystem, setMeasurementSystem] = useState<'original' | 'metric' | 'imperial'>(prefs.unitPreference || 'original');
 
     // Background Data for Smart Swaps
     const [pantryItems, setPantryItems] = useState<any[]>([]);
