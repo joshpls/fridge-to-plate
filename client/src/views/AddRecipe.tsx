@@ -346,9 +346,12 @@ const uploadFileToServer = async (file: File) => {
                     sodium: parsedData.nutrition.sodium !== '' ? parsedData.nutrition.sodium : prev.nutrition.sodium,
                     potassium: parsedData.nutrition.potassium !== '' ? parsedData.nutrition.potassium : prev.nutrition.potassium,
                     vitaminA: parsedData.nutrition.vitaminA || prev.nutrition.vitaminA,
+                    vitaminB6: parsedData.nutrition.vitaminB6 || prev.nutrition.vitaminB6, 
                     vitaminC: parsedData.nutrition.vitaminC || prev.nutrition.vitaminC,
+                    vitaminE: parsedData.nutrition.vitaminE || prev.nutrition.vitaminE,
                     calcium: parsedData.nutrition.calcium !== '' ? parsedData.nutrition.calcium : prev.nutrition.calcium,
                     iron: parsedData.nutrition.iron !== '' ? parsedData.nutrition.iron : prev.nutrition.iron,
+                    zinc: parsedData.nutrition.zinc !== '' ? parsedData.nutrition.zinc : prev.nutrition.zinc,
                 }
             };
         });

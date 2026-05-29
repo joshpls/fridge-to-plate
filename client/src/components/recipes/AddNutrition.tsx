@@ -14,7 +14,7 @@ export const AddNutrition = ({ nutrition, handleNutritionChange }: NutritionProp
     useEffect(() => {
         if (hasAutoExpanded.current) return;
 
-        const detailedKeys = ['fiber', 'sugar', 'sodium', 'potassium', 'vitaminA', 'vitaminC', 'calcium', 'iron'];
+        const detailedKeys = ['fiber', 'sugar', 'sodium', 'potassium', 'vitaminA', 'vitaminB6', 'vitaminC', 'vitaminE', 'calcium', 'iron', 'zinc'];
         const fatKeys = ['saturatedFat', 'polyunsaturatedFat', 'monounsaturatedFat', 'transFat'];
 
         const hasDetailedData =

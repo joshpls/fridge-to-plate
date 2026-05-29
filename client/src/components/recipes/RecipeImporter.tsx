@@ -94,7 +94,7 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
         // --- Nutrition Matrix ---
         const nutrition: any = {
             calories: '', carbohydrates: '', protein: '', fat: '', fiber: '', sugar: '', sodium: '', potassium: '',
-            vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: ''
+            vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', zinc: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: ''
         };
 
         const parseNutritionField = (regexes: RegExp[], targetKey: string) => {
@@ -142,6 +142,7 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
         parseNutritionField([/Potassium[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'potassium');
         parseNutritionField([/Calcium[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'calcium');
         parseNutritionField([/Iron[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'iron');
+        parseNutritionField([/Zinc[:\s]*(\d+(?:\.\d+)?)\s*(mg|milligrams?|%\s*DV|%)?/i], 'zinc');
         parseNutritionField([/Vitamin\s*A[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|iu|ui)?/i], 'vitaminA');
         parseNutritionField([/Vitamin\s*B6[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|mg)?/i], 'vitaminB6');
         parseNutritionField([/Vitamin\s*C[:\s]*(\d+(?:\.\d+)?)\s*(%\s*DV|%|mg)?/i], 'vitaminC');
