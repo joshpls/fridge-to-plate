@@ -9,7 +9,11 @@ export const CompactNutritionDisplay = ({ nutrition }: NutritionProps) => {
         key => !primaryKeys.includes(key.toLowerCase())
     );
 
-    const formatKey = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    const formatKey = (key: string) => {
+        if (key === 'omega3') return 'Omega-3';
+        if (key === 'omega6') return 'Omega-6';
+        return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    };
 
     return (
         <section className="bg-white dark:bg-gray-900 rounded-3xl border-2 border-gray-100 dark:border-gray-800/50 overflow-hidden">
@@ -19,12 +23,13 @@ export const CompactNutritionDisplay = ({ nutrition }: NutritionProps) => {
                     Per Serving
                 </span>
             </div>
+            
             {/* Primary Macros Row */}
-            <div className="grid grid-cols-4 divide-x-2 divide-gray-50 bg-gray-50 dark:bg-gray-800/50 border-b-2 border-gray-100 dark:border-gray-800/50">
+            <div className="grid grid-cols-4 divide-x-2 divide-gray-50 dark:divide-gray-800 bg-gray-50 dark:bg-gray-800/50 border-b-2 border-gray-100 dark:border-gray-800/50">
                 {primaryKeys.map((key) => {
-                    const val = nutrition[key];
-                    // Handle cases where fat might be an object { total: '10g', ... }
-                    const displayVal = typeof val === 'object' ? val.total : val;
+                    const val = nutrition[key as keyof typeof nutrition];
+                    // Handle cases where fat is an object { total: '10g', ... }
+                    const displayVal = typeof val === 'object' && val !== null ? (val as any).total : val;
 
                     return (
                         <div key={key} className="py-4 px-2 text-center">
@@ -39,25 +44,31 @@ export const CompactNutritionDisplay = ({ nutrition }: NutritionProps) => {
                 })}
             </div>
 
-            {/* Secondary Info (Fiber, Sugar, Vitamins etc.) */}
-            {secondaryKeys.length > 0 && (
+            {/* Secondary Info (Fiber, Sugar, Fat Breakdown, Vitamins etc.) */}
+            {(secondaryKeys.length > 0 || (nutrition.fat && Object.keys(nutrition.fat).length > 1)) && (
                 <div className="p-4 grid grid-cols-2 gap-x-8 gap-y-2">
+                    
+                    {/* Render secondary string fields */}
                     {secondaryKeys.map((key) => {
-                        const val = nutrition[key];
-
-                        if (typeof val === 'object' && val !== null) {
-                            return Object.entries(val).map(([subKey, subVal]) => (
-                                <div key={subKey} className="flex justify-between text-[11px] border-b border-gray-50 pb-1">
-                                    <span className="text-gray-500 dark:text-gray-400 font-medium">{formatKey(subKey)}</span>
-                                    <span className="font-bold text-gray-700 dark:text-gray-300">{subVal as string}</span>
-                                </div>
-                            ));
-                        }
+                        const val = nutrition[key as keyof typeof nutrition];
+                        if (typeof val === 'object') return null; // handled below
 
                         return (
-                            <div key={key} className="flex justify-between text-[11px] border-b border-gray-50 pb-1">
+                            <div key={key} className="flex justify-between text-[11px] border-b border-gray-50 dark:border-gray-800/50 pb-1">
                                 <span className="text-gray-500 dark:text-gray-400 font-medium">{formatKey(key)}</span>
-                                <span className="font-bold text-gray-700 dark:text-gray-300">{val}</span>
+                                <span className="font-bold text-gray-700 dark:text-gray-300">{val as string}</span>
+                            </div>
+                        );
+                    })}
+
+                    {/* Render fat sub-fields (ignoring the 'total' field) */}
+                    {nutrition.fat && typeof nutrition.fat === 'object' && Object.entries(nutrition.fat).map(([subKey, subVal]) => {
+                        if (subKey === 'total' || !subVal) return null; 
+
+                        return (
+                            <div key={`fat-${subKey}`} className="flex justify-between text-[11px] border-b border-gray-50 dark:border-gray-800/50 pb-1">
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">{formatKey(subKey)}</span>
+                                <span className="font-bold text-gray-700 dark:text-gray-300">{subVal as string}</span>
                             </div>
                         );
                     })}

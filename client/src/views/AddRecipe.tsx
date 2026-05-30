@@ -94,6 +94,8 @@ const AddRecipe = () => {
                                     total: fetchedFat.total || '',
                                     saturatedFat: fetchedFat.saturatedFat || '',
                                     polyunsaturatedFat: fetchedFat.polyunsaturatedFat || '',
+                                    omega3: fetchedFat.omega3 || '',
+                                    omega6: fetchedFat.omega6 || '',
                                     monounsaturatedFat: fetchedFat.monounsaturatedFat || '',
                                     transFat: fetchedFat.transFat || ''
                                 },
@@ -102,9 +104,12 @@ const AddRecipe = () => {
                                 sodium: fetchedNutrition.sodium || '',
                                 potassium: fetchedNutrition.potassium || '',
                                 vitaminA: fetchedNutrition.vitaminA || '',
+                                vitaminB6: fetchedNutrition.vitaminB6 || '',
                                 vitaminC: fetchedNutrition.vitaminC || '',
+                                vitaminE: fetchedNutrition.vitaminE || '',
                                 calcium: fetchedNutrition.calcium || '',
                                 iron: fetchedNutrition.iron || '',
+                                zinc: fetchedNutrition.zinc || ''
                             },
                             visibility: r.visibility || Visibility.PRIVATE
                         });
@@ -338,6 +343,8 @@ const uploadFileToServer = async (file: File) => {
                         total: parsedData.nutrition.fat !== '' ? parsedData.nutrition.fat : prev.nutrition.fat.total,
                         saturatedFat: parsedData.nutrition.saturatedFat !== '' ? parsedData.nutrition.saturatedFat : prev.nutrition.fat.saturatedFat,
                         polyunsaturatedFat: parsedData.nutrition.polyunsaturatedFat !== '' ? parsedData.nutrition.polyunsaturatedFat : prev.nutrition.fat.polyunsaturatedFat,
+                        omega3: parsedData.nutrition.omega3 !== '' ? parsedData.nutrition.omega3 : prev.nutrition.fat.omega3,
+                        omega6: parsedData.nutrition.omega6 !== '' ? parsedData.nutrition.omega6 : prev.nutrition.fat.omega6,
                         monounsaturatedFat: parsedData.nutrition.monounsaturatedFat !== '' ? parsedData.nutrition.monounsaturatedFat : prev.nutrition.fat.monounsaturatedFat,
                         transFat: parsedData.nutrition.transFat !== '' ? parsedData.nutrition.transFat : prev.nutrition.fat.transFat,
                     },

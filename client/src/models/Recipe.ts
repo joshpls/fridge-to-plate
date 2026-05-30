@@ -43,6 +43,8 @@ export interface Nutrition {
         total: string;
         saturatedFat?: string;
         polyunsaturatedFat?: string;
+        omega3?: string;
+        omega6?: string;
         monounsaturatedFat?: string;
         transFat?: string;
     };
@@ -51,9 +53,12 @@ export interface Nutrition {
     sodium?: string;
     potassium?: string;
     vitaminA?: string;
+    vitaminB6?: string;
     vitaminC?: string;
+    vitaminE?: string;
     calcium?: string;
     iron?: string;
+    zinc?: string;
     [key: string]: any;
 };
 
@@ -91,8 +96,8 @@ export const initialRecipe: RecipeFormData = {
     ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', name: '', sectionName: '', amount: '', unitId: '', modifierId: '' }],
     nutrition: { 
         calories: '', protein: '', carbohydrates: '', 
-        fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '' },
-        fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminC: '', calcium: '', iron: ''
+        fat: { total: '', saturatedFat: '', polyunsaturatedFat: '', omega3: '', omega6: '', monounsaturatedFat: '', transFat: ''},
+        fiber: '', sugar: '', sodium: '', potassium: '', vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', zinc: ''
     },
     sourceName: '',
     sourceUrl: '',

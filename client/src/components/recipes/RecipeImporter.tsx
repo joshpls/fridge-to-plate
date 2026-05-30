@@ -94,7 +94,7 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
         // --- Nutrition Matrix ---
         const nutrition: any = {
             calories: '', carbohydrates: '', protein: '', fat: '', fiber: '', sugar: '', sodium: '', potassium: '',
-            vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', zinc: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: ''
+            vitaminA: '', vitaminB6: '', vitaminC: '', vitaminE: '', calcium: '', iron: '', zinc: '', saturatedFat: '', polyunsaturatedFat: '', monounsaturatedFat: '', transFat: '', omega3: '', omega6: ''
         };
 
         const parseNutritionField = (regexes: RegExp[], targetKey: string) => {
@@ -151,6 +151,8 @@ export const RecipeImporter = ({ taxonomy, onImport }: RecipeImporterProps) => {
         parseNutritionField([/Polyunsaturated\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'polyunsaturatedFat');
         parseNutritionField([/Monounsaturated\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'monounsaturatedFat');
         parseNutritionField([/Trans\s*Fat[:\s]*(\d+(?:\.\d+)?)\s*(g|grams?)?/i], 'transFat');
+        parseNutritionField([/Omega\s*3[:\s]*(\d+(?:\.\d+)?)\s*(mg|g|%\s*DV)?/i], 'omega3');
+        parseNutritionField([/Omega\s*6[:\s]*(\d+(?:\.\d+)?)\s*(mg|g|%\s*DV)?/i], 'omega6');
 
 
         // --- Arrays ---
