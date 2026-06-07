@@ -78,6 +78,12 @@ export const validateLogin = async (data: any) => {
         throw new Error('Invalid email or password.');
     }
 
+    // Update lastActiveAt on login
+    const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { lastActiveAt: new Date() }
+    });
+
     // Strip the password before returning
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;

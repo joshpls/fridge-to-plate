@@ -115,6 +115,13 @@ export const refreshSession = async (req: Request, res: Response) => {
         }
 
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as any;
+
+        // Update lastActiveAt on session refresh
+        await prisma.user.update({
+            where: { id: decoded.id },
+            data: { lastActiveAt: new Date() }
+        });
+
         const newAccessToken = generateAccessToken(decoded.id, decoded.role);
 
         res.status(200).json({ status: 'success', token: newAccessToken });

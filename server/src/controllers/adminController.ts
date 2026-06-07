@@ -45,7 +45,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
         const [users, totalCount] = await Promise.all([
             prisma.user.findMany({
                 where: whereClause,
-                select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true },
+                select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true, lastActiveAt: true },
                 orderBy: { [sortBy]: sortOrder },
                 skip,
                 take: limit
@@ -104,7 +104,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
                 alias,
                 email: email?.toLowerCase() // Keep emails standardized
             },
-            select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true }
+            select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true, lastActiveAt: true }
         });
 
         return sendSuccess(res, updatedUser, "User updated successfully");

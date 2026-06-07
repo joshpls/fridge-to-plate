@@ -21,7 +21,7 @@ export const UsersTab = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');
-    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortBy, setSortBy] = useState('lastActiveAt');
     const [sortOrder, setSortOrder] = useState('desc');
 
     const fetchUsers = async () => {
@@ -38,7 +38,6 @@ export const UsersTab = () => {
             const result = await res.json();
             
             if (result.status === 'success') {
-                // Now expecting { users, pagination } from the updated backend
                 setUsers(result.data.users);
                 setTotalPages(result.data.pagination.totalPages);
             }
@@ -159,6 +158,12 @@ export const UsersTab = () => {
         }
     };
 
+    // Helper to determine if user is online (activity within the last 15 minutes)
+    const isOnline = (lastActiveAt?: string) => {
+        if (!lastActiveAt) return false;
+        return (Date.now() - new Date(lastActiveAt).getTime()) < 15 * 60 * 1000;
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
@@ -180,7 +185,7 @@ export const UsersTab = () => {
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
                 <div className="overflow-x-auto min-h-[400px]">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px] cursor-pointer">
+                        <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px] cursor-pointer whitespace-nowrap">
                             <tr>
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('email')}>
                                     Email / ID {sortBy === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -194,6 +199,9 @@ export const UsersTab = () => {
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('role')}>
                                     Role {sortBy === 'role' && (sortOrder === 'asc' ? '↑' : '↓')}
                                 </th>
+                                <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('lastActiveAt')}>
+                                    Last Active {sortBy === 'lastActiveAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                </th>
                                 <th className="p-4 hover:text-orange-500 transition-colors" onClick={() => handleSort('createdAt')}>
                                     Joined {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                                 </th>
@@ -203,7 +211,7 @@ export const UsersTab = () => {
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-gray-400 font-bold animate-pulse">Loading users...</td>
+                                    <td colSpan={7} className="p-8 text-center text-gray-400 font-bold animate-pulse">Loading users...</td>
                                 </tr>
                             ) : users.length > 0 ? (
                                 users.map(u => (
@@ -249,7 +257,10 @@ export const UsersTab = () => {
                                                         {u.role}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-gray-400 text-xs">
+                                                <td className="p-4 text-gray-400 text-xs whitespace-nowrap">
+                                                    {u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : '-'}
+                                                </td>
+                                                <td className="p-4 text-gray-400 text-xs whitespace-nowrap">
                                                     {new Date(u.createdAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="p-4 text-right flex justify-end gap-2">
@@ -266,8 +277,17 @@ export const UsersTab = () => {
                                             <>
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                                                            <UserIcon size={14} />
+                                                        <div className="relative">
+                                                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                                                                <UserIcon size={14} />
+                                                            </div>
+                                                            {/* Online Indicator Dot */}
+                                                            {isOnline(u.lastActiveAt) && (
+                                                                <span 
+                                                                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full shadow-sm" 
+                                                                    title="Online">
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="truncate max-w-[150px]">
                                                             <p className="font-bold text-gray-900 dark:text-white truncate" title={u.email}>{u.email}</p>
@@ -290,7 +310,23 @@ export const UsersTab = () => {
                                                         {u.role}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                <td className="p-4 whitespace-nowrap">
+                                                    {u.lastActiveAt ? (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                                                {isOnline(u.lastActiveAt) ? <span className="text-green-500">Active Now</span> : new Date(u.lastActiveAt).toLocaleDateString()}
+                                                            </span>
+                                                            {!isOnline(u.lastActiveAt) && (
+                                                                <span className="text-[10px] text-gray-400">
+                                                                    {new Date(u.lastActiveAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Never</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-gray-500 dark:text-gray-400 whitespace-nowrap text-xs">
                                                     {new Date(u.createdAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="p-4 text-right">
@@ -304,14 +340,14 @@ export const UsersTab = () => {
                                                         </button>
                                                         <button 
                                                             onClick={() => startEdit(u)}
-                                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/15 rounded-lg transition-colors"
                                                             title="Edit User"
                                                         >
                                                             <Edit2 size={16} />
                                                         </button>
                                                         <button 
                                                             onClick={() => handleDelete(u.id, u.email)}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/15 rounded-lg transition-colors"
                                                             title="Delete User"
                                                         >
                                                             <Trash2 size={16} />
@@ -324,7 +360,7 @@ export const UsersTab = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">No users found.</td>
+                                    <td colSpan={7} className="p-8 text-center text-gray-500 dark:text-gray-400 font-medium">No users found.</td>
                                 </tr>
                             )}
                         </tbody>

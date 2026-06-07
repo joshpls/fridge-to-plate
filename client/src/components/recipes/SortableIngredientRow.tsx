@@ -6,7 +6,6 @@ import { IngredientAutocomplete } from './IngredientAutocomplete';
 import type { IngredientRow } from '../../models/Utils';
 import { QuantityInput } from './QuantityInput';
 
-// Extend the interface to include our new admin props
 interface SortableRowProps extends IngredientRow {
     isAdmin?: boolean;
     onCreateNewIngredient?: (name: string, index: number) => Promise<boolean>;
@@ -19,6 +18,7 @@ export const SortableIngredientRow = ({
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Tracks what the user types
 
   const {
     attributes,
@@ -43,9 +43,26 @@ export const SortableIngredientRow = ({
     if (success) {
         setIsCreating(false);
         setNewName('');
+        setSearchQuery('');
     }
     setIsSaving(false);
   };
+
+  const handleStartCreating = () => {
+      setIsCreating(true);
+      setNewName(searchQuery); // Carry over the typed text
+  };
+
+  // --- Dynamic Validation Styles ---
+  const isAmountMissing = !ingredient.amount || String(ingredient.amount).trim() === '';
+  const isUnitMissing = !ingredient.unitId;
+
+  const inputBaseClass = "flex-1 p-2.5 sm:p-3 rounded-xl outline-none border-2 font-bold transition-all duration-200";
+  const errorClass = "border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10 placeholder-red-400 dark:placeholder-red-400/70 text-red-700 dark:text-red-400 focus:border-red-500";
+  const defaultClass = "border-transparent bg-gray-50 dark:bg-gray-800 focus:border-orange-300 text-gray-600 dark:text-white";
+
+  // Find selected unit to display full name on hover
+  const selectedUnit = taxonomy.units.find((u: any) => u.id === ingredient.unitId);
 
   return (
     <div
@@ -64,7 +81,7 @@ export const SortableIngredientRow = ({
           <GripVertical size={20} />
         </div>
 
-        <div className="flex-1 min-w-0 z-50 flex items-center gap-1 sm:gap-2">
+        <div className="flex-1 min-w-0 z-40 flex items-center gap-1 sm:gap-2">
           {isCreating ? (
             <div className="flex-1 flex gap-1 items-center bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border-2 border-orange-400 shadow-sm overflow-hidden">
               <input
@@ -106,12 +123,14 @@ export const SortableIngredientRow = ({
                             value={ingredient.ingredientId}
                             ingredients={taxonomy.ingredients}
                             onChange={(newId) => handleIngredientChange(index, 'ingredientId', newId)}
+                            searchValue={searchQuery}
+                            onSearchChange={setSearchQuery}
                         />
                     </div>
                     {isAdmin && (
                         <button 
                             type="button" 
-                            onClick={() => setIsCreating(true)}
+                            onClick={handleStartCreating}
                             className="shrink-0 p-2 text-orange-500 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 dark:hover:bg-orange-500/20 rounded-xl transition-colors border border-orange-200 dark:border-orange-500/30"
                             title="Create New Ingredient"
                         >
@@ -138,23 +157,28 @@ export const SortableIngredientRow = ({
             value={ingredient.amount}
             onChange={(val) => handleIngredientChange(index, 'amount', val)}
             placeholder="Qty"
-            className="flex-1 sm:w-20 md:w-24 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white text-center min-w-[60px]"
+            className={`${inputBaseClass} text-center sm:w-20 md:w-24 min-w-[60px] ${isAmountMissing ? errorClass : defaultClass}`}
         />
 
         <select
             required
+            title={selectedUnit ? selectedUnit.name : 'Select a unit'}
             value={ingredient.unitId}
             onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-            className="flex-1 sm:w-28 md:w-32 p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white cursor-pointer min-w-[80px]"
+            className={`${inputBaseClass} cursor-pointer sm:w-[130px] md:w-[150px] min-w-[90px] ${isUnitMissing ? errorClass : defaultClass}`}
         >
             <option value="" disabled>Unit</option>
-            {taxonomy.units.map((u: any) => <option key={u.id} value={u.id}>{u.abbreviation}</option>)}
+            {taxonomy.units.map((u: any) => (
+                <option key={u.id} value={u.id} title={u.name}>
+                    {u.abbreviation} {u.name && u.name !== u.abbreviation ? `- ${u.name}` : ''}
+                </option>
+            ))}
         </select>
 
         <select
             value={ingredient.modifierId || ''}
             onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
-            className="flex-1 md:w-32 p-2.5 md:p-3 bg-gray-50 dark:bg-gray-800 rounded-xl outline-none border border-transparent focus:border-orange-300 font-bold text-gray-600 dark:text-white cursor-pointer min-w-[100px]"
+            className={`${inputBaseClass} cursor-pointer md:w-32 min-w-[100px] ${defaultClass}`}
         >
             <option value="">(None)</option>
             {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}

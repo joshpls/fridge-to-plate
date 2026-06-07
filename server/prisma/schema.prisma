@@ -35,6 +35,8 @@ model User {
   lastName  String?
   alias     String?
 
+  lastActiveAt DateTime @default(now())
+
   activeHouseholdId String?
   activeHousehold   Household? @relation(fields: [activeHouseholdId], references: [id])
 
