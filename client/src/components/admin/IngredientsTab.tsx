@@ -3,7 +3,7 @@ import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
-import { Search, Plus, Trash2, Edit2, Layers, CheckCircle2, Circle, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, Layers, CheckCircle2, Circle, ArrowUpDown, ArrowUp, ArrowDown, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type Tab = 'ingredients' | 'categories';
@@ -23,6 +23,10 @@ export const IngredientsTab = () => {
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+    // --- Pagination State ---
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
+
     const [isIngredientModalOpen, setIsIngredientModalOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<any>(null);
     const [ingForm, setIngForm] = useState({ name: '', categoryId: '', isDefaultStaple: false });
@@ -38,6 +42,11 @@ export const IngredientsTab = () => {
     };
 
     useEffect(() => { loadData(); }, []);
+
+    // Reset to page 1 whenever filters, search, or sorting changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedCategoryFilter, sortField, sortOrder, activeTab]);
 
     // --- Category Actions ---
     const handleAddCategory = async () => {
@@ -195,7 +204,7 @@ export const IngredientsTab = () => {
             );
         }
 
-        // Category Dropdown Filter
+        // 2. Category Dropdown Filter
         if (selectedCategoryFilter !== 'ALL') {
             if (selectedCategoryFilter === 'UNCATEGORIZED') {
                 mappedData = mappedData.filter(ing => !ing.categoryId);
@@ -219,6 +228,13 @@ export const IngredientsTab = () => {
 
         return mappedData;
     }, [ingredients, categories, searchTerm, selectedCategoryFilter, sortField, sortOrder]);
+
+    // --- Pagination Logic ---
+    const totalPages = Math.ceil(filteredIngredients.length / itemsPerPage);
+    const paginatedIngredients = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredIngredients.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredIngredients, currentPage, itemsPerPage]);
 
     const filteredCategories = useMemo(() => {
         return categories.filter(cat => cat.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -269,11 +285,11 @@ export const IngredientsTab = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col">
                 {activeTab === 'ingredients' ? (
                     <>
                         {/* DESKTOP VIEW (Table) */}
-                        <div className="hidden md:block overflow-x-auto">
+                        <div className="hidden md:block overflow-x-auto flex-1">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
@@ -294,7 +310,7 @@ export const IngredientsTab = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                                    {filteredIngredients.map(ing => (
+                                    {paginatedIngredients.map(ing => (
                                         <tr key={ing.id} className="group hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="font-bold text-gray-800 dark:text-gray-200">{ing.name}</div>
@@ -318,7 +334,7 @@ export const IngredientsTab = () => {
                         </div>
 
                         {/* MOBILE VIEW (Cards) */}
-                        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800 flex-1">
                             {/* Mobile Sort Controls */}
                             <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center text-sm">
                                 <span className="font-bold text-gray-500 dark:text-gray-400">Sort by:</span>
@@ -332,7 +348,7 @@ export const IngredientsTab = () => {
                                 </div>
                             </div>
                             
-                            {filteredIngredients.map(ing => (
+                            {paginatedIngredients.map(ing => (
                                 <div key={ing.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
@@ -359,12 +375,37 @@ export const IngredientsTab = () => {
                                     </div>
                                 </div>
                             ))}
-                            {filteredIngredients.length === 0 && (
+                            {paginatedIngredients.length === 0 && (
                                 <div className="p-8 text-center text-gray-500 font-medium">
                                     No ingredients found matching your filters.
                                 </div>
                             )}
                         </div>
+
+                        {/* Pagination Footer */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 mt-auto">
+                                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <div className="flex gap-2">
+                                    <button 
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button 
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 hover:border-orange-500 hover:text-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="divide-y divide-gray-50 dark:divide-gray-800">
