@@ -7,7 +7,7 @@ import { CookMode } from '../components/recipes/CookMode';
 import { ShareButton } from '../components/ui/ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/userUtils';
-import { Printer, Play, Heart, Check } from 'lucide-react';
+import { Printer, Play, Heart, Check, Square } from 'lucide-react';
 import { convertUnit } from '../utils/helperFunctions';
 import toast from 'react-hot-toast';
 import { API_BASE, getNetworkImageUrl } from '../utils/apiConfig';
@@ -100,35 +100,31 @@ const RecipeDetail = () => {
         : null;
 
     const formatIngredientAmount = (baseAmount: number, baseUnitName: string) => {
-    // baseAmount is ALWAYS the original DB amount. We scale it safely here.
-    const scaled = baseAmount * multiplier;
+        const scaled = baseAmount * multiplier;
 
-    // 1. If Original system OR no unit exists, format nicely with fractions
-    if (measurementSystem === 'original' || !baseUnitName) {
-        return { 
-            amount: formatDecimalToQuantity(scaled), 
-            unit: baseUnitName || '' 
-        };
-    }
+        if (measurementSystem === 'original' || !baseUnitName) {
+            return { 
+                amount: formatDecimalToQuantity(scaled), 
+                unit: baseUnitName || '' 
+            };
+        }
 
-    const converted = convertUnit(scaled, baseUnitName, measurementSystem);
+        const converted = convertUnit(scaled, baseUnitName, measurementSystem);
 
-    // 2. If the conversion algorithm didn't change anything (e.g., unit is "pinch" or "slice")
-    if (converted.amount === scaled) {
-        return { 
-            amount: formatDecimalToQuantity(scaled), 
-            unit: converted.unit 
-        };
-    }
+        if (converted.amount === scaled) {
+            return { 
+                amount: formatDecimalToQuantity(scaled), 
+                unit: converted.unit 
+            };
+        }
 
-    // 3. For Metric/Imperial conversions, decimals make more sense than fractions
-    let finalAmountStr = converted.amount.toFixed(1);
-    if (finalAmountStr.endsWith('.0')) {
-        finalAmountStr = finalAmountStr.slice(0, -2);
-    }
+        let finalAmountStr = converted.amount.toFixed(1);
+        if (finalAmountStr.endsWith('.0')) {
+            finalAmountStr = finalAmountStr.slice(0, -2);
+        }
 
-    return { amount: finalAmountStr, unit: converted.unit };
-};
+        return { amount: finalAmountStr, unit: converted.unit };
+    };
 
     const addToShoppingList = async () => {
         const itemsToAdd = missingIngredients.map((item: any) => {
@@ -335,7 +331,7 @@ const RecipeDetail = () => {
         return ing;
     }) || [];
 
-    // Inflate flat array with Section Headers for visual grouping
+     // Inflate flat array with Section Headers for visual grouping
     const displayList = rehydrateIngredients(effectiveIngredients, false);
 
     // Filter headers out when dealing with purely functional logic
@@ -402,13 +398,8 @@ const RecipeDetail = () => {
     // Pre-format ingredients for Cook Mode
     const formattedIngredients = displayList.map((item: any) => {
         if (item.isHeader) {
-            return {
-                id: item.id,
-                isHeader: true,
-                name: item.name
-            };
+            return { id: item.id, isHeader: true, name: item.name };
         }
-
         const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
         return {
             id: item.id,
@@ -419,27 +410,57 @@ const RecipeDetail = () => {
         };
     });
 
+    // Helper for generating the print-friendly nutrition string
+    const getPrintNutritionString = () => {
+        if (!recipe.nutrition) return '';
+        const pairs: string[] = [];
+        for (const [key, value] of Object.entries(recipe.nutrition)) {
+            if (key === 'fat' && typeof value === 'object' && value !== null) {
+                if ((value as any).total) pairs.push(`Fat: ${(value as any).total}`);
+                if ((value as any).saturatedFat) pairs.push(`Saturated Fat: ${(value as any).saturatedFat}`);
+                continue;
+            }
+            if (value && typeof value === 'string' && value.trim() !== '') {
+                const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                pairs.push(`${formattedKey}: ${value}${key === 'calories' ? 'kcal' : ''}`);
+            }
+        }
+        return pairs.join(' | ');
+    };
+
+    const handleFindCategory = () => {
+        const categoryId = recipe?.category?.id;
+        if (categoryId) {
+            storageService.cache.clearDiscoveryState();
+            navigate('/discovery', { state: { selectedCategory: categoryId } });
+        }
+    };
+
     return (
-        <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white">
+        <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white print:max-w-none">
             <nav className="flex items-center gap-2 text-sm font-bold text-gray-400 dark:text-gray-200 mb-6 uppercase tracking-wider print:hidden">
                 <Link to="/discovery" className="hover:text-orange-600 transition-colors">Discovery</Link>
                 <span>/</span>
-                {recipe.category && <span className="text-gray-600 dark:text-gray-400 truncate max-w-[100px] sm:max-w-none">{recipe.category.name}</span>}
+                <button
+                    onClick={() => handleFindCategory()}
+                >
+                    {recipe.category && <span className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-orange-500 transition-colors truncate max-w-[100px] sm:max-w-none">{recipe.category.name}</span>}
+                </button>
                 {recipe.subcategory && <><span>/</span><span className="text-orange-600 truncate max-w-[100px] sm:max-w-none">{recipe.subcategory.name}</span></>}
             </nav>
 
-            <div className="hidden print:flex justify-between items-center pb-4 mb-8 border-b-2 border-black">
-                <h1 className="text-xl font-bold">FRIDGE TO PLATE • Chef's Sheet</h1>
-                <p className="text-sm font-medium text-gray-600">
-                    Printed on: {new Date().toLocaleDateString()}
-                </p>
+            {/* Print Only Header branding */}
+            <div className="hidden print:flex justify-between items-center pb-2 mb-6 border-b-2 border-black">
+                <h1 className="text-lg font-bold">FRIDGE TO PLATE • Chef's Sheet</h1>
+                <p className="text-sm font-medium text-gray-600">Printed on: {new Date().toLocaleDateString()}</p>
             </div>
 
-            <div className="w-full h-64 sm:h-80 md:h-96 rounded-3xl overflow-hidden mb-8 relative shadow-sm print:h-64 print:rounded-none print:shadow-none print:border-b-2 print:border-gray-200">
+            {/* Screen Banner Image (Hidden on Print) */}
+            <div className="w-full h-64 sm:h-80 md:h-96 rounded-3xl overflow-hidden mb-8 relative shadow-sm print:hidden">
                 <img src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent print:hidden" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                 
-                <div className="absolute top-4 right-4 flex items-center gap-2 print:hidden z-10">
+                <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
                     {(isAdmin || (isAuthenticated && user?.id === recipe?.author?.id)) && (
                         <div className="flex gap-2 mr-1">
                             <Link to={`/edit-recipe/${recipe.slug}`}>
@@ -466,7 +487,13 @@ const RecipeDetail = () => {
 
             {/* Main Header Info */}
             <header className="mb-10 text-center md:text-left print:text-left print:mb-6">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight mb-6 print:text-4xl print:tracking-tight print:leading-none print:font-black print:text-black">
+                
+                {/* Print Only Floated Image */}
+                <div className="hidden print:block float-right w-40 h-40 ml-6 mb-4 rounded-lg overflow-hidden border border-gray-300">
+                    <img src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight mb-6 print:text-4xl print:tracking-tight print:leading-none print:mb-3 print:text-black">
                     {recipe.name}
                 </h1>
 
@@ -508,23 +535,25 @@ const RecipeDetail = () => {
                 </div>
 
                 {/* Metadata Row */}
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 print:text-gray-700 print:justify-start px-4 md:px-0">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-sm font-bold text-gray-500 dark:text-gray-400 mb-6 print:text-gray-700 print:mb-3 px-4 md:px-0">
                     <span className="flex items-center gap-1.5">
                         👨‍🍳 By <span className="text-gray-900 dark:text-gray-200 print:text-black">{authorName}</span>
                     </span>
                     {(recipe.sourceName || recipe.sourceUrl) && (
                         <>
-                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
-                            <SourceAttribution sourceName={recipe.sourceName} sourceUrl={recipe.sourceUrl} />
+                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600 print:hidden">•</span>
+                            <div className="print:text-black print:text-sm print:leading-snug px-4 md:px-0 print:px-0 print:mt-0 flex items-center">
+                                <SourceAttribution sourceName={recipe.sourceName} sourceUrl={recipe.sourceUrl} />
+                            </div>
                         </>
                     )}
 
                     {avgRating && (
                         <>
-                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
-                            <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:text-black">
+                            <span className="hidden sm:inline text-gray-300 dark:text-gray-600 print:hidden">•</span>
+                            <span className="text-yellow-500 dark:text-yellow-400 flex items-center gap-1 text-base print:hidden">
                                 ★ <span className="font-bold">{avgRating}</span>
-                                <span className="text-gray-400 dark:text-gray-200 text-sm print:text-gray-600">
+                                <span className="text-gray-400 dark:text-gray-200 text-sm print:text-gray-600 print:hidden">
                                     ({ratings.length} reviews)
                                 </span>
                             </span>
@@ -532,13 +561,13 @@ const RecipeDetail = () => {
                     )}
                 </div>
 
-                <p className="text-base sm:text-lg text-gray-600 dark:text-gray-200 mb-6 font-medium leading-relaxed max-w-3xl mx-auto md:mx-0 print:max-w-full print:text-black print:text-base print:leading-relaxed print:italic px-4 md:px-0">
+                <p className="text-base sm:text-lg text-gray-600 dark:text-gray-200 mb-6 font-medium leading-relaxed max-w-3xl mx-auto md:mx-0 print:text-black print:text-sm print:leading-snug print:mb-4 px-4 md:px-0">
                     {recipe.summary || "A delicious recipe ready to be cooked."}
                 </p>
 
-                <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:justify-start px-4 md:px-0">
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 items-center print:hidden px-4 md:px-0">
                     {recipe && (
-                        <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md print:hidden">
+                        <span className="bg-orange-500 dark:bg-orange-400 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md">
                             {recipe?.matchPercentage}% Match
                         </span>
                     )}
@@ -548,52 +577,59 @@ const RecipeDetail = () => {
                         </span>
                     ))}
                 </div>
+
+                {/* Print-Only Compact Meta Row */}
+                <div className="hidden print:flex flex-wrap gap-x-6 gap-y-1 text-sm border-y border-black py-2 mb-4">
+                    {recipe.method && <div><strong>Method:</strong> {recipe.method}</div>}
+                    {recipe.prepTime && <div><strong>Prep Time:</strong> {recipe.prepTime} mins</div>}
+                    {recipe.cookTime && <div><strong>Cook Time:</strong> {recipe.cookTime} mins</div>}
+                    {recipe.totalTime && <div><strong>Total Time:</strong> {recipe.totalTime} mins</div>}
+                    {recipe.servings && <div><strong>Yields:</strong> {recipe.servings} servings</div>}
+                </div>
             </header>
 
-            {/* Metadata Hero Bar*/}
-            <div className={`grid grid-cols-2 gap-4 sm:gap-6 mb-10 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-3xl p-4 sm:p-6 print:bg-transparent print:border-gray-200 print:rounded-none print:p-4 print:mb-6 ${recipe.method ? 'md:grid-cols-3 lg:grid-cols-5 print:grid-cols-5' : 'md:grid-cols-4 print:grid-cols-4'}`}>
-                
+            {/* Metadata Hero Bar */}
+            <div className={`print:hidden grid grid-cols-2 gap-4 sm:gap-6 mb-10 bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-3xl p-4 sm:p-6 ${recipe.method ? 'md:grid-cols-3 lg:grid-cols-5' : 'md:grid-cols-4'}`}>
                 {recipe.method && (
-                    <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start col-span-2 md:col-span-1">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Method</span>
-                        <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl capitalize leading-tight truncate max-w-full">
+                    <div className="flex flex-col items-center md:items-start text-center md:text-left col-span-2 md:col-span-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1">Method</span>
+                        <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 capitalize leading-tight truncate max-w-full">
                             {recipe.method}
                         </span>
                     </div>
                 )}
-
-                <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Prep Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
+                <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1">Prep Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 leading-tight">{recipe.prepTime ? `${recipe.prepTime}m` : '--'}</span>
                 </div>
-                <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Cook Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
+                <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1">Cook Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 leading-tight">{recipe.cookTime ? `${recipe.cookTime}m` : '--'}</span>
                 </div>
-                <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Total Time</span>
-                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
+                <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1">Total Time</span>
+                    <span className="text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 leading-tight">{recipe.totalTime ? `${recipe.totalTime}m` : '--'}</span>
                 </div>
-                <div className="flex flex-col items-center md:items-start text-center md:text-left print:items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1 print:text-gray-600">Yields</span>
-                    <span className="text-lg sm:text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 print:text-black print:text-xl leading-tight">
+                <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-800/50 dark:text-orange-400/70 mb-1">Yields</span>
+                    <span className="text-lg sm:text-xl md:text-2xl font-black text-orange-900 dark:text-orange-400 leading-tight">
                         {recipe.servings ? `${recipe.servings * multiplier} servings` : '--'}
                     </span>
                 </div>
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid lg:grid-cols-3 gap-8 md:gap-12 print:grid-cols-1 print:gap-8">
+            <div className="grid lg:grid-cols-3 gap-8 md:gap-12 print:block print:space-y-6 clear-both">
                 
                 {/* Left Sidebar: Ingredients & Nutrition */}
-                <aside className="lg:col-span-1 space-y-10 print:space-y-6">
+                <aside className="lg:col-span-1 space-y-10 print:space-y-4">
                     <section>
-                        <div className="flex flex-col gap-4 mb-6 print:mb-3">
+                        <div className="flex flex-col gap-4 mb-6 print:mb-2">
                             <h2 className="text-2xl font-black flex items-center gap-2 print:text-xl">
-                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 px-3 py-1 rounded-full print:border print:border-gray-200 print:text-black print:bg-white ">{displayList.filter((i: any) => !i.isHeader).length} Items</span>
+                                Ingredients <span className="text-sm font-medium text-gray-400 bg-gray-100 dark:text-gray-400 dark:bg-gray-800 px-3 py-1 rounded-full print:hidden">{displayList.filter((i: any) => !i.isHeader).length} Items</span>
                             </h2>
                             
-                            {/* Multiplier & Toggle Staples */}
+                            {/* Multiplier & Toggle Staples (Hidden on print) */}
                             <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex flex-col gap-3 print:hidden">
                                 <div className="flex bg-white dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800">
                                     {[1, 2, 3].map((val) => (
@@ -662,13 +698,14 @@ const RecipeDetail = () => {
                             </div>
                         )}
 
-                        <ul className="space-y-3 print:space-y-1">
+                        {/* Ingredients List */}
+                        <ul className="space-y-3 print:space-y-0.5 print:ml-1">
                             {displayList.map((item: any) => {
                                 if (item.isHeader) {
-                                    if (!item.name) return null; // Don't render empty sections
+                                    if (!item.name) return null; 
                                     return (
-                                        <li key={item.id} className="pt-4 pb-1">
-                                            <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">
+                                        <li key={item.id} className="pt-4 pb-1 print:pt-2 print:pb-0">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 print:text-black print:text-xs">
                                                 {item.name}
                                             </h3>
                                         </li>
@@ -677,31 +714,39 @@ const RecipeDetail = () => {
 
                                 const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
                                 return (
-                                    <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:rounded-none print:shadow-none print:border-0 print:border-b print:border-gray-200 print:p-1.5">
+                                    <li key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/50 shadow-sm print:p-0 print:border-0 print:shadow-none print:bg-transparent print:flex-row print:justify-start print:items-start print:gap-2">
                                         
-                                        <div className="flex items-center gap-3 w-full pr-2">
-                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry || (!showStaples && item.isStaple) ? 'bg-green-500' : (allowSubstitutions && item.isSubstituted) ? 'bg-blue-500' : 'bg-orange-300'} print:border print:border-black print:w-3 print:h-3 print:rounded-sm print:bg-white`} />}
+                                        {/* Print Checkbox */}
+                                        <div className="hidden print:flex items-center justify-center pt-0.5 shrink-0">
+                                            <Square size={12} className="text-black stroke-[1.5]" />
+                                        </div>
+
+                                        <div className="flex items-center gap-3 w-full pr-2 print:hidden">
+                                            {isAuthenticated && <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.inPantry || (!showStaples && item.isStaple) ? 'bg-green-500' : (allowSubstitutions && item.isSubstituted) ? 'bg-blue-500' : 'bg-orange-300'}`} />}
                                             <div className="min-w-0 flex-1">
-                                                <p className={`font-bold text-sm print:text-black print:text-sm truncate sm:whitespace-normal ${item.isSwapped ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-white'}`}>
+                                                <p className={`font-bold text-sm truncate sm:whitespace-normal ${item.isSwapped ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-white'}`}>
                                                     {item.name}
                                                     {item.modifier && (
                                                         <span className="text-gray-500 dark:text-gray-400 font-medium">, {item.modifier.toLowerCase()}</span>
                                                     )}
                                                 </p>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 print:text-gray-600 print:font-medium">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
                                                     {amount} {unit}
                                                 </p>
-                                                {/* Show original ingredient if swapped */}
                                                 {item.isSwapped && (
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-through mt-0.5 print:hidden">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-through mt-0.5">
                                                         Originally: {item.originalName}
                                                     </p>
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Print Layout Inline Text */}
+                                        <div className="hidden print:block text-sm text-black leading-tight flex-1">
+                                            {amount} {unit} <strong>{item.name}</strong> {item.modifier && `, ${item.modifier.toLowerCase()}`}
+                                        </div>
                                         
                                         <div className="flex items-center gap-2 shrink-0 print:hidden">
-                                            {/* Swap Actions */}
                                             {item.isSwapped ? (
                                                 <button 
                                                     onClick={() => handleUndoSwap(item.id)}
@@ -718,7 +763,6 @@ const RecipeDetail = () => {
                                                 </button>
                                             ) : null}
 
-                                            {/* Status Badge */}
                                             {isAuthenticated &&
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${item.inPantry ? 'text-green-600 bg-green-50' :
                                                         (allowSubstitutions && item.isSubstituted) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' : (!showStaples && item.isStaple) ? 'bg-none dark:bg-none' :
@@ -733,27 +777,37 @@ const RecipeDetail = () => {
                         </ul>
                     </section>
 
-                    <CompactNutritionDisplay nutrition={recipe.nutrition} />
+                    {/* Hide sidebar nutrition block on print, show at bottom instead */}
+                    <div className="print:hidden">
+                        <CompactNutritionDisplay nutrition={recipe.nutrition} />
+                    </div>
                 </aside>
 
                 {/* Right Content: Instructions, Notes & Comments */}
-                <main className="lg:col-span-2 space-y-12 print:space-y-6">
+                <main className="lg:col-span-2 space-y-12 print:space-y-4">
                     <section>
-                        <h2 className="text-2xl font-black mb-6 print:text-xl print:mb-3">Instructions</h2>
-                        <div className="space-y-4 print:space-y-2">
+                        <h2 className="text-2xl font-black mb-6 print:text-xl print:mb-2">Instructions</h2>
+                        <div className="space-y-4 print:space-y-1.5">
                             {steps.map((step: string, index: number) => (
                                 <div key={index}
                                     onClick={() => setCompletedSteps(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])}
-                                    className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:rounded-none print:shadow-none print:p-2 print:gap-3 print:bg-transparent print:border-0 print:border-b print:border-gray-200 dark:border-gray-800 ${completedSteps.includes(index)
-                                            ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60'
-                                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:hover:border-transparent'
+                                    className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:p-0 print:border-0 print:gap-2 print:items-start ${completedSteps.includes(index)
+                                            ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60 print:opacity-100 print:bg-transparent'
+                                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:bg-transparent print:border-0 print:shadow-none'
                                         }`}
                                 >
-                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-6 print:h-6 print:border-gray-300 ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-gray-100' : 'border-gray-300 group-hover:border-orange-400'
+                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-auto print:h-auto print:border-0 print:rounded-none ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-transparent' : 'border-gray-300 group-hover:border-orange-400 print:border-0'
                                         }`}>
-                                        {completedSteps.includes(index) ? <span className="text-white text-sm font-bold print:text-black">✓</span> : <span className="text-xs font-bold text-gray-400 print:text-black">{index + 1}</span>}
+                                        {completedSteps.includes(index) ? (
+                                            <>
+                                                <span className="text-white text-sm font-bold print:hidden">✓</span>
+                                                <span className="hidden print:inline text-sm font-bold text-black">{index + 1}.</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-xs font-bold text-gray-400 print:text-black print:text-sm">{index + 1}.</span>
+                                        )}
                                     </div>
-                                    <p className={`text-base sm:text-lg leading-relaxed ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-white font-medium'} print:no-underline print:text-black print:text-sm`}>
+                                    <p className={`text-base sm:text-lg leading-relaxed print:text-sm print:leading-snug print:text-black ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400 print:no-underline' : 'text-gray-800 dark:text-white font-medium'}`}>
                                         {step}
                                     </p>
                                 </div>
@@ -762,20 +816,30 @@ const RecipeDetail = () => {
                     </section>
 
                     {recipe.notes && (
-                        <section className="bg-yellow-50 dark:bg-yellow-500/10 p-6 rounded-3xl border-2 border-yellow-100 dark:border-yellow-500/20 print:p-4 print:rounded-none print:border-0 print:border-b print:border-gray-200 print:bg-transparent">
-                            <h2 className="text-lg font-black text-yellow-900 dark:text-yellow-500 mb-2 print:text-base print:text-black">Chef's Notes</h2>
-                            <p className="text-yellow-800/80 dark:text-yellow-200/80 leading-relaxed font-medium whitespace-pre-wrap print:text-black print:text-sm print:italic">
+                        <section className="bg-yellow-50 dark:bg-yellow-500/10 p-6 rounded-3xl border-2 border-yellow-100 dark:border-yellow-500/20 print:p-0 print:bg-transparent print:border-0 print:mt-6">
+                            <h2 className="text-lg font-black text-yellow-900 dark:text-yellow-500 mb-2 print:text-base print:text-black! print:opacity-100! print:mb-1">Notes</h2>
+                            <p className="text-yellow-800/80 dark:text-yellow-200/80 leading-relaxed font-medium whitespace-pre-wrap print:text-black! print:text-sm print:leading-snug print:opacity-100!">
                                 {recipe.notes}
                             </p>
                         </section>
                     )}
 
-                    {/* Comments & Reviews Section */}
+                    {/* Print-Only Nutrition Block (Bottom of page) */}
+                    {recipe.nutrition && Object.keys(recipe.nutrition).length > 0 && (
+                        <section className="hidden print:block mt-6 pt-4 border-t border-black">
+                            <h2 className="text-base font-bold text-black mb-1">Nutrition</h2>
+                            <p className="text-xs text-black leading-relaxed">
+                                {getPrintNutritionString()}
+                            </p>
+                        </section>
+                    )}
+
+                    {/* Comments & Reviews Section (Hidden on Print) */}
                     <section className="pt-8 border-t-2 border-gray-100 dark:border-gray-800/50 print:hidden">
-                        <h2 className="text-2xl font-black mb-6 print:text-xl print:mb-3">Community Reviews ({recipe.comments?.length || 0})</h2>
+                        <h2 className="text-2xl font-black mb-6">Community Reviews ({recipe.comments?.length || 0})</h2>
                         
                         {isAuthenticated ? (
-                            <form onSubmit={handleAddComment} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm mb-8 print:hidden">
+                            <form onSubmit={handleAddComment} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm mb-8">
                                 <div className="mb-4">
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Your Rating</label>
                                     <div className="flex gap-2">
@@ -807,7 +871,7 @@ const RecipeDetail = () => {
                                 </button>
                             </form>
                         ) : (
-                            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 mb-8 text-center print:hidden">
+                            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 mb-8 text-center">
                                 <p className="text-gray-500 dark:text-gray-400 font-medium">Please <Link to="/auth" className="text-orange-600 font-bold hover:underline">log in</Link> to leave a review.</p>
                             </div>
                         )}
@@ -816,34 +880,34 @@ const RecipeDetail = () => {
                         {recipe.comments && recipe.comments.length > 0 ? (
                             <div className="space-y-6">
                                 {recipe.comments.map((comment: any) => (
-                                    <div key={comment.id} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm relative group print:p-2 print:border-0 print:border-b print:border-gray-200 print:rounded-none print:shadow-none">
+                                    <div key={comment.id} className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-3xl border border-gray-100 dark:border-gray-800/50 shadow-sm relative group">
                                         {(userId === comment.user?.id || isAdmin) && (
                                             <button 
                                                 onClick={() => handleDeleteComment(comment.id)}
-                                                className="absolute top-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 text-sm font-bold bg-red-50 px-2 py-1 rounded-md print:hidden"
+                                                className="absolute top-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 text-sm font-bold bg-red-50 px-2 py-1 rounded-md"
                                             >
                                                 Delete
                                             </button>
                                         )}
-                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 print:mb-1 gap-1">
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-1">
                                             <div>
-                                                <span className="font-black text-gray-900 dark:text-white block print:text-black print:font-bold">{getDisplayName(comment.user) ?? 'Anonymous'}</span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider print:text-gray-600">
+                                                <span className="font-black text-gray-900 dark:text-white block">{getDisplayName(comment.user) ?? 'Anonymous'}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                                     {new Date(comment.createdAt).toLocaleDateString()}
                                                 </span>
                                             </div>
                                             {comment.rating && (
-                                                <div className="text-yellow-400 tracking-widest text-sm print:text-black print:text-xs">
+                                                <div className="text-yellow-400 tracking-widest text-sm">
                                                     {'★'.repeat(comment.rating)}{'☆'.repeat(5 - comment.rating)}
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium print:text-black print:text-xs">{comment.content}</p>
+                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">{comment.content}</p>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-400 font-medium italic text-center py-8 print:text-black print:font-bold">No reviews yet. Be the first to share your thoughts!</p>
+                            <p className="text-gray-400 font-medium italic text-center py-8">No reviews yet. Be the first to share your thoughts!</p>
                         )}
                     </section>
                 </main>

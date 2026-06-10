@@ -20,7 +20,7 @@ export const useDiscoveryFilters = () => {
     const [searchQuery, setSearchQuery] = useState(''); 
 
     // Cached Filter States
-    const [selectedCategory, setSelectedCategory] = useState<string>(cachedFilters.selectedCategory ?? '');
+    const [selectedCategory, setSelectedCategory] = useState<string>(location.state?.selectedCategory || ( cachedFilters.selectedCategory ?? ''));
     const [selectedSubcategory, setSelectedSubcategory] = useState<string>(cachedFilters.selectedSubcategory ?? '');
     const [selectedTags, setSelectedTags] = useState<string[]>(cachedFilters.selectedTags ?? []);
     

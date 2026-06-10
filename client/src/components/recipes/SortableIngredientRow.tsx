@@ -18,7 +18,7 @@ export const SortableIngredientRow = ({
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Tracks what the user types
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     attributes,
@@ -50,29 +50,28 @@ export const SortableIngredientRow = ({
 
   const handleStartCreating = () => {
       setIsCreating(true);
-      setNewName(searchQuery); // Carry over the typed text
+      setNewName(searchQuery); 
   };
 
   // --- Dynamic Validation Styles ---
   const isAmountMissing = !ingredient.amount || String(ingredient.amount).trim() === '';
   const isUnitMissing = !ingredient.unitId;
 
-  const inputBaseClass = "flex-1 p-2.5 sm:p-3 rounded-xl outline-none border-2 font-bold transition-all duration-200";
+  const inputBaseClass = "p-2.5 sm:p-3 rounded-xl outline-none border-2 font-bold transition-all duration-200 w-full";
   const errorClass = "border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10 placeholder-red-400 dark:placeholder-red-400/70 text-red-700 dark:text-red-400 focus:border-red-500";
   const defaultClass = "border-transparent bg-gray-50 dark:bg-gray-800 focus:border-orange-300 text-gray-600 dark:text-white";
 
-  // Find selected unit to display full name on hover
   const selectedUnit = taxonomy.units.find((u: any) => u.id === ingredient.unitId);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col sm:flex-row gap-2 sm:gap-3 p-3 sm:p-2 bg-white dark:bg-gray-900 rounded-2xl border-2 transition-all
+      className={`flex flex-col sm:flex-row gap-3 p-3 sm:p-2 bg-white dark:bg-gray-900 rounded-2xl border-2 transition-all
         ${isDragging ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/15 scale-[1.02] shadow-md' : 'border-gray-100 dark:border-gray-800/50 hover:border-orange-200'}`}
     >
-      {/* Top Row on Mobile / Left Side on Desktop */}
-      <div className="flex items-center gap-2 w-full sm:flex-1">
+      {/* Top Row / Left Block */}
+      <div className="flex items-center gap-2 w-full sm:flex-1 sm:min-w-[250px]">
         <div 
           {...attributes} 
           {...listeners} 
@@ -81,7 +80,7 @@ export const SortableIngredientRow = ({
           <GripVertical size={20} />
         </div>
 
-        <div className="flex-1 min-w-0 z-40 flex items-center gap-1 sm:gap-2">
+        <div className="flex-1 min-w-0 z-40 flex items-center gap-2">
           {isCreating ? (
             <div className="flex-1 flex gap-1 items-center bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border-2 border-orange-400 shadow-sm overflow-hidden">
               <input
@@ -90,8 +89,8 @@ export const SortableIngredientRow = ({
                 disabled={isSaving}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="New ingredient name..."
-                className="flex-1 bg-transparent px-2 py-1 outline-none text-sm font-bold text-gray-700 dark:text-gray-200 min-w-[100px]"
+                placeholder="New ingredient..."
+                className="flex-1 bg-transparent px-2 py-1 outline-none text-sm font-bold text-gray-700 dark:text-gray-200 min-w-0"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') { e.preventDefault(); handleSaveNew(); }
                   if (e.key === 'Escape') setIsCreating(false);
@@ -141,54 +140,56 @@ export const SortableIngredientRow = ({
             )}
         </div>
 
-        {/* Mobile Delete Button */}
+        {/* Mobile Delete Button - Hidden on desktop */}
         <button 
             type="button" 
             onClick={() => removeIngredientRow(index)} 
-            className="sm:hidden p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0"
+            className="sm:hidden p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0 ml-1"
         >
             <X size={20} />
         </button>
       </div>
 
-      {/* Bottom Row on Mobile / Right Side on Desktop */}
-      <div className="flex items-center gap-2 pl-1 sm:pl-0 w-full sm:w-auto">
-        <QuantityInput
-            value={ingredient.amount}
-            onChange={(val) => handleIngredientChange(index, 'amount', val)}
-            placeholder="Qty"
-            className={`${inputBaseClass} text-center sm:w-20 md:w-24 min-w-[60px] ${isAmountMissing ? errorClass : defaultClass}`}
-        />
+      {/* Bottom Row / Right Block */}
+      <div className="flex items-center gap-2 w-full sm:w-auto pl-2 sm:pl-0">
+        <div className="flex flex-1 sm:flex-none items-center gap-2">
+            <QuantityInput
+                value={ingredient.amount}
+                onChange={(val) => handleIngredientChange(index, 'amount', val)}
+                placeholder="Qty"
+                className={`${inputBaseClass} text-center sm:w-20 md:w-24 shrink min-w-[60px] ${isAmountMissing ? errorClass : defaultClass}`}
+            />
 
-        <select
-            required
-            title={selectedUnit ? selectedUnit.name : 'Select a unit'}
-            value={ingredient.unitId}
-            onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-            className={`${inputBaseClass} cursor-pointer sm:w-[130px] md:w-[150px] min-w-[90px] ${isUnitMissing ? errorClass : defaultClass}`}
-        >
-            <option value="" disabled>Unit</option>
-            {taxonomy.units.map((u: any) => (
-                <option key={u.id} value={u.id} title={u.name}>
-                    {u.abbreviation} {u.name && u.name !== u.abbreviation ? `- ${u.name}` : ''}
-                </option>
-            ))}
-        </select>
+            <select
+                required
+                title={selectedUnit ? selectedUnit.name : 'Select a unit'}
+                value={ingredient.unitId}
+                onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
+                className={`${inputBaseClass} cursor-pointer sm:w-32 md:w-[150px] shrink min-w-[80px] ${isUnitMissing ? errorClass : defaultClass}`}
+            >
+                <option value="" disabled>Unit</option>
+                {taxonomy.units.map((u: any) => (
+                    <option key={u.id} value={u.id} title={u.name}>
+                        {u.abbreviation} {u.name && u.name !== u.abbreviation ? `- ${u.name}` : ''}
+                    </option>
+                ))}
+            </select>
+        </div>
 
         <select
             value={ingredient.modifierId || ''}
             onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
-            className={`${inputBaseClass} cursor-pointer md:w-32 min-w-[100px] ${defaultClass}`}
+            className={`${inputBaseClass} cursor-pointer flex-1 sm:w-32 md:w-32 min-w-[90px] ${defaultClass}`}
         >
             <option value="">(None)</option>
             {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
 
-        {/* Desktop Delete Button */}
+        {/* Desktop Delete Button - Hidden on mobile */}
         <button 
             type="button" 
             onClick={() => removeIngredientRow(index)} 
-            className="hidden sm:block p-2 md:p-3 text-gray-300 hover:text-red-500 transition-colors shrink-0" 
+            className="hidden sm:block p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0" 
             title="Remove Ingredient"
         >
             ✕

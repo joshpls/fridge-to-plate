@@ -19,15 +19,15 @@ export const SourceAttribution = ({ sourceName, sourceUrl }: SourceAttributionPr
     }
 
     return (
-        <div className="flex items-center gap-2 mt-2 md:mt-0 print:text-black">
-            <span className="text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 mt-2 md:mt-0 print:mt-0 print:text-black">
+            <span className="text-gray-500 dark:text-gray-400 print:text-black">
                 Adapted from:{' '}
                 {isLink ? (
                     <a 
                         href={sourceUrl} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-orange-600 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 font-bold hover:underline transition-colors"
+                        className="text-orange-600 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 font-bold hover:underline transition-colors print:text-black print:no-underline"
                     >
                         {displayName}
                     </a>

@@ -8,5 +8,6 @@ export const ingredientCategories = [
     'Spices & Herbs',
     'Grains & Legumes',
     'Condiments & Sauces',
-    'Other'
+    'Other',
+    'Nuts & Seeds'
 ];
