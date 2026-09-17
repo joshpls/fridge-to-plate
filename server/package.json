@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "prisma generate && tsc",
     "start": "NODE_ENV=production node dist/index.js",
     "prisma:studio": "prisma studio"
@@ -33,9 +35,12 @@
     "@types/node": "^25.3.3",
     "@types/pg": "^8.11.11",
     "@types/sharp": "^0.31.1",
+    "@types/supertest": "^7.2.1",
     "prisma": "^7.4.2",
+    "supertest": "^7.2.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest-mock-extended": "^5.1.1"
   },
   "overrides": {
     "@types/pg": "^8.11.11"

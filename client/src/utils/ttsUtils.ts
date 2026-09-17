@@ -10,16 +10,30 @@ interface TTSOptions {
 // Helper to reliably grab a voice based on preference
 const getPreferredVoice = (preference: 'male' | 'female'): SpeechSynthesisVoice | null => {
     const voices = window.speechSynthesis.getVoices();
+    console.log("Available voices on this system:", voices.map(v => v.name));
     if (voices.length === 0) return null;
 
-    const femaleNames = ['female', 'samantha', 'zira', 'karen', 'victoria', 'melina', 'moira', 'tessa', 'siri'];
+    const femaleNames = ['female', 'female voice 1 (us)', 'samantha', 'zira', 'karen', 'victoria', 'melina', 'moira', 'tessa', 'siri'];
     const maleNames = ['male', 'andrew', 'daniel', 'alex', 'fred', 'tomas', 'mark', 'aaron', 'arthur', 'gordon', 'ryan', 'paul', 'david', 'voice iii', 'voice iv', 'en-us-x-iom-local'];
 
     const targetNames = preference === 'male' ? maleNames : femaleNames;
 
-    return voices.find(voice => 
+    // Try to find a matched voice from our preference arrays
+    let foundVoice = voices.find(voice => 
         targetNames.some(name => voice.name.toLowerCase().includes(name))
-    ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+    );
+
+    // Fallback to any English voice if a specific preferred voice isn't found
+    if (!foundVoice) {
+        foundVoice = voices.find(v => v.lang.toLowerCase().startsWith('en'));
+    }
+
+    // fallback to the first available hardware engine voice
+    if (!foundVoice) {
+        foundVoice = voices[0];
+    }
+
+    return foundVoice;
 };
 
 export const speakText = (text: string, { onStart, onEnd, voicePreference = 'female' }: TTSOptions = {}) => {
@@ -47,8 +61,10 @@ export const speakText = (text: string, { onStart, onEnd, voicePreference = 'fem
         const voice = getPreferredVoice(voicePreference);
         if (voice) {
             utterance.voice = voice;
+            // toast.success(`Found Voice: ${voice.name}`);
         } else {
-            utterance.lang = 'en-US'; 
+            utterance.lang = 'en-US';
+            // toast.success("Found Voice: System Default (en-US)");
         }
         window.speechSynthesis.speak(utterance);
     };

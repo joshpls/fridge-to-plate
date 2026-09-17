@@ -207,15 +207,21 @@ const Profile = () => {
                             <Toggle checked={prefsData.autoTTS} onChange={(val) => setPrefsData({...prefsData, autoTTS: val})} />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        {/* <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800"> */}
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed select-none">
                             <div>
-                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2"><User size={16} className="text-blue-500"/> Assistant Voice</h3>
+                                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    {/*<User size={16} className="text-blue-500"/> Assistant Voice*/}
+                                    <User size={16} className="text-gray-400 dark:text-gray-500" /> Assistant Voice
+                                </h3>
                                 <p className="text-sm text-gray-500 font-medium">Choose your preferred voice for Cook Mode (if applicable).</p>
                             </div>
                             <select
                                 value={prefsData.ttsVoice}
                                 onChange={(e) => setPrefsData({ ...prefsData, ttsVoice: e.target.value })}
-                                className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl font-bold outline-none focus:border-orange-500 text-gray-700 dark:text-gray-300 cursor-pointer"
+                                //className="px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl font-bold outline-none focus:border-orange-500 text-gray-700 dark:text-gray-300 cursor-pointer"
+                                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold outline-none text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                disabled
                             >
                                 <option value="female">Female</option>
                                 <option value="male">Male</option>
