@@ -32,7 +32,7 @@ export const SortableIngredientRow = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 10 : 1,
+    zIndex: isDragging ? 49 : Math.max(1, 48 - index),
     opacity: isDragging ? 0.8 : 1,
   };
 
@@ -67,7 +67,7 @@ export const SortableIngredientRow = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col sm:flex-row gap-3 p-3 sm:p-2 bg-white dark:bg-gray-900 rounded-2xl border-2 transition-all
+      className={`flex flex-col sm:flex-row gap-3 p-3 sm:p-2 bg-white dark:bg-gray-900 rounded-2xl border-2 transition-all relative
         ${isDragging ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/15 scale-[1.02] shadow-md' : 'border-gray-100 dark:border-gray-800/50 hover:border-orange-200'}`}
     >
       {/* Top Row / Left Block */}
