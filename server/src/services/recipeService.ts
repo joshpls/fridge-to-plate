@@ -295,7 +295,28 @@ export const getRecipeBySlug = async (slug: string, userId?: string, activeHouse
   if (recipe.visibility === 'PRIVATE' && recipe.authorId !== userId) return null;
   if (recipe.visibility === 'HOUSEHOLD' && recipe.householdId !== activeHouseholdId && recipe.authorId !== userId) return null;
 
-  return mapRecipeToDto(recipe, context.pantryIds, context.pantrySubGroups, context.householdStapleIds);
+  const baseRecipe = mapRecipeToDto(recipe, context.pantryIds, context.pantrySubGroups, context.householdStapleIds);
+
+  if (!baseRecipe) return null;
+
+  // Parse and hydrate linked recipes via [[recipe:slug]] syntax
+  const linkRegex = /\[\[recipe:([a-zA-Z0-9-]+)\]\]/g;
+  const matches = [...(baseRecipe.instructions?.matchAll(linkRegex) || [])];
+  const linkedSlugs = matches.map(m => m[1]);
+
+  const finalRecipe = baseRecipe as typeof baseRecipe & { linkedRecipes?: any[] };
+
+  if (linkedSlugs.length > 0) {
+    const linkedRecipes = await prisma.recipe.findMany({
+      where: { slug: { in: linkedSlugs } },
+      include: fallbackIncludes
+    });
+    finalRecipe.linkedRecipes = linkedRecipes.map((lr: any) =>
+      mapRecipeToDto(lr, context.pantryIds, context.pantrySubGroups, context.householdStapleIds)
+    );
+  }
+
+  return finalRecipe;
 };
 
 export const getFavoriteRecipes = async (userId: string, activeHouseholdId?: string) => {

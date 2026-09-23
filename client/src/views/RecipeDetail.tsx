@@ -436,6 +436,51 @@ const RecipeDetail = () => {
         }
     };
 
+    const prepareCookModeData = () => {
+        let expandedSteps: string[] = [];
+        let expandedIngredients = [...formattedIngredients];
+
+        steps.forEach((step: string) => {
+            const matches = [...step.matchAll(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/g)];
+            
+            if (matches.length > 0 && recipe.linkedRecipes) {
+                // Keep the parent step but replace the raw tag with the linked recipe name
+                let finalStepName = step;
+                matches.forEach(m => {
+                    const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
+                    if (linked) finalStepName = finalStepName.replace(m[0], `(Included: ${linked.name})`);
+                });
+                expandedSteps.push(finalStepName);
+
+                // Inject the linked recipe's ingredients and instructions immediately after
+                matches.forEach(m => {
+                    const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
+                    if (linked) {
+                        // Inject Ingredients
+                        expandedIngredients.push({ id: `header-${linked.id}`, isHeader: true, name: `For the ${linked.name}` });
+                        
+                        const linkedIngs = rehydrateIngredients(linked.ingredients, false).map((item: any) => {
+                            if (item.isHeader) return { id: item.id, isHeader: true, name: item.name };
+                            const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
+                            return { id: `linked-${item.id}`, isHeader: false, name: item.name, modifier: item.modifier, displayAmount: `${amount} ${unit}`.trim() };
+                        });
+                        expandedIngredients.push(...linkedIngs);
+
+                        // Inject Sub-Steps
+                        const linkedSteps = linked.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
+                        linkedSteps.forEach((ls: string) => expandedSteps.push(`[${linked.name}] ${ls}`));
+                    }
+                });
+            } else {
+                expandedSteps.push(step);
+            }
+        });
+
+        return { expandedSteps, expandedIngredients };
+    };
+
+    const { expandedSteps, expandedIngredients: cookModeIngredients } = prepareCookModeData();
+
     return (
         <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-24 print:p-0 print:m-0 print:text-black print:bg-white print:max-w-none">
             <nav className="flex items-center gap-2 text-sm font-bold text-gray-400 dark:text-gray-200 mb-6 uppercase tracking-wider print:hidden">
@@ -792,8 +837,8 @@ const RecipeDetail = () => {
                                 <div key={index}
                                     onClick={() => setCompletedSteps(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])}
                                     className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:p-0 print:border-0 print:gap-2 print:items-start ${completedSteps.includes(index)
-                                            ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60 print:opacity-100 print:bg-transparent'
-                                            : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:bg-transparent print:border-0 print:shadow-none'
+                                        ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60 print:opacity-100 print:bg-transparent'
+                                        : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:bg-transparent print:border-0 print:shadow-none'
                                         }`}
                                 >
                                     <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-auto print:h-auto print:border-0 print:rounded-none ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-transparent' : 'border-gray-300 group-hover:border-orange-400 print:border-0'
@@ -808,7 +853,21 @@ const RecipeDetail = () => {
                                         )}
                                     </div>
                                     <p className={`text-base sm:text-lg leading-relaxed print:text-sm print:leading-snug print:text-black ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400 print:no-underline' : 'text-gray-800 dark:text-white font-medium'}`}>
-                                        {step}
+                                        {step.split(/(\[\[recipe:[a-zA-Z0-9-]+\]\])/g).map((part, i) => {
+                                            const match = part.match(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/);
+                                            if (match) {
+                                                const linked = recipe.linkedRecipes?.find((r: any) => r.slug === match[1]);
+                                                if (linked) {
+                                                    return (
+                                                        <span key={i} onClick={(e) => { e.stopPropagation(); navigate(`/recipe/${linked.slug}`); }} className="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-lg font-black text-sm hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-colors mx-1 border border-orange-200 dark:border-orange-500/20 shadow-sm cursor-pointer">
+                                                            🔗 {linked.name}
+                                                        </span>
+                                                    );
+                                                }
+                                                return <span key={i} className="text-gray-400 italic">[{match[1]} - missing]</span>;
+                                            }
+                                            return <span key={i}>{part}</span>;
+                                        })}
                                     </p>
                                 </div>
                             ))}
@@ -915,10 +974,10 @@ const RecipeDetail = () => {
 
             {/* Render Cook Mode Overlay */}
             {isCookModeOpen && (
-                <CookMode 
+                <CookMode
                     recipeName={recipe.name}
-                    instructions={steps}
-                    ingredients={formattedIngredients}
+                    instructions={expandedSteps}
+                    ingredients={cookModeIngredients}
                     onClose={() => setIsCookModeOpen(false)}
                     checkedIngredients={checkedIngredients}
                     setCheckedIngredients={setCheckedIngredients}

@@ -649,8 +649,23 @@ const uploadFileToServer = async (file: File) => {
                     <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">5. Directions</h2>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Instructions * <span className="text-gray-400 font-normal block sm:inline">(Separate steps with a new line)</span></label>
-                        <textarea required name="instructions" value={formData.instructions} onChange={handleChange} rows={8} className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y leading-relaxed text-sm sm:text-base" placeholder="1. Preheat the oven...&#10;2. Mix the dry ingredients..." />
+                        <div className="flex justify-between items-end mb-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
+                                Instructions * <span className="text-gray-400 font-normal block sm:inline">(Separate steps with a new line)</span>
+                            </label>
+                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-500/20 hidden sm:block">
+                                💡 Type <kbd className="font-mono font-bold">[[recipe:id]]</kbd> to link a recipe (e.g. [[recipe:garlic-sauce]])
+                            </div>
+                        </div>
+                        <textarea
+                            required
+                            name="instructions"
+                            value={formData.instructions}
+                            onChange={handleChange}
+                            rows={8}
+                            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y leading-relaxed text-sm sm:text-base"
+                            placeholder="1. Preheat the oven...&#10;2. Make the sauce using [[recipe:my-sauce-slug]]...&#10;3. Mix the dry ingredients..."
+                        />
                     </div>
 
                     <div>
