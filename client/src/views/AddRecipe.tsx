@@ -395,14 +395,23 @@ const uploadFileToServer = async (file: File) => {
             });
 
             if (response.ok) {
+                const result = await response.json();
+                const targetSlug = result?.data?.slug || slug;
+
                 storageService.cache.clearDiscoveryState();
-                if (isEdit && slug) storageService.cache.clearRecipe(slug, userId);
-                navigate('/discovery');
+                if (targetSlug) {
+                    storageService.cache.clearRecipe(targetSlug, userId);
+                    toast.success(`Recipe ${isEdit ? 'updated' : 'created'} successfully!`);
+                    navigate(`/recipe/${targetSlug}`);
+                } else {
+                    navigate('/discovery');
+                }
             } else {
                 toast.error(`Failed to ${isEdit ? 'update' : 'save'} recipe.`);
             }
         } catch (err) {
             console.error(err);
+            toast.error('An error occurred while saving the recipe.');
         } finally {
             setSaving(false);
         }
