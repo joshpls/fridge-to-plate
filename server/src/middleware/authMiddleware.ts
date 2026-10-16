@@ -59,7 +59,7 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
         return res.status(401).json({ status: 'error', message: 'Unauthorized: Please log in.' });
     }
 
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'ROOT') {
         return res.status(403).json({ 
             status: 'error', 
             message: 'Forbidden: Admin access required.' 
@@ -74,7 +74,7 @@ export const requireTrusted = (req: AuthRequest, res: Response, next: NextFuncti
         return res.status(401).json({ status: 'error', message: 'Unauthorized: Please log in.' });
     }
 
-    if (req.user.role !== 'ADMIN' && req.user.role !== 'TRUSTED') {
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'TRUSTED' && req.user.role !== 'ROOT') {
         return res.status(403).json({ 
             status: 'error', 
             message: 'Forbidden: Trusted or Admin access required.' 

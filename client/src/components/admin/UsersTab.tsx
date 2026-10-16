@@ -320,12 +320,13 @@ export const UsersTab = () => {
                                                 <td className="p-4">
                                                     <button
                                                         onClick={() => openRoleModal(u)}
-                                                        className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm ${
-                                                            u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30' :
-                                                            u.role === 'TRUSTED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
-                                                            'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30'
-                                                        }`}
+                                                        className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm ${u.role === 'ROOT' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30' :
+                                                                u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30' :
+                                                                    u.role === 'TRUSTED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
+                                                                        'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30'
+                                                            }`}
                                                         title="Click to change role"
+                                                        disabled={u.role === 'ROOT'}
                                                     >
                                                         <Shield size={10} />
                                                         {u.role}

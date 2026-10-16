@@ -117,18 +117,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ 
+        <AuthContext.Provider value={{
             user,
-            updateUserParams, 
-            token, 
-            login, 
-            logout, 
+            updateUserParams,
+            token,
+            login,
+            logout,
             switchHousehold,
             isAuthenticated: !!user,
-            isAdmin: user?.role === 'ADMIN',
-            isTrusted: user?.role === 'ADMIN' || user?.role === 'TRUSTED',
-            canAddIngredients: user?.role === 'ADMIN' || user?.role === 'TRUSTED',
-            loading 
+            isAdmin: user?.role === 'ADMIN' || user?.role === 'ROOT',
+            isTrusted: user?.role === 'ADMIN' || user?.role === 'TRUSTED' || user?.role === 'ROOT',
+            canAddIngredients: user?.role === 'ADMIN' || user?.role === 'TRUSTED' || user?.role === 'ROOT',
+            loading
         }}>
             {!loading && children}
         </AuthContext.Provider>

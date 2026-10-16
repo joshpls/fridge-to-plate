@@ -16,9 +16,8 @@ export const registerUser = async (data: any) => {
     const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
 
     const result = await prisma.$transaction(async (tx) => {
-        const role = (await tx.user.count()) === 0 ? 'ADMIN' : 'USER';
+        const role = (await tx.user.count()) === 0 ? 'ROOT' : 'USER';
 
-        // Create the base User
         const user = await tx.user.create({
             data: {
                 email: data.email.toLowerCase(),
@@ -26,7 +25,7 @@ export const registerUser = async (data: any) => {
                 firstName: data.firstName, 
                 lastName: data.lastName, 
                 alias: data.alias,
-                role: role,
+                role: role, // 'ROOT' if first user, else 'USER'
             }
         });
 

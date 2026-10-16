@@ -66,28 +66,35 @@ export const toggleUserRole = async (req: AuthRequest, res: Response) => {
     try {
         const targetUserId = req.params.id as string;
         const requestingUserId = req.user?.id;
+        const requestingUserRole = req.user?.role;
 
         if (targetUserId === requestingUserId) {
             return sendError(res, "Safety catch: You cannot change your own role.", 400);
         }
 
-        const user = await prisma.user.findUnique({ where: { id: targetUserId } });
-        if (!user) {
+        const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!targetUser) {
             return sendError(res, "User not found", 404);
         }
 
+        // Prevent modifying ROOT user unless requester is ROOT
+        if (targetUser.role === 'ROOT' && requestingUserRole !== 'ROOT') {
+            return sendError(res, "Forbidden: You cannot modify the ROOT user's role.", 403);
+        }
+
         const requestedRole = req.body.role;
-        const validRoles = ['USER', 'TRUSTED', 'ADMIN'];
-        let newRole: string;
+        const validRoles = ['USER', 'TRUSTED', 'ADMIN']; // ROOT cannot be assigned via UI/API
+        let newRole: any;
 
         if (requestedRole && validRoles.includes(requestedRole)) {
             newRole = requestedRole;
         } else {
             // Cycle: USER -> TRUSTED -> ADMIN -> USER
-            if (user.role === 'USER') newRole = 'TRUSTED';
-            else if (user.role === 'TRUSTED') newRole = 'ADMIN';
+            if (targetUser.role === 'USER') newRole = 'TRUSTED';
+            else if (targetUser.role === 'TRUSTED') newRole = 'ADMIN';
             else newRole = 'USER';
         }
+
         const updatedUser = await prisma.user.update({
             where: { id: targetUserId },
             data: { role: newRole }
@@ -102,27 +109,32 @@ export const toggleUserRole = async (req: AuthRequest, res: Response) => {
 
 export const updateUser = async (req: AuthRequest, res: Response) => {
     const userId = req.params.id as string;
+    const requestingUserRole = req.user?.role;
+
     try {
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+        if (!targetUser) return sendError(res, "User not found", 404);
+
+        // Prevent regular admins from editing ROOT
+        if (targetUser.role === 'ROOT' && requestingUserRole !== 'ROOT') {
+            return sendError(res, "Forbidden: You cannot edit the ROOT user account.", 403);
+        }
+
         const { firstName, lastName, alias, email } = req.body;
 
-        // Update the user and specifically select the fields we want to return
-        // (This ensures we never accidentally send the password hash back)
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
                 firstName,
                 lastName,
                 alias,
-                email: email?.toLowerCase() // Keep emails standardized
+                email: email?.toLowerCase()
             },
             select: { id: true, email: true, firstName: true, lastName: true, alias: true, role: true, createdAt: true, lastActiveAt: true }
         });
 
         return sendSuccess(res, updatedUser, "User updated successfully");
     } catch (error: any) {
-        console.error("Error updating user:", error);
-
-        // P2002 is Prisma's error code for a Unique Constraint violation
         if (error.code === 'P2002') {
             return sendError(res, "That email is already in use by another account.", 400);
         }
@@ -133,29 +145,30 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 export const deleteUser = async (req: AuthRequest, res: Response) => {
     const targetUserId = req.params.id as string;
     const requestingUserId = req.user?.id as string;
+    const requestingUserRole = req.user?.role;
 
-    // Server-side safety catch
     if (targetUserId === requestingUserId) {
         return sendError(res, "Safety catch: You cannot delete your own account.", 400);
     }
 
     try {
-        await prisma.user.delete({
-            where: { id: targetUserId }
-        });
+        const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!targetUser) return sendError(res, "User not found", 404);
+
+        if (targetUser.role === 'ROOT') {
+            return sendError(res, "Safety catch: The ROOT user cannot be deleted.", 403);
+        }
+
+        await prisma.user.delete({ where: { id: targetUserId } });
 
         return sendSuccess(res, null, "User deleted successfully");
     } catch (error: any) {
-        console.error("Error deleting user:", error);
-
-        // P2003 is Prisma's error code for a Foreign Key constraint failure
         if (error.code === 'P2003') {
-            return sendError(res, "Cannot delete user because they have authored recipes or posted comments. Delete their content first.", 400);
+            return sendError(res, "Cannot delete user because they have authored recipes or comments.", 400);
         }
         return sendError(res, "Failed to delete user", 500, error);
     }
 };
-
 
 // --- CATEGORY CRUD ---
 export const createCategory = async (req: AuthRequest, res: Response) => {

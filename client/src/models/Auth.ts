@@ -5,7 +5,7 @@ export interface User {
     alias: string;
     email: string;
     preferences: any;
-    role: 'USER' | 'TRUSTED' | 'ADMIN';
+    role: 'USER' | 'TRUSTED' | 'ADMIN' | 'ROOT';
     activeHouseholdId?: string;
     activeHousehold?: {
         name: string;

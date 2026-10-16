@@ -7,6 +7,13 @@ generator client {
 }
 
 // Enums
+enum Role {
+  USER
+  TRUSTED
+  ADMIN
+  ROOT
+}
+
 enum HouseholdRole {
   OWNER
   ADMIN
@@ -30,7 +37,7 @@ model User {
   id        String  @id @default(uuid())
   email     String  @unique
   password  String
-  role      String  @default("USER")
+  role      Role     @default(USER)
   firstName String?
   lastName  String?
   alias     String?
