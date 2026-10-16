@@ -342,3 +342,15 @@ const deleteLocalImage = async (imageUrl?: string | null) => {
         if (err.code !== 'ENOENT') console.error('Failed to delete old recipe image:', err);
     }
 };
+
+export const createIngredient = async (req: AuthRequest, res: Response) => {
+    try {
+        const { name, categoryId, isDefaultStaple } = req.body;
+        const ingredient = await prisma.ingredient.create({
+            data: { name, categoryId: categoryId || null, isDefaultStaple: !!isDefaultStaple }
+        });
+        return sendSuccess(res, ingredient, "Ingredient created successfully");
+    } catch (error: any) {
+        return sendError(res, error.message || "Failed to create ingredient", 500, error);
+    }
+};

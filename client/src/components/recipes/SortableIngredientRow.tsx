@@ -7,13 +7,13 @@ import type { IngredientRow } from '../../models/Utils';
 import { QuantityInput } from './QuantityInput';
 
 interface SortableRowProps extends IngredientRow {
-    isAdmin?: boolean;
+    canCreateIngredients?: boolean;
     onCreateNewIngredient?: (name: string, index: number) => Promise<boolean>;
 }
 
 export const SortableIngredientRow = ({ 
   id, index, ingredient, taxonomy, handleIngredientChange, removeIngredientRow,
-  isAdmin, onCreateNewIngredient
+  canCreateIngredients, onCreateNewIngredient
 }: SortableRowProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -126,7 +126,7 @@ export const SortableIngredientRow = ({
                             onSearchChange={setSearchQuery}
                         />
                     </div>
-                    {isAdmin && (
+                    {canCreateIngredients && (
                         <button 
                             type="button" 
                             onClick={handleStartCreating}

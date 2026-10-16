@@ -17,6 +17,10 @@ export const UsersTab = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ firstName: '', lastName: '', alias: '', email: '' });
 
+    // Role Modal State
+    const [roleModalUser, setRoleModalUser] = useState<any | null>(null);
+    const [selectedRole, setSelectedRole] = useState<string>('USER');
+
     // Pagination, Search, and Sort State
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -66,26 +70,36 @@ export const UsersTab = () => {
         setPage(1); // Reset to page 1 on sort change
     };
 
-    const handleToggleRole = async (userId: string, currentRole: string) => {
-        if (userId === currentUser?.id) {
+    const openRoleModal = (u: any) => {
+        if (u.id === currentUser?.id) {
             toast.error("You cannot change your own role!");
             return;
         }
+        setRoleModalUser(u);
+        setSelectedRole(u.role || 'USER');
+    };
 
-        const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
+    const handleSaveRole = async () => {
+        if (!roleModalUser) return;
+        const userId = roleModalUser.id;
+
         try {
             const res = await fetchWithAuth(`${API_BASE}/admin/users/${userId}/role`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role: newRole })
+                body: JSON.stringify({ role: selectedRole })
             });
 
             if (res.ok) {
-                toast.success(`User updated to ${newRole}`);
-                setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+                toast.success(`User role updated to ${selectedRole}`);
+                setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: selectedRole } : u));
+                setRoleModalUser(null);
+            } else {
+                const data = await res.json();
+                toast.error(data.message || "Failed to update role");
             }
         } catch (error) {
-            toast.error("Update failed");
+            toast.error("Network error");
         }
     };
 
@@ -208,14 +222,14 @@ export const UsersTab = () => {
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
                             {loading ? (
                                 <tr>
                                     <td colSpan={7} className="p-8 text-center text-gray-400 font-bold animate-pulse">Loading users...</td>
                                 </tr>
                             ) : users.length > 0 ? (
                                 users.map(u => (
-                                    <tr key={u.id} className="hover:bg-gray-50 dark:bg-gray-800/50 transition-colors">
+                                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                         
                                         {/* IF EDITING */}
                                         {editingId === u.id ? (
@@ -304,11 +318,18 @@ export const UsersTab = () => {
                                                     <p className="font-bold text-gray-900 dark:text-white truncate max-w-[100px]">{u.alias || <span className="text-gray-300 italic">-</span>}</p>
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
-                                                        u.role === 'ADMIN' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'
-                                                    }`}>
+                                                    <button
+                                                        onClick={() => openRoleModal(u)}
+                                                        className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                                                            u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30' :
+                                                            u.role === 'TRUSTED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30' :
+                                                            'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30'
+                                                        }`}
+                                                        title="Click to change role"
+                                                    >
+                                                        <Shield size={10} />
                                                         {u.role}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap">
                                                     {u.lastActiveAt ? (
@@ -331,13 +352,6 @@ export const UsersTab = () => {
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-1">
-                                                        <button 
-                                                            onClick={() => handleToggleRole(u.id, u.role)}
-                                                            className="p-2 text-orange-500 hover:bg-orange-50 dark:bg-orange-500/15 rounded-lg transition-colors"
-                                                            title="Toggle Role"
-                                                        >
-                                                            <Shield size={16} />
-                                                        </button>
                                                         <button 
                                                             onClick={() => startEdit(u)}
                                                             className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/15 rounded-lg transition-colors"
@@ -390,6 +404,99 @@ export const UsersTab = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Role Selection Modal */}
+            {roleModalUser && (
+                <div 
+                    className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={(e) => { if (e.target === e.currentTarget) setRoleModalUser(null); }}
+                >
+                    <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl dark:border-gray-800 dark:shadow-none transform transition-all">
+                        <div className="p-8 relative">
+                            <button 
+                                onClick={() => setRoleModalUser(null)}
+                                className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 dark:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+
+                            <div className="flex flex-col items-center text-center">
+                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 dark:bg-orange-500/15 text-orange-500">
+                                    <Shield size={32} />
+                                </div>
+
+                                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">
+                                    Change User Role
+                                </h3>
+                                <p className="text-xs text-gray-400 font-mono mb-6 truncate max-w-[280px]" title={roleModalUser.email}>
+                                    {roleModalUser.email}
+                                </p>
+
+                                <div className="w-full space-y-3">
+                                    {[
+                                        { 
+                                            role: 'USER', 
+                                            label: 'User', 
+                                            desc: 'Standard account permissions', 
+                                            color: 'border-blue-200 bg-blue-50/50 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-300' 
+                                        },
+                                        { 
+                                            role: 'TRUSTED', 
+                                            label: 'Trusted', 
+                                            desc: 'Trusted contributor permissions', 
+                                            color: 'border-emerald-200 bg-emerald-50/50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300' 
+                                        },
+                                        { 
+                                            role: 'ADMIN', 
+                                            label: 'Admin', 
+                                            desc: 'Full administrative control over the platform', 
+                                            color: 'border-purple-200 bg-purple-50/50 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/30 dark:text-purple-300' 
+                                        }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.role}
+                                            type="button"
+                                            onClick={() => setSelectedRole(item.role)}
+                                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between cursor-pointer ${
+                                                selectedRole === item.role 
+                                                    ? `\${item.color} ring-2 ring-orange-500/50 shadow-md` 
+                                                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-gray-700 dark:text-gray-300'
+                                            }`}
+                                        >
+                                            <div>
+                                                <p className="font-black text-sm uppercase tracking-wider">{item.label}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.desc}</p>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                                selectedRole === item.role ? 'border-orange-500 bg-orange-500 text-white' : 'border-gray-300 dark:border-gray-700'
+                                            }`}>
+                                                {selectedRole === item.role && <Check size={14} />}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setRoleModalUser(null)}
+                                className="flex-1 px-4 py-3.5 text-gray-500 dark:text-gray-400 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors tracking-widest uppercase text-sm cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveRole}
+                                className="flex-1 px-4 py-3.5 text-white font-black rounded-2xl shadow-xl bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 transition-all tracking-widest uppercase text-sm transform hover:-translate-y-0.5 cursor-pointer"
+                            >
+                                Save Role
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

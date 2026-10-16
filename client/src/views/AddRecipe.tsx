@@ -32,10 +32,8 @@ import { storageService } from '../services/storageService';
 const AddRecipe = () => {
     const navigate = useNavigate();
     const { slug } = useParams<{ slug: string }>(); 
-    const { user } = useAuth();
+    const { user, canAddIngredients } = useAuth();
     const userId = user?.id;
-    const isAdmin = user?.role === 'ADMIN';
-    
     const [formData, setFormData] = useState<RecipeFormData>(initialRecipe);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -184,7 +182,7 @@ const AddRecipe = () => {
 
     const handleCreateNewIngredient = async (name: string, index: number) => {
         try {
-            const res = await fetchWithAuth(`${API_BASE}/admin/ingredients`, {
+            const res = await fetchWithAuth(`${API_BASE}/ingredients`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, isDefaultStaple: false })
@@ -635,7 +633,7 @@ const uploadFileToServer = async (file: File) => {
                                             taxonomy={taxonomy}
                                             handleIngredientChange={handleIngredientChange}
                                             removeIngredientRow={removeIngredientRow}
-                                            isAdmin={isAdmin}
+                                            canCreateIngredients={canAddIngredients}
                                             onCreateNewIngredient={handleCreateNewIngredient}
                                         />
                                     );

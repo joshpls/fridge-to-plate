@@ -1,6 +1,6 @@
 import express from 'express';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
-import { getMatches, getFavorites, handleToggleFavorite, createRecipe, updateRecipe, getRecipeDetail, getCategories, getTags, getTaxonomy, deleteRecipe, createComment, getAuthoredRecipes, deleteUserComment} from '../controllers/recipeController.js';
+import { requireAuth, requireAdmin, requireTrusted } from '../middleware/authMiddleware.js';
+import { getMatches, getFavorites, handleToggleFavorite, createRecipe, updateRecipe, getRecipeDetail, getCategories, getTags, getTaxonomy, deleteRecipe, createComment, getAuthoredRecipes, deleteUserComment, createIngredient} from '../controllers/recipeController.js';
 
 const router = express.Router();
 
@@ -19,6 +19,7 @@ router.get('/:slug', getRecipeDetail);
 
 // ACTION ROUTES
 router.post('/', requireAuth, createRecipe);
+router.post('/ingredients', requireAuth, requireTrusted, createIngredient);
 router.post('/:slug/favorite', requireAuth, handleToggleFavorite);
 router.post('/:id/comments', requireAuth, createComment);
 router.delete('/comments/:commentId', requireAuth, deleteUserComment);

@@ -126,6 +126,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             switchHousehold,
             isAuthenticated: !!user,
             isAdmin: user?.role === 'ADMIN',
+            isTrusted: user?.role === 'ADMIN' || user?.role === 'TRUSTED',
+            canAddIngredients: user?.role === 'ADMIN' || user?.role === 'TRUSTED',
             loading 
         }}>
             {!loading && children}

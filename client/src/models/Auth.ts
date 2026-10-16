@@ -5,7 +5,7 @@ export interface User {
     alias: string;
     email: string;
     preferences: any;
-    role: 'USER' | 'ADMIN';
+    role: 'USER' | 'TRUSTED' | 'ADMIN';
     activeHouseholdId?: string;
     activeHousehold?: {
         name: string;
@@ -18,6 +18,8 @@ export interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isAdmin: boolean;
+    isTrusted: boolean;
+    canAddIngredients: boolean;
     login: (token: string, userData: User) => void;
     logout: () => void;
     switchHousehold: (id: string) => Promise<void>;

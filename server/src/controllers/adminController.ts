@@ -76,7 +76,18 @@ export const toggleUserRole = async (req: AuthRequest, res: Response) => {
             return sendError(res, "User not found", 404);
         }
 
-        const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
+        const requestedRole = req.body.role;
+        const validRoles = ['USER', 'TRUSTED', 'ADMIN'];
+        let newRole: string;
+
+        if (requestedRole && validRoles.includes(requestedRole)) {
+            newRole = requestedRole;
+        } else {
+            // Cycle: USER -> TRUSTED -> ADMIN -> USER
+            if (user.role === 'USER') newRole = 'TRUSTED';
+            else if (user.role === 'TRUSTED') newRole = 'ADMIN';
+            else newRole = 'USER';
+        }
         const updatedUser = await prisma.user.update({
             where: { id: targetUserId },
             data: { role: newRole }
