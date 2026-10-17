@@ -416,7 +416,7 @@ export const getAllRecipes = async (req: Request, res: Response) => {
             prisma.recipe.findMany({
                 where: finalWhere,
                 include: {
-                    author: { select: { email: true } },
+                    author: { select: { id: true, email: true } },
                     category: { select: { name: true } },
                     subcategory: { select: { name: true } }
                 },
@@ -454,6 +454,41 @@ export const deleteRecipe = async (req: Request, res: Response) => {
         res.status(200).json({ status: 'success', message: 'Recipe deleted' });
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Failed to delete recipe' });
+    }
+};
+
+export const updateRecipeAuthor = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ status: 'error', message: 'User ID is required' });
+    }
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            return res.status(404).json({ status: 'error', message: 'User not found' });
+        }
+
+        const updatedRecipe = await prisma.recipe.update({
+            where: { id },
+            data: { authorId: userId },
+            include: {
+                author: { select: { email: true } },
+                category: { select: { name: true } },
+                subcategory: { select: { name: true } }
+            }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Recipe author updated successfully',
+            data: updatedRecipe
+        });
+    } catch (error) {
+        console.error("Failed to update recipe author:", error);
+        res.status(500).json({ status: 'error', message: 'Failed to update recipe author' });
     }
 };
 

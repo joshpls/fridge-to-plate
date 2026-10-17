@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments, createModifier, deleteModifier, createIngredientCategory, updateIngredientCategory, deleteIngredientCategory, getSubstitutions, createSubstitutionGroup, updateSubstitutionGroup, deleteSubstitutionGroup } from '../controllers/adminController.js';
+import { getAllUsers, getSystemStats, toggleUserRole, createCategory, createSubcategory, updateCategory, deleteCategory, updateSubcategory, deleteSubcategory, createIngredient, updateIngredient, deleteIngredient, getAllRecipes, deleteRecipe, updateRecipeAuthor, createTag, deleteTag, createUnit, deleteUnit, deleteComment, updateUser, deleteUser, getAllComments, createModifier, deleteModifier, createIngredientCategory, updateIngredientCategory, deleteIngredientCategory, getSubstitutions, createSubstitutionGroup, updateSubstitutionGroup, deleteSubstitutionGroup } from '../controllers/adminController.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -21,6 +21,7 @@ router.patch('/users/:id/role', toggleUserRole);
 // Recipe Management
 router.get('/recipes', getAllRecipes);
 router.delete('/recipes/:id', deleteRecipe);
+router.patch('/recipes/:id/author', updateRecipeAuthor);
 
 // Categories & Subcategories
 router.post('/categories', createCategory);

@@ -14,6 +14,7 @@ export const RecipesTab = () => {
     // Data States
     const [recipes, setRecipes] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Pagination & Filter States
@@ -29,7 +30,7 @@ export const RecipesTab = () => {
     const [sortField, setSortField] = useState<'createdAt' | 'name' | 'author'>('createdAt');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-    // Fetch Categories for Dropdown
+    // Fetch Categories & Users for Dropdown
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -40,8 +41,41 @@ export const RecipesTab = () => {
                 console.error("Failed to load categories");
             }
         };
-        fetchCategories();
-    }, []);
+        const fetchUsers = async () => {
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/admin/users?limit=1000`);
+                const result = await res.json();
+                if (result.status === 'success') {
+                    setUsers(result.data.users || []);
+                }
+            } catch (error) {
+                console.error("Failed to load users");
+            }
+        };
+        if (token) {
+            fetchCategories();
+            fetchUsers();
+        }
+    }, [token]);
+
+    const handleAuthorChange = async (recipeId: string, newUserId: string) => {
+        try {
+            const res = await fetchWithAuth(`${API_BASE}/admin/recipes/${recipeId}/author`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: newUserId })
+            });
+            const result = await res.json();
+            if (res.ok && result.status === 'success') {
+                toast.success("Recipe author updated");
+                setRecipes(recipes.map(r => r.id === recipeId ? result.data : r));
+            } else {
+                toast.error(result.message || "Failed to update recipe author");
+            }
+        } catch (error) {
+            toast.error("Network error");
+        }
+    };
 
     // Debounce Search Term
     useEffect(() => {
@@ -196,7 +230,17 @@ export const RecipesTab = () => {
                                                 </Link>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-gray-600 truncate max-w-[150px]">{recipe.author?.email}</td>
+                                        <td className="p-4">
+                                            <select
+                                                value={recipe.author?.id || ''}
+                                                onChange={(e) => handleAuthorChange(recipe.id, e.target.value)}
+                                                className="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 outline-none cursor-pointer max-w-[200px] truncate focus:ring-2 focus:ring-orange-500"
+                                            >
+                                                {users.map(u => (
+                                                    <option key={u.id} value={u.id}>{u.email}</option>
+                                                ))}
+                                            </select>
+                                        </td>
                                         <td className="p-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-gray-700 dark:text-gray-300">{recipe.category?.name || 'N/A'}</span>
@@ -229,7 +273,18 @@ export const RecipesTab = () => {
                                     <Link to={`/recipe/${recipe.slug}`} target="_blank" className="font-black text-gray-900 dark:text-white text-base hover:text-orange-600 transition-colors line-clamp-2">
                                         {recipe.name}
                                     </Link>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 truncate">{recipe.author?.email}</p>
+                                    <div className="mt-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Author</label>
+                                        <select
+                                            value={recipe.author?.id || ''}
+                                            onChange={(e) => handleAuthorChange(recipe.id, e.target.value)}
+                                            className="w-full p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 outline-none cursor-pointer truncate focus:ring-2 focus:ring-orange-500"
+                                        >
+                                            {users.map(u => (
+                                                <option key={u.id} value={u.id}>{u.email}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                                 
                                 <div className="flex justify-between items-end">
