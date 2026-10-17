@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { taxonomyService } from '../../services/taxonomyService';
 import { API_BASE } from '../../utils/apiConfig';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useConfirm } from '../../context/ConfirmContext';
-import { Search, Plus, Trash2, Edit2, Hexagon, CheckCircle2, X, ChevronRight } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, Hexagon, CheckCircle2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const SubstitutionsTab = () => {

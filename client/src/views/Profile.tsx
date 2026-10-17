@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { User, Shield, Moon, Flame, KeyRound, Users, Volume2, Scale } from 'lucide-react';
+import { User, Moon, Flame, KeyRound, Users, Volume2, Scale } from 'lucide-react';
 import { API_BASE } from '../utils/apiConfig';
 import { fetchWithAuth } from '../utils/apiClient';
 import { HouseholdManager } from '../components/Household/HouseholdManager';

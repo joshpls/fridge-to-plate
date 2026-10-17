@@ -7,7 +7,7 @@ import { Search, Plus, Trash2, Edit2, Layers, CheckCircle2, Circle, ArrowUpDown,
 import toast from 'react-hot-toast';
 
 type Tab = 'ingredients' | 'categories';
-type SortField = 'name' | 'category';
+type SortField = 'name' | 'category' | 'addedBy' | 'addedOn' | 'staple';
 type SortOrder = 'asc' | 'desc';
 
 export const IngredientsTab = () => {
@@ -17,6 +17,21 @@ export const IngredientsTab = () => {
     const [categories, setCategories] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+
+    const getUserDisplay = (u: any) => {
+        if (!u) return 'System';
+        return u.alias || [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || 'Unknown';
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '-';
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch {
+            return dateStr;
+        }
+    };
 
     // --- Filter & Sort State ---
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
@@ -200,7 +215,8 @@ export const IngredientsTab = () => {
         if (searchTerm) {
             mappedData = mappedData.filter(ing => 
                 ing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ing.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+                ing.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                getUserDisplay(ing.user).toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -220,7 +236,19 @@ export const IngredientsTab = () => {
                 comparison = a.name.localeCompare(b.name);
             } else if (sortField === 'category') {
                 comparison = a.categoryName.localeCompare(b.categoryName);
-                // Fallback to name sort if categories are identical
+                if (comparison === 0) comparison = a.name.localeCompare(b.name);
+            } else if (sortField === 'addedBy') {
+                comparison = getUserDisplay(a.user).localeCompare(getUserDisplay(b.user));
+                if (comparison === 0) comparison = a.name.localeCompare(b.name);
+            } else if (sortField === 'addedOn') {
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
+                comparison = dateA - dateB;
+                if (comparison === 0) comparison = a.name.localeCompare(b.name);
+            } else if (sortField === 'staple') {
+                const stapleA = a.isDefaultStaple ? 1 : 0;
+                const stapleB = b.isDefaultStaple ? 1 : 0;
+                comparison = stapleA - stapleB;
                 if (comparison === 0) comparison = a.name.localeCompare(b.name);
             }
             return sortOrder === 'asc' ? comparison : -comparison;
@@ -305,7 +333,24 @@ export const IngredientsTab = () => {
                                         >
                                             Category {renderSortIcon('category')}
                                         </th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Staple</th>
+                                        <th 
+                                            onClick={() => handleSort('addedBy')} 
+                                            className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 cursor-pointer group hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        >
+                                            Added By {renderSortIcon('addedBy')}
+                                        </th>
+                                        <th 
+                                            onClick={() => handleSort('addedOn')} 
+                                            className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 cursor-pointer group hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        >
+                                            Added On {renderSortIcon('addedOn')}
+                                        </th>
+                                        <th 
+                                            onClick={() => handleSort('staple')} 
+                                            className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center cursor-pointer group hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        >
+                                            Staple {renderSortIcon('staple')}
+                                        </th>
                                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
                                     </tr>
                                 </thead>
@@ -317,6 +362,12 @@ export const IngredientsTab = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-xs font-bold px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-gray-500">{ing.categoryName}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-bold text-gray-700 dark:text-gray-300">{getUserDisplay(ing.user)}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs text-gray-500 font-medium">{formatDate(ing.createdAt)}</div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {ing.isDefaultStaple ? <CheckCircle2 size={18} className="text-green-500 mx-auto" /> : <Circle size={18} className="text-gray-200 dark:text-gray-700 mx-auto" />}
@@ -336,14 +387,23 @@ export const IngredientsTab = () => {
                         {/* MOBILE VIEW (Cards) */}
                         <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800 flex-1">
                             {/* Mobile Sort Controls */}
-                            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center text-sm">
+                            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex flex-wrap justify-between items-center text-xs gap-2">
                                 <span className="font-bold text-gray-500 dark:text-gray-400">Sort by:</span>
-                                <div className="flex gap-4">
-                                    <button onClick={() => handleSort('name')} className={`font-black flex items-center gap-1 ${sortField === 'name' ? 'text-orange-600' : 'text-gray-400'}`}>
-                                        Name {sortField === 'name' && (sortOrder === 'asc' ? <ArrowUp size={14}/> : <ArrowDown size={14}/>)}
+                                <div className="flex flex-wrap gap-2">
+                                    <button onClick={() => handleSort('name')} className={`font-black flex items-center gap-0.5 px-2 py-1 rounded-md ${sortField === 'name' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        Name {sortField === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
                                     </button>
-                                    <button onClick={() => handleSort('category')} className={`font-black flex items-center gap-1 ${sortField === 'category' ? 'text-orange-600' : 'text-gray-400'}`}>
-                                        Category {sortField === 'category' && (sortOrder === 'asc' ? <ArrowUp size={14}/> : <ArrowDown size={14}/>)}
+                                    <button onClick={() => handleSort('category')} className={`font-black flex items-center gap-0.5 px-2 py-1 rounded-md ${sortField === 'category' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        Category {sortField === 'category' && (sortOrder === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
+                                    </button>
+                                    <button onClick={() => handleSort('addedBy')} className={`font-black flex items-center gap-0.5 px-2 py-1 rounded-md ${sortField === 'addedBy' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        By {sortField === 'addedBy' && (sortOrder === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
+                                    </button>
+                                    <button onClick={() => handleSort('addedOn')} className={`font-black flex items-center gap-0.5 px-2 py-1 rounded-md ${sortField === 'addedOn' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        Date {sortField === 'addedOn' && (sortOrder === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
+                                    </button>
+                                    <button onClick={() => handleSort('staple')} className={`font-black flex items-center gap-0.5 px-2 py-1 rounded-md ${sortField === 'staple' ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        Staple {sortField === 'staple' && (sortOrder === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}
                                     </button>
                                 </div>
                             </div>
@@ -353,7 +413,7 @@ export const IngredientsTab = () => {
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h4 className="font-bold text-gray-800 dark:text-gray-200 text-base">{ing.name}</h4>
-                                            <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-gray-500">
+                                            <span className="inline-block mt-1 text-[10px] font-black px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md text-gray-500">
                                                 {ing.categoryName}
                                             </span>
                                         </div>
@@ -362,16 +422,21 @@ export const IngredientsTab = () => {
                                             <button onClick={() => handleDeleteIngredient(ing.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={16} /></button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-3">
-                                        {ing.isDefaultStaple ? (
-                                            <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-md">
-                                                <CheckCircle2 size={14} /> Default Staple
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center gap-1 text-xs font-bold text-gray-400 px-2 py-1">
-                                                <Circle size={14} /> Not a staple
-                                            </span>
-                                        )}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 text-xs">
+                                        <div className="text-gray-500 font-medium">
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">Added by:</span> {getUserDisplay(ing.user)} ({formatDate(ing.createdAt)})
+                                        </div>
+                                        <div>
+                                            {ing.isDefaultStaple ? (
+                                                <span className="inline-flex items-center gap-1 font-bold text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-md">
+                                                    <CheckCircle2 size={14} /> Default Staple
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 font-bold text-gray-400 px-2 py-1">
+                                                    <Circle size={14} /> Not a staple
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

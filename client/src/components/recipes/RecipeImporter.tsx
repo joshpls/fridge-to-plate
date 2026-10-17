@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, Clipboard, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 

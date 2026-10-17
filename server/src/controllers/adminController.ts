@@ -294,11 +294,18 @@ export const deleteIngredientCategory = async (req: Request, res: Response) => {
 };
 
 // --- INGREDIENTS ---
-export const createIngredient = async (req: Request, res: Response) => {
+export const createIngredient = async (req: AuthRequest, res: Response) => {
     try {
         const { name, categoryId, isDefaultStaple } = req.body;
+        const userId = req.user?.id;
         const ingredient = await prisma.ingredient.create({
-            data: { name, categoryId: categoryId || null, isDefaultStaple }
+            data: { 
+                name, 
+                categoryId: categoryId || null, 
+                isDefaultStaple: !!isDefaultStaple,
+                userId: userId || null
+            },
+            include: { user: { select: { id: true, email: true, firstName: true, lastName: true, alias: true } } }
         });
         res.json({ status: 'success', data: ingredient });
     } catch (error) { res.status(500).json({ status: 'error' }); }

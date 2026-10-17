@@ -205,6 +205,7 @@ const Favorites = () => {
             {selectedRecipe && (
                 <RecipeModal
                     recipe={selectedRecipe}
+                    showStaples={false}
                     onClose={() => setSelectedRecipe(null)}
                 />
             )}

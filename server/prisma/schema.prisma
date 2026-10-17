@@ -51,6 +51,7 @@ model User {
 
   households       HouseholdMember[]
   addedPantryItems PantryItem[]      @relation("AddedBy")
+  addedIngredients Ingredient[]
 
   favorites      Favorite[]
   comments       Comment[]
@@ -127,12 +128,18 @@ model Ingredient {
   subGroupId        String?
   subGroup          SubstitutionGroup?  @relation(fields: [subGroupId], references: [id], onDelete: SetNull)
 
+  userId            String?
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime           @default(now())
+
   pantryItems       PantryItem[]
   recipeIngredients RecipeIngredient[]
   householdStaples  HouseholdStaple[]  // [NEW]
 
   @@index([categoryId])
   @@index([subGroupId])
+  @@index([userId])
 }
 
 model HouseholdStaple {

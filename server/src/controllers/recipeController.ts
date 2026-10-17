@@ -98,7 +98,10 @@ export const getTaxonomy = async (req: Request, res: Response) => {
             }),
             prisma.tag.findMany({ orderBy: { name: 'asc' } }),
             prisma.unit.findMany({ orderBy: { name: 'asc' } }),
-            prisma.ingredient.findMany({ orderBy: { name: 'asc' } }),
+            prisma.ingredient.findMany({ 
+                orderBy: { name: 'asc' },
+                include: { user: { select: { id: true, email: true, firstName: true, lastName: true, alias: true } } }
+            }),
             prisma.modifier.findMany({ orderBy: { name: 'asc' } }),
             
             prisma.ingredientCategory.findMany({ orderBy: { order: 'asc' } }),
@@ -346,8 +349,15 @@ const deleteLocalImage = async (imageUrl?: string | null) => {
 export const createIngredient = async (req: AuthRequest, res: Response) => {
     try {
         const { name, categoryId, isDefaultStaple } = req.body;
+        const userId = req.user?.id;
         const ingredient = await prisma.ingredient.create({
-            data: { name, categoryId: categoryId || null, isDefaultStaple: !!isDefaultStaple }
+            data: { 
+                name, 
+                categoryId: categoryId || null, 
+                isDefaultStaple: !!isDefaultStaple,
+                userId: userId || null
+            },
+            include: { user: { select: { id: true, email: true, firstName: true, lastName: true, alias: true } } }
         });
         return sendSuccess(res, ingredient, "Ingredient created successfully");
     } catch (error: any) {

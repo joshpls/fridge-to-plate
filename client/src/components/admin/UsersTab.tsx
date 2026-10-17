@@ -197,7 +197,7 @@ export const UsersTab = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800/50 overflow-hidden">
-                <div className="overflow-x-auto min-h-[400px]">
+                <div className="overflow-x-auto min-h-100">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px] cursor-pointer whitespace-nowrap">
                             <tr>
@@ -303,19 +303,19 @@ export const UsersTab = () => {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="truncate max-w-[150px]">
+                                                        <div className="truncate max-w-37.5">
                                                             <p className="font-bold text-gray-900 dark:text-white truncate" title={u.email}>{u.email}</p>
                                                             <p className="text-[10px] text-gray-400 font-mono truncate">{u.id}</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-[120px]">
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-30">
                                                         {u.lastName || u.firstName ? `${u.lastName || ''}${u.lastName && u.firstName ? ', ' : ''}${u.firstName || ''}` : <span className="text-gray-300 italic">No Name</span>}
                                                     </p>
                                                 </td>
                                                 <td className="p-4">
-                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-[100px]">{u.alias || <span className="text-gray-300 italic">-</span>}</p>
+                                                    <p className="font-bold text-gray-900 dark:text-white truncate max-w-25">{u.alias || <span className="text-gray-300 italic">-</span>}</p>
                                                 </td>
                                                 <td className="p-4">
                                                     <button
@@ -429,7 +429,7 @@ export const UsersTab = () => {
                                 <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">
                                     Change User Role
                                 </h3>
-                                <p className="text-xs text-gray-400 font-mono mb-6 truncate max-w-[280px]" title={roleModalUser.email}>
+                                <p className="text-xs text-gray-400 font-mono mb-6 truncate max-w-70" title={roleModalUser.email}>
                                     {roleModalUser.email}
                                 </p>
 
