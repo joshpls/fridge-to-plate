@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { FilterBarProps } from '../../models/Utils';
 import { useAuth } from '../../context/AuthContext';
+import { IngredientAutocomplete } from './IngredientAutocomplete';
 
 export const FilterBar = ({
     taxonomy,
@@ -31,21 +32,12 @@ export const FilterBar = ({
     
     const { isAuthenticated } = useAuth();
 
+    const [includeSearch, setIncludeSearch] = useState('');
+    const [excludeSearch, setExcludeSearch] = useState('');
+
     const availableSubcategories = taxonomy?.categories?.find(
         (cat: any) => cat.id === selectedCategory
     )?.subcategories || [];
-
-    const handleAddIngredient = (type: 'include' | 'exclude', e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
-        if (!val) return;
-
-        if (type === 'include' && !includeIngredients.includes(val)) {
-            setIncludeIngredients([...includeIngredients, val]);
-        } else if (type === 'exclude' && !excludeIngredients.includes(val)) {
-            setExcludeIngredients([...excludeIngredients, val]);
-        }
-        e.target.value = '';
-    };
 
     const removeIngredient = (type: 'include' | 'exclude', id: string) => {
         if (type === 'include') {
@@ -229,16 +221,20 @@ export const FilterBar = ({
                         {/* Include */}
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Must Include Ingredients</label>
-                            <select
-                                onChange={(e) => handleAddIngredient('include', e)}
-                                defaultValue=""
-                                className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-sm mb-2 outline-none"
-                            >
-                                <option value="" disabled>+ Add an ingredient...</option>
-                                {taxonomy?.ingredients?.map((ing: any) => (
-                                    <option key={ing.id} value={ing.id}>{ing.name}</option>
-                                ))}
-                            </select>
+                            <div className="mb-2">
+                                <IngredientAutocomplete
+                                    value=""
+                                    ingredients={taxonomy?.ingredients || []}
+                                    onChange={(id) => {
+                                        if (id && !includeIngredients.includes(id)) {
+                                            setIncludeIngredients([...includeIngredients, id]);
+                                        }
+                                        setIncludeSearch('');
+                                    }}
+                                    searchValue={includeSearch}
+                                    onSearchChange={setIncludeSearch}
+                                />
+                            </div>
                             <div className="flex flex-wrap gap-2">
                                 {includeIngredients.map(id => (
                                     <span key={id} className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
@@ -252,16 +248,20 @@ export const FilterBar = ({
                         {/* Exclude */}
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Must Exclude Ingredients</label>
-                            <select
-                                onChange={(e) => handleAddIngredient('exclude', e)}
-                                defaultValue=""
-                                className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-sm mb-2 outline-none"
-                            >
-                                <option value="" disabled>+ Add an ingredient...</option>
-                                {taxonomy?.ingredients?.map((ing: any) => (
-                                    <option key={ing.id} value={ing.id}>{ing.name}</option>
-                                ))}
-                            </select>
+                            <div className="mb-2">
+                                <IngredientAutocomplete
+                                    value=""
+                                    ingredients={taxonomy?.ingredients || []}
+                                    onChange={(id) => {
+                                        if (id && !excludeIngredients.includes(id)) {
+                                            setExcludeIngredients([...excludeIngredients, id]);
+                                        }
+                                        setExcludeSearch('');
+                                    }}
+                                    searchValue={excludeSearch}
+                                    onSearchChange={setExcludeSearch}
+                                />
+                            </div>
                             <div className="flex flex-wrap gap-2">
                                 {excludeIngredients.map(id => (
                                     <span key={id} className="bg-red-100 text-red-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
