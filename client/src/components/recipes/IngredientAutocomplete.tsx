@@ -36,30 +36,32 @@ export const IngredientAutocomplete = ({
         if (selectedIngredient) {
             if (isControlled) onSearchChange(selectedIngredient.name);
             else setInternalSearchTerm(selectedIngredient.name);
-        } else if (!value) {
-            // Clear input text if the actual ID row resets or clears out
-            if (!isControlled) setInternalSearchTerm('');
+        } else if (!value && !isControlled) {
+            // Only clear internal state automatically if not parent-controlled
+            setInternalSearchTerm('');
         }
     }, [value, ingredients, isControlled]);
 
     // Close dropdown when clicking outside the component viewport wrapper
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
-                // Revert text to match the active underlying selection if they click away
                 const currentSelection = ingredients.find(i => i.id === value);
                 if (currentSelection) {
                     if (isControlled) onSearchChange(currentSelection.name);
                     else setInternalSearchTerm(currentSelection.name);
-                } else {
-                    if (isControlled) onSearchChange('');
-                    else setInternalSearchTerm('');
+                } else if (!isControlled) {
+                    setInternalSearchTerm('');
                 }
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
     }, [value, ingredients, isControlled, onSearchChange]);
 
     // High-performance filter: strictly limits DOM nodes to 50 max
@@ -86,6 +88,9 @@ export const IngredientAutocomplete = ({
         <div ref={wrapperRef} className="relative w-full">
             <input
                 type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck="false"
                 value={currentSearchTerm}
                 onChange={handleInputChange}
                 onFocus={() => setIsOpen(true)}
@@ -100,10 +105,11 @@ export const IngredientAutocomplete = ({
                         filteredIngredients.map(ing => (
                             <li
                                 key={ing.id}
+                                onMouseDown={(e) => e.preventDefault()} // Prevent input blur on mobile touch/click
                                 onClick={() => {
                                     onChange(ing.id);
-                                    if (isControlled) onSearchChange(ing.name);
-                                    else setInternalSearchTerm(ing.name);
+                                    if (isControlled) onSearchChange('');
+                                    else setInternalSearchTerm('');
                                     setIsOpen(false);
                                 }}
                                 className="px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-500/15 cursor-pointer text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors border-b border-gray-50 dark:border-gray-800/40 last:border-0"
