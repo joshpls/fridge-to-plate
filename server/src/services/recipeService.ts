@@ -104,7 +104,7 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
 export const updateRecipe = async (recipeId: string, userId: string, data: any, userRole: string) => {
     return await prisma.$transaction(async (tx) => {
         const existingRecipe = await tx.recipe.findUnique({ where: { id: recipeId } });
-        if (!existingRecipe || (existingRecipe.authorId !== userId && userRole !== 'ADMIN')) {
+        if (!existingRecipe || (existingRecipe.authorId !== userId && !['ADMIN', 'ROOT'].includes(userRole))) {
           throw new Error("Unauthorized or Recipe not found.");
         }
     
@@ -148,7 +148,7 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
 
 export const deleteRecipe = async (recipeId: string, userId: string, userRole: string) => {
     const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { authorId: true } });
-    if (!recipe || (recipe.authorId !== userId && userRole !== 'ADMIN')) throw new Error("Unauthorized");
+    if (!recipe || (recipe.authorId !== userId && !['ADMIN', 'ROOT'].includes(userRole))) throw new Error("Unauthorized");
     return await prisma.recipe.delete({ where: { id: recipeId } });
 };
 

@@ -89,34 +89,38 @@ describe('Recipe Service', () => {
         .toThrow('Unauthorized or Recipe not found.'); //[cite: 4]
     });
 
-    it('should update the recipe if authorized (as author or ADMIN)', async () => {
+    it('should update the recipe if authorized (as author, ADMIN, or ROOT)', async () => {
       vi.mocked(prisma.recipe.findUnique).mockResolvedValue({ authorId: 'other-user', visibility: 'PUBLIC' } as any);
       vi.mocked(prisma.recipe.update).mockResolvedValue({ id: 'recipe-1' } as any);
 
-      // Testing ADMIN override[cite: 4]
+      // Testing ADMIN and ROOT overrides
       await recipeService.updateRecipe('recipe-1', 'user-1', updateData, 'ADMIN');
+      await recipeService.updateRecipe('recipe-1', 'user-1', updateData, 'ROOT');
 
-      // It should delete existing ingredients before updating[cite: 4]
+      // It should delete existing ingredients before updating
       expect(prisma.recipeIngredient.deleteMany).toHaveBeenCalledWith({ where: { recipeId: 'recipe-1' } });
       expect(prisma.recipe.update).toHaveBeenCalled();
     });
   });
 
   describe('deleteRecipe', () => {
-    it('should throw an error if user is not author and not admin', async () => {
+    it('should throw an error if user is not author and not admin or root', async () => {
       vi.mocked(prisma.recipe.findUnique).mockResolvedValue({ authorId: 'other-user' } as any);
 
       await expect(recipeService.deleteRecipe('recipe-1', 'user-1', 'USER'))
         .rejects
-        .toThrow('Unauthorized'); //[cite: 4]
+        .toThrow('Unauthorized');
     });
 
-    it('should delete the recipe if user is the author', async () => {
+    it('should delete the recipe if user is the author, ADMIN, or ROOT', async () => {
       vi.mocked(prisma.recipe.findUnique).mockResolvedValue({ authorId: 'user-1' } as any);
       
       await recipeService.deleteRecipe('recipe-1', 'user-1', 'USER');
+      expect(prisma.recipe.delete).toHaveBeenCalledWith({ where: { id: 'recipe-1' } });
 
-      expect(prisma.recipe.delete).toHaveBeenCalledWith({ where: { id: 'recipe-1' } }); //[cite: 4]
+      vi.mocked(prisma.recipe.findUnique).mockResolvedValue({ authorId: 'other-user' } as any);
+      await recipeService.deleteRecipe('recipe-1', 'user-1', 'ROOT');
+      expect(prisma.recipe.delete).toHaveBeenCalledWith({ where: { id: 'recipe-1' } });
     });
   });
 
