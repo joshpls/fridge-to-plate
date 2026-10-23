@@ -6,9 +6,7 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(process.cwd(), 'public/uploads');
-fs.mkdir(uploadDir, { recursive: true }).catch(console.error);
+const uploadBaseDir = path.join(process.cwd(), 'public/uploads');
 
 export const uploadImage = async (req: AuthRequest, res: Response) => {
     try {
@@ -16,12 +14,22 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ status: 'error', message: 'No file uploaded' });
         }
 
+        // Organize by Year/Month subdirectories
+        const now = new Date();
+        const year = now.getFullYear().toString();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        
+        const subDir = path.join('recipes', year, month);
+        const fullSubDir = path.join(uploadBaseDir, subDir);
+        
+        await fs.mkdir(fullSubDir, { recursive: true });
+
         // Generate a random filename with a .webp extension
         const randomName = crypto.randomBytes(16).toString('hex');
         const filename = `${randomName}.webp`;
-        const outputPath = path.join(uploadDir, filename);
+        const outputPath = path.join(fullSubDir, filename);
 
-        // 2. Compress and resize using Sharp
+        // Compress and resize using Sharp
         await sharp(req.file.buffer)
             .resize({ 
                 width: 1200, 
@@ -32,7 +40,7 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
             .webp({ quality: 80 })
             .toFile(outputPath);
 
-        const fileUrl = `/uploads/${filename}`; 
+        const fileUrl = `/uploads/${subDir}/${filename}`.replace(/\\/g, '/'); 
         return res.status(200).json({ status: 'success', imageUrl: fileUrl });
 
     } catch (error) {
@@ -48,8 +56,9 @@ export const deleteImage = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ status: 'error', message: 'Invalid image URL' });
         }
 
-        const filename = path.basename(imageUrl);
-        const filePath = path.join(uploadDir, filename);
+        // Strip leading /uploads/ to get relative path inside uploadBaseDir
+        const relativePath = imageUrl.replace(/^\/uploads\//, '');
+        const filePath = path.join(uploadBaseDir, relativePath);
 
         await fs.unlink(filePath);
         return res.status(200).json({ status: 'success', message: 'File deleted' });

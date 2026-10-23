@@ -10,6 +10,7 @@ const recipeIncludes = (userId: string) => ({
   category: true,
   subcategory: true,
   tags: true,
+  images: { orderBy: { order: 'asc' as const } },
   favorites: { where: { userId } },
   ingredients: {
     orderBy: { order: 'asc' as const },
@@ -26,6 +27,7 @@ const fallbackIncludes = {
     category: true,
     subcategory: true,
     tags: true,
+    images: { orderBy: { order: 'asc' as const } },
     ingredients: {
         orderBy: { order: 'asc' as const },
         include: { ingredient: true, unit: true, modifier: true }
@@ -64,11 +66,13 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
         const categoryExists = await tx.category.findUnique({ where: { id: data.categoryId } });
         if (!categoryExists) throw new Error(`Category not found.`);
     
+        const mainImageUrl = data.imageUrl || (data.images?.find((img: any) => img.isMain)?.url) || data.images?.[0]?.url || null;
+
         return await tx.recipe.create({
           data: {
             name: data.name,
             slug: generateUniqueSlug(data.name),
-            imageUrl: data.imageUrl || null,
+            imageUrl: mainImageUrl,
             summary: data.summary || null,
             instructions: data.instructions,
             notes: data.notes || null,
@@ -86,6 +90,13 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
             category: { connect: { id: data.categoryId } },
             ...(data.subcategoryId && { subcategory: { connect: { id: data.subcategoryId } } }),
             tags: { connect: data.tagIds?.map((id: string) => ({ id })) || [] },
+            images: {
+              create: (data.images || []).map((img: any, index: number) => ({
+                url: img.url,
+                isMain: img.isMain ?? (img.url === mainImageUrl || (index === 0 && !mainImageUrl)),
+                order: img.order ?? index
+              }))
+            },
             ingredients: {
               create: data.ingredients.map((ing: any, index: number) => ({
                 amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
@@ -109,12 +120,17 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
         }
     
         await tx.recipeIngredient.deleteMany({ where: { recipeId } });
+        if (tx.recipeImage?.deleteMany) {
+            await tx.recipeImage.deleteMany({ where: { recipeId } });
+        }
     
+        const mainImageUrl = data.imageUrl || (data.images?.find((img: any) => img.isMain)?.url) || data.images?.[0]?.url || null;
+
         return await tx.recipe.update({
           where: { id: recipeId },
           data: {
             name: data.name,
-            imageUrl: data.imageUrl || null,
+            imageUrl: mainImageUrl,
             summary: data.summary || null,
             instructions: data.instructions,
             notes: data.notes || null,
@@ -130,7 +146,13 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
             category: { connect: { id: data.categoryId } },
             subcategory: data.subcategoryId ? { connect: { id: data.subcategoryId } } : { disconnect: true },
             tags: { set: data.tagIds?.map((id: string) => ({ id })) || [] },
-            
+            images: {
+              create: (data.images || []).map((img: any, index: number) => ({
+                url: img.url,
+                isMain: img.isMain ?? (img.url === mainImageUrl || (index === 0 && !mainImageUrl)),
+                order: img.order ?? index
+              }))
+            },
             ingredients: {
               create: data.ingredients.map((ing: any, index: number) => ({
                 amount: Number(ing.amount),
@@ -283,6 +305,7 @@ export const getRecipeBySlug = async (slug: string, userId?: string, activeHouse
       include: {
         ingredients: { orderBy: { order: 'asc' }, include: { ingredient: true, unit: true, modifier: true } },
         category: true, subcategory: true, tags: true, author: userProfileSelect,
+        images: { orderBy: { order: 'asc' } },
         comments: { include: { user: userProfileSelect }, orderBy: { createdAt: 'desc' } },
         favorites: { where: { userId } }
       }

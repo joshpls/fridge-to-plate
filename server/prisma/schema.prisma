@@ -211,9 +211,22 @@ model Recipe {
 
   tags        Tag[]              @relation("RecipeTags")
   ingredients RecipeIngredient[]
+  images      RecipeImage[]
   favorites   Favorite[]
   comments    Comment[]
   createdAt   DateTime           @default(now())
+}
+
+model RecipeImage {
+  id        String   @id @default(uuid())
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  url       String
+  isMain    Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([recipeId])
 }
 
 model Category {

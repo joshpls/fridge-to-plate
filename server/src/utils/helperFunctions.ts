@@ -112,6 +112,12 @@ export const mapRecipeToDto = (
     servings: recipe.servings || 1,
     method: recipe.method,
     imageUrl: recipe.imageUrl,
+    images: recipe.images?.map((img: any) => ({
+      id: img.id,
+      url: img.url,
+      isMain: img.isMain,
+      order: img.order
+    })) || [],
     nutrition: recipe.nutrition || {},
     sourceName: recipe.sourceName,
     sourceUrl: recipe.sourceUrl,

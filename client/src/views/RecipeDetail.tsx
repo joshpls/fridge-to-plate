@@ -59,6 +59,19 @@ const RecipeDetail = () => {
     const [swapOptions, setSwapOptions] = useState<any[]>([]);
 
     const [isCookModeOpen, setIsCookModeOpen] = useState(false);
+    const [activeBannerImage, setActiveBannerImage] = useState<string>('');
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (lightboxIndex === null || !recipe?.images) return;
+            if (e.key === 'Escape') setLightboxIndex(null);
+            if (e.key === 'ArrowRight') setLightboxIndex((lightboxIndex + 1) % recipe.images.length);
+            if (e.key === 'ArrowLeft') setLightboxIndex((lightboxIndex - 1 + recipe.images.length) % recipe.images.length);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [lightboxIndex, recipe]);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -81,6 +94,7 @@ const RecipeDetail = () => {
                 if (recipeResult.status === 'success') {
                     storageService.cache.setRecipe(slug, recipeResult.data, userId);
                     setRecipe(recipeResult.data);
+                    setActiveBannerImage(recipeResult.data.imageUrl || '');
                     setCheckedIngredients(new Set());
                 }
             } catch (error) {
@@ -501,8 +515,8 @@ const RecipeDetail = () => {
             </div>
 
             {/* Screen Banner Image (Hidden on Print) */}
-            <div className="w-full h-64 sm:h-80 md:h-96 rounded-3xl overflow-hidden mb-8 relative shadow-sm print:hidden">
-                <img src={getNetworkImageUrl(recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
+            <div className="w-full h-64 sm:h-80 md:h-96 rounded-3xl overflow-hidden mb-4 relative shadow-sm print:hidden">
+                <img src={getNetworkImageUrl(activeBannerImage || recipe.imageUrl || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80')} alt={recipe.name} className="w-full h-full object-cover"/>
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                 
                 <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -662,6 +676,81 @@ const RecipeDetail = () => {
                     </span>
                 </div>
             </div>
+
+            {/* Photo Gallery Section */}
+            {recipe.images && recipe.images.length > 0 && (
+                <div className="mb-10 print:hidden bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border-2 border-gray-100 dark:border-gray-800">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Recipe Gallery ({recipe.images.length} photos)</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                        {recipe.images.map((img: any, idx: number) => (
+                            <button
+                                key={idx}
+                                onClick={() => setLightboxIndex(idx)}
+                                className="group relative h-24 rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-orange-500 transition-all shadow-sm active:scale-95"
+                            >
+                                <img src={getNetworkImageUrl(img.url)} alt={`Gallery photo ${idx}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg backdrop-blur">🔍 View</span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Lightbox Modal with Carousel Navigation */}
+            {lightboxIndex !== null && recipe.images && recipe.images[lightboxIndex] && (
+                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 print:hidden" onClick={() => setLightboxIndex(null)}>
+                    <div className="relative max-w-5xl max-h-[90vh] w-full flex items-center justify-center p-2" onClick={(e) => e.stopPropagation()}>
+                        
+                        {/* Main Lightbox Image Container with Overlay Controls */}
+                        <div className="relative inline-flex items-center justify-center max-w-full max-h-[85vh]">
+                            {/* Close button */}
+                            <button
+                                onClick={() => setLightboxIndex(null)}
+                                className="absolute top-3 right-3 text-white bg-black/60 hover:bg-red-600 rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg transition-colors z-30 backdrop-blur-md shadow-lg"
+                                title="Close"
+                            >
+                                ✕
+                            </button>
+
+                            {/* Image Counter */}
+                            <div className="absolute top-3 left-3 text-white font-bold text-xs bg-black/60 px-3 py-1.5 rounded-xl backdrop-blur-md z-30 shadow-lg">
+                                {lightboxIndex + 1} / {recipe.images.length}
+                            </div>
+
+                            {/* Previous Button */}
+                            {recipe.images.length > 1 && (
+                                <button
+                                    onClick={() => setLightboxIndex((lightboxIndex - 1 + recipe.images.length) % recipe.images.length)}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white bg-black/60 hover:bg-orange-500 rounded-full w-12 h-12 flex items-center justify-center font-black text-2xl transition-all shadow-xl z-30 backdrop-blur-md active:scale-95"
+                                    title="Previous photo"
+                                >
+                                    ‹
+                                </button>
+                            )}
+
+                            {/* Main Lightbox Image */}
+                            <img 
+                                src={getNetworkImageUrl(recipe.images[lightboxIndex].url)} 
+                                alt={`Lightbox ${lightboxIndex + 1}`} 
+                                className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl" 
+                            />
+
+                            {/* Next Button */}
+                            {recipe.images.length > 1 && (
+                                <button
+                                    onClick={() => setLightboxIndex((lightboxIndex + 1) % recipe.images.length)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white bg-black/60 hover:bg-orange-500 rounded-full w-12 h-12 flex items-center justify-center font-black text-2xl transition-all shadow-xl z-30 backdrop-blur-md active:scale-95"
+                                    title="Next photo"
+                                >
+                                    ›
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content Grid */}
             <div className="grid lg:grid-cols-3 gap-8 md:gap-12 print:block print:space-y-6 clear-both">

@@ -68,10 +68,18 @@ export const Visibility = {
     PUBLIC: 'PUBLIC'
 };
 
+export interface RecipeImageItem {
+    id?: string;
+    url: string;
+    isMain: boolean;
+    order: number;
+}
+
 export interface RecipeFormData {
     id?: string;
     name: string;
     imageUrl: string;
+    images: RecipeImageItem[];
     summary: string;
     categoryId: string;
     subcategoryId: string;
@@ -90,7 +98,7 @@ export interface RecipeFormData {
 }
 
 export const initialRecipe: RecipeFormData = {
-    name: '', imageUrl: '', summary: '', categoryId: '', subcategoryId: '',
+    name: '', imageUrl: '', images: [], summary: '', categoryId: '', subcategoryId: '',
     prepTime: '', cookTime: '', servings: '', method: '', instructions: '', notes: '',
     tagIds: [],
     ingredients: [{ id: Math.random().toString(36).substring(7), ingredientId: '', name: '', sectionName: '', amount: '', unitId: '', modifierId: '' }],

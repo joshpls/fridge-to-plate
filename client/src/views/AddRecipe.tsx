@@ -71,6 +71,7 @@ const AddRecipe = () => {
                             id: r.id,
                             name: r.name || '',
                             imageUrl: r.imageUrl || '',
+                            images: r.images || [],
                             summary: r.summary || '',
                             categoryId: r.category?.id || '',
                             subcategoryId: r.subcategory?.id || '',
@@ -253,6 +254,65 @@ const uploadFileToServer = async (file: File) => {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) uploadFileToServer(file);
+    };
+
+    const uploadAdditionalFileToServer = async (file: File) => {
+        setIsUploading(true);
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+        try {
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch(`${API_BASE}/upload`, { 
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: uploadData 
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                setFormData(prev => ({
+                    ...prev,
+                    images: [...prev.images, { url: result.imageUrl, isMain: false, order: prev.images.length }]
+                }));
+                toast.success("Additional image added");
+            } else {
+                toast.error("Upload failed: " + result.message);
+            }
+        } catch (err) {
+            console.error("Failed to upload additional image", err);
+            toast.error("Network Error during upload.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleAdditionalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) uploadAdditionalFileToServer(file);
+    };
+
+    const handleRemoveAdditionalImage = (index: number) => {
+        setFormData(prev => {
+            const newImages = prev.images.filter((_, i) => i !== index);
+            return { ...prev, images: newImages };
+        });
+    };
+
+    const handleSetMainImage = (index: number) => {
+        setFormData(prev => {
+            const targetImage = prev.images[index];
+            if (!targetImage) return prev;
+            const updatedImages = prev.images.map((img, i) => ({
+                ...img,
+                isMain: i === index
+            }));
+            currentImageUrlRef.current = targetImage.url;
+            return {
+                ...prev,
+                imageUrl: targetImage.url,
+                images: updatedImages
+            };
+        });
+        toast.success("Main cover photo updated");
     };
 
     useEffect(() => {
@@ -489,6 +549,46 @@ const uploadFileToServer = async (file: File) => {
                                     <kbd className="text-orange-500">Max Image Size: 10MB</kbd>
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Additional Photos Gallery Section */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Additional Photos (Gallery)</label>
+                        <p className="text-xs text-gray-400 mb-4">Add extra photos of your recipe steps or final presentation. You can set any photo as the main cover.</p>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {formData.images.map((img, index) => (
+                                <div key={index} className="relative group rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 h-32 flex items-center justify-center">
+                                    <img src={getNetworkImageUrl(img.url)} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        {formData.imageUrl !== img.url && (
+                                            <button type="button" onClick={() => handleSetMainImage(index)} className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-orange-600 transition-colors shadow-md">
+                                                Set Main
+                                            </button>
+                                        )}
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => handleRemoveAdditionalImage(index)} 
+                                        title="Remove photo"
+                                        className="absolute top-2 right-2 w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center font-black text-xs shadow-lg transition-transform active:scale-95 z-10"
+                                    >
+                                        ✕
+                                    </button>
+                                    {formData.imageUrl === img.url && (
+                                        <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shadow">
+                                            Main
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+
+                            <label className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 dark:hover:border-orange-500 transition-colors bg-gray-50 dark:bg-gray-900">
+                                <span className="text-2xl mb-1">➕</span>
+                                <span className="text-xs font-bold text-gray-600 dark:text-gray-400">Add Photo</span>
+                                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleAdditionalImageUpload} className="hidden" disabled={isUploading} />
+                            </label>
                         </div>
                     </div>
 
