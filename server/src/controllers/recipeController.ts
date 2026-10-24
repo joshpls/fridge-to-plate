@@ -3,6 +3,7 @@ import * as recipeService from '../services/recipeService.js';
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
 import { prisma } from '../config/db.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js';
+import { deleteLocalFile } from './uploadController.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 import path from 'path';
@@ -185,13 +186,23 @@ export const deleteRecipe = async (req: AuthRequest, res: Response) => {
     }
 
     const existingRecipe = await prisma.recipe.findUnique({
-      where: { id }, select: { imageUrl: true }
+      where: { id },
+      select: { imageUrl: true, images: { select: { url: true } } }
     });
 
     await recipeService.deleteRecipe(id, userId, userRole);
 
-    if (existingRecipe?.imageUrl) {
-      await deleteLocalImage(existingRecipe.imageUrl);
+    if (existingRecipe) {
+      const urlsToDelete = new Set<string>();
+      if (existingRecipe.imageUrl) urlsToDelete.add(existingRecipe.imageUrl);
+      if (existingRecipe.images) {
+        for (const img of existingRecipe.images) {
+          if (img.url) urlsToDelete.add(img.url);
+        }
+      }
+      for (const url of urlsToDelete) {
+        await deleteLocalFile(url);
+      }
     }
 
     return res.status(200).json({

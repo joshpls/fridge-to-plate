@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { prisma } from '../config/db.js';
 import type { AuthRequest } from '../middleware/authMiddleware.js'; // Use .js extension
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
+import { deleteLocalFile } from './uploadController.js';
 
 export const getSystemStats = async (req: AuthRequest, res: Response) => {
     try {
@@ -448,9 +449,28 @@ export const getAllRecipes = async (req: Request, res: Response) => {
 export const deleteRecipe = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
+        const existingRecipe = await prisma.recipe.findUnique({
+            where: { id },
+            select: { imageUrl: true, images: { select: { url: true } } }
+        });
+
         await prisma.recipe.delete({
             where: { id: id }
         });
+
+        if (existingRecipe) {
+            const urlsToDelete = new Set<string>();
+            if (existingRecipe.imageUrl) urlsToDelete.add(existingRecipe.imageUrl);
+            if (existingRecipe.images) {
+                for (const img of existingRecipe.images) {
+                    if (img.url) urlsToDelete.add(img.url);
+                }
+            }
+            for (const url of urlsToDelete) {
+                await deleteLocalFile(url);
+            }
+        }
+
         res.status(200).json({ status: 'success', message: 'Recipe deleted' });
     } catch (error) {
         res.status(500).json({ status: 'error', message: 'Failed to delete recipe' });

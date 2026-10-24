@@ -178,7 +178,7 @@ describe('Recipe Controller', () => {
       await recipeController.deleteRecipe(req as any, res);
 
       expect(prisma.recipe.findUnique).toHaveBeenCalledWith({
-        where: { id: 'recipe-123' }, select: { imageUrl: true }
+        where: { id: 'recipe-123' }, select: { imageUrl: true, images: { select: { url: true } } }
       });
       expect(recipeService.deleteRecipe).toHaveBeenCalledWith('recipe-123', 'user-1', 'ADMIN');
       

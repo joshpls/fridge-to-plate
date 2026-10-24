@@ -49,6 +49,17 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const deleteLocalFile = async (imageUrl?: string | null) => {
+    if (!imageUrl || !imageUrl.startsWith('/uploads/')) return;
+    try {
+        const relativePath = imageUrl.replace(/^\/uploads\//, '');
+        const filePath = path.join(uploadBaseDir, relativePath);
+        await fs.unlink(filePath);
+    } catch (err: any) {
+        if (err.code !== 'ENOENT') console.error('Failed to delete recipe image:', err);
+    }
+};
+
 export const deleteImage = async (req: AuthRequest, res: Response) => {
     try {
         const { imageUrl } = req.body;
@@ -56,11 +67,7 @@ export const deleteImage = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ status: 'error', message: 'Invalid image URL' });
         }
 
-        // Strip leading /uploads/ to get relative path inside uploadBaseDir
-        const relativePath = imageUrl.replace(/^\/uploads\//, '');
-        const filePath = path.join(uploadBaseDir, relativePath);
-
-        await fs.unlink(filePath);
+        await deleteLocalFile(imageUrl);
         return res.status(200).json({ status: 'success', message: 'File deleted' });
     } catch (error: any) {
         if (error.code === 'ENOENT') {
