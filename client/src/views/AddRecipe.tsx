@@ -71,11 +71,16 @@ const AddRecipe = () => {
 
                         const uiIngredients = rehydrateIngredients(r.ingredients, true);
 
+                        const rawImages = r.images || [];
+                        const cleanedImages = rawImages
+                            .filter((img: any) => img.url !== r.imageUrl)
+                            .map((img: any, i: number) => ({ ...img, order: i, isMain: false }));
+
                         setFormData({
                             id: r.id,
                             name: r.name || '',
                             imageUrl: r.imageUrl || '',
-                            images: r.images || [],
+                            images: cleanedImages,
                             summary: r.summary || '',
                             categoryId: r.category?.id || '',
                             subcategoryId: r.subcategory?.id || '',
@@ -236,15 +241,24 @@ const uploadFileToServer = async (file: File) => {
         const result = await res.json();
         
         if (result.status === 'success') {
-            if (currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
-                fetchWithAuth(`${API_BASE}/upload`, { 
-                    method: 'DELETE', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ imageUrl: currentImageUrlRef.current }) 
-                }).catch(console.error);
-            }
-            currentImageUrlRef.current = result.imageUrl;
-            setFormData(prev => ({ ...prev, imageUrl: result.imageUrl }));
+            setFormData(prev => {
+                const oldMainUrl = prev.imageUrl;
+                let newImages = [...prev.images];
+
+                if (oldMainUrl && oldMainUrl !== result.imageUrl && !newImages.some(img => img.url === oldMainUrl)) {
+                    newImages.push({ url: oldMainUrl, isMain: false, order: newImages.length });
+                }
+
+                newImages = newImages.filter(img => img.url !== result.imageUrl);
+
+                currentImageUrlRef.current = result.imageUrl;
+                return {
+                    ...prev,
+                    imageUrl: result.imageUrl,
+                    images: newImages.map((img, i) => ({ ...img, order: i, isMain: false }))
+                };
+            });
+            toast.success("Main cover photo updated");
         } else {
             toast.error("Upload failed: " + result.message);
         }
@@ -383,15 +397,23 @@ const uploadFileToServer = async (file: File) => {
         setFormData(prev => {
             const targetImage = prev.images[index];
             if (!targetImage) return prev;
-            const updatedImages = prev.images.map((img, i) => ({
-                ...img,
-                isMain: i === index
-            }));
-            currentImageUrlRef.current = targetImage.url;
+
+            const oldMainUrl = prev.imageUrl;
+            const targetUrl = targetImage.url;
+
+            let newImages = prev.images.filter((_, i) => i !== index);
+
+            if (oldMainUrl && oldMainUrl !== targetUrl && !newImages.some(img => img.url === oldMainUrl)) {
+                newImages.splice(index, 0, { url: oldMainUrl, isMain: false, order: index });
+            }
+
+            newImages = newImages.filter(img => img.url !== targetUrl);
+
+            currentImageUrlRef.current = targetUrl;
             return {
                 ...prev,
-                imageUrl: targetImage.url,
-                images: updatedImages
+                imageUrl: targetUrl,
+                images: newImages.map((img, i) => ({ ...img, order: i, isMain: false }))
             };
         });
         toast.success("Main cover photo updated");
