@@ -229,7 +229,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     <div>
                         <h3 className="text-xl font-black text-gray-900 dark:text-white">Crop & Adjust Image</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-                            {loadingImage ? 'Loading image...' : `${imageNaturalSize.width}×{imageNaturalSize.height}px (${formatBytes(fileSize)}) • Max Target: 1200×1200px`}
+                            {loadingImage ? 'Loading image...' : `${imageNaturalSize.width} × ${imageNaturalSize.height} px (${formatBytes(fileSize)}) • Max Target: 1200px`}
                         </p>
                     </div>
                     <button 

@@ -604,16 +604,16 @@ const uploadFileToServer = async (file: File) => {
                                 {formData.imageUrl ? (
                                     <>
                                         <img src={getNetworkImageUrl(formData.imageUrl)} alt="Recipe Preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
                                             <button 
                                                 type="button" 
                                                 onClick={() => {
                                                     setEditorFile(getNetworkImageUrl(formData.imageUrl));
                                                     setEditorTarget('main');
                                                 }}
-                                                className="bg-white text-gray-900 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors shadow-md"
+                                                className="bg-white/95 dark:bg-gray-900/95 text-gray-900 dark:text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-white transition-all shadow-lg backdrop-blur-sm active:scale-95"
                                             >
-                                                Edit / Crop
+                                                ✏️ Edit / Crop Photo
                                             </button>
                                         </div>
                                     </>
