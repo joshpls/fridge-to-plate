@@ -11,6 +11,7 @@ import { rehydrateIngredients, dehydrateIngredients } from '../utils/recipeUtils
 import { initialRecipe, Visibility, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 import { AddNutrition } from '../components/recipes/AddNutrition';
 import { RecipeImporter } from '../components/recipes/RecipeImporter';
+import { ImageEditorModal } from '../components/recipes/ImageEditorModal';
 
 import {
   DndContext,
@@ -39,6 +40,8 @@ const AddRecipe = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [editorFile, setEditorFile] = useState<File | null>(null);
+    const [editorTarget, setEditorTarget] = useState<'main' | 'additional' | null>(null);
     const originalImageUrlRef = useRef<string>('');
     const currentImageUrlRef = useRef<string>('');
     const isSubmittedRef = useRef<boolean>(false);
@@ -253,7 +256,11 @@ const uploadFileToServer = async (file: File) => {
 };
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) uploadFileToServer(file);
+        if (file) {
+            setEditorFile(file);
+            setEditorTarget('main');
+        }
+        e.target.value = '';
     };
 
     const uploadAdditionalFileToServer = async (file: File) => {
@@ -287,11 +294,33 @@ const uploadFileToServer = async (file: File) => {
 
     const handleAdditionalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) uploadAdditionalFileToServer(file);
+        if (file) {
+            setEditorFile(file);
+            setEditorTarget('additional');
+        }
+        e.target.value = '';
+    };
+
+    const handleEditorSave = (processedFile: File) => {
+        if (editorTarget === 'main') {
+            uploadFileToServer(processedFile);
+        } else if (editorTarget === 'additional') {
+            uploadAdditionalFileToServer(processedFile);
+        }
+        setEditorFile(null);
+        setEditorTarget(null);
     };
 
     const handleRemoveAdditionalImage = (index: number) => {
         setFormData(prev => {
+            const targetImage = prev.images[index];
+            if (targetImage && targetImage.url && targetImage.url.startsWith('/uploads/')) {
+                fetchWithAuth(`${API_BASE}/upload`, { 
+                    method: 'DELETE', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ imageUrl: targetImage.url }) 
+                }).catch(console.error);
+            }
             const newImages = prev.images.filter((_, i) => i !== index);
             return { ...prev, images: newImages };
         });
@@ -817,6 +846,15 @@ const uploadFileToServer = async (file: File) => {
 
                 <AddNutrition nutrition={formData.nutrition} handleNutritionChange={handleNutritionChange} />
             </div>
+
+            {editorFile && (
+                <ImageEditorModal
+                    file={editorFile}
+                    isOpen={!!editorFile}
+                    onClose={() => setEditorFile(null)}
+                    onSave={handleEditorSave}
+                />
+            )}
         </form>
     );
 };
