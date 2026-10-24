@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 interface ImageEditorModalProps {
-    file: File;
+    file: File | string;
     isOpen: boolean;
     onClose: () => void;
     onSave: (processedFile: File) => void;
@@ -13,6 +13,9 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
     const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [imageSrc, setImageSrc] = useState<string>('');
     const [imageNaturalSize, setImageNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+    const [originalFileName, setOriginalFileName] = useState<string>('recipe-image.jpg');
+    const [fileSize, setFileSize] = useState<number>(0);
+    const [loadingImage, setLoadingImage] = useState<boolean>(true);
     const [processing, setProcessing] = useState<boolean>(false);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -24,20 +27,50 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
 
     useEffect(() => {
         if (!file) return;
-        const objectUrl = URL.createObjectURL(file);
-        setImageSrc(objectUrl);
+        setLoadingImage(true);
         setRotation(0);
         setZoom(1);
         setPan({ x: 0, y: 0 });
 
-        const img = new Image();
-        img.src = objectUrl;
-        img.onload = () => {
-            setImageNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
+        let objectUrl = '';
+        const loadImg = async () => {
+            try {
+                if (file instanceof File) {
+                    objectUrl = URL.createObjectURL(file);
+                    setOriginalFileName(file.name || 'recipe-image.jpg');
+                    setFileSize(file.size);
+                } else {
+                    // It's a URL string (existing uploaded photo)
+                    const res = await fetch(file);
+                    const blob = await res.blob();
+                    objectUrl = URL.createObjectURL(blob);
+                    const nameMatch = file.split('/').pop() || 'recipe-image.jpg';
+                    setOriginalFileName(nameMatch);
+                    setFileSize(blob.size);
+                }
+
+                setImageSrc(objectUrl);
+
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.src = objectUrl;
+                img.onload = () => {
+                    setImageNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
+                    setLoadingImage(false);
+                };
+                img.onerror = () => {
+                    setLoadingImage(false);
+                };
+            } catch (err) {
+                console.error("Failed to load image for editing", err);
+                setLoadingImage(false);
+            }
         };
 
+        loadImg();
+
         return () => {
-            URL.revokeObjectURL(objectUrl);
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
     }, [file]);
 
@@ -53,7 +86,12 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
         setPan({ x: 0, y: 0 });
     };
 
-    // Pointer / Touch / Mouse handlers for panning and pinch-to-zoom
+    const handleReset = () => {
+        setRotation(0);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+    };
+
     const handlePointerDown = (e: React.PointerEvent) => {
         pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         
@@ -107,6 +145,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
         setProcessing(true);
         try {
             const img = new Image();
+            img.crossOrigin = 'anonymous';
             img.src = imageSrc;
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
@@ -117,10 +156,10 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
             const ctx = canvas.getContext('2d');
             if (!ctx) throw new Error('Could not get canvas context');
 
-            // Set max target export size (e.g., 1200x1200px max for recipe images)
+            // Set max target export size (1200x1200px max for recipe images)
             const MAX_DIM = 1200;
-            let targetW = imageNaturalSize.width;
-            let targetH = imageNaturalSize.height;
+            let targetW = imageNaturalSize.width || img.naturalWidth;
+            let targetH = imageNaturalSize.height || img.naturalHeight;
 
             if (targetW > MAX_DIM || targetH > MAX_DIM) {
                 if (targetW > targetH) {
@@ -138,12 +177,10 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
             ctx.clearRect(0, 0, targetW, targetH);
             ctx.save();
 
-            // Apply transformations
             ctx.translate(targetW / 2, targetH / 2);
             ctx.rotate((rotation * Math.PI) / 180);
             ctx.scale(zoom, zoom);
             
-            // Factor container offset into canvas units
             const containerEl = containerRef.current;
             const containerWidth = containerEl ? containerEl.clientWidth || 300 : 300;
             const panScaleX = (targetW / containerWidth) * pan.x;
@@ -162,14 +199,14 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     setProcessing(false);
                     return;
                 }
-                const processedFile = new File([blob], file.name || 'recipe-image.jpg', {
-                    type: file.type || 'image/jpeg',
+                const processedFile = new File([blob], originalFileName, {
+                    type: 'image/jpeg',
                     lastModified: Date.now()
                 });
                 onSave(processedFile);
                 setProcessing(false);
                 onClose();
-            }, file.type || 'image/jpeg', 0.92);
+            }, 'image/jpeg', 0.92);
 
         } catch (err) {
             console.error('Failed to process image', err);
@@ -178,7 +215,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
     };
 
     const formatBytes = (bytes: number) => {
-        if (bytes === 0) return '0 Bytes';
+        if (!bytes || bytes === 0) return '0 Bytes';
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -192,7 +229,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     <div>
                         <h3 className="text-xl font-black text-gray-900 dark:text-white">Crop & Adjust Image</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-                            Original: {imageNaturalSize.width}×{imageNaturalSize.height}px ({formatBytes(file.size)}) • Max Target: 1200×1200px
+                            {loadingImage ? 'Loading image...' : `${imageNaturalSize.width}×{imageNaturalSize.height}px (${formatBytes(fileSize)}) • Max Target: 1200×1200px`}
                         </p>
                     </div>
                     <button 
@@ -213,28 +250,37 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     onWheel={handleWheel}
                     className="touch-none flex flex-col items-center justify-center bg-gray-900 rounded-2xl h-[320px] overflow-hidden relative border-2 border-dashed border-gray-700 cursor-grab active:cursor-grabbing shadow-inner"
                 >
-                    {/* Crop guide frame overlay */}
-                    <div className="absolute inset-6 border-2 border-orange-400/80 rounded-xl pointer-events-none z-10 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/25 pointer-events-none rounded-xl" />
-                        <span className="text-[10px] uppercase font-black tracking-widest text-white/75 bg-black/50 px-2.5 py-1 rounded-md z-20 backdrop-blur-sm">
-                            Recipe Frame Preview
-                        </span>
-                    </div>
+                    {loadingImage ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950 text-white space-y-2">
+                            <span className="animate-spin text-3xl">⏳</span>
+                            <span className="text-xs font-bold text-gray-400">Loading high-res photo...</span>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Crop guide frame overlay */}
+                            <div className="absolute inset-6 border-2 border-orange-400/80 rounded-xl pointer-events-none z-10 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-black/25 pointer-events-none rounded-xl" />
+                                <span className="text-[10px] uppercase font-black tracking-widest text-white/75 bg-black/50 px-2.5 py-1 rounded-md z-20 backdrop-blur-sm">
+                                    Recipe Frame Preview
+                                </span>
+                            </div>
 
-                    {imageSrc && (
-                        <img 
-                            src={imageSrc} 
-                            alt="Crop Preview" 
-                            style={{ 
-                                transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
-                                touchAction: 'none'
-                            }}
-                            className="max-h-[240px] max-w-full object-contain transition-transform duration-75 select-none pointer-events-none"
-                        />
+                            {imageSrc && (
+                                <img 
+                                    src={imageSrc} 
+                                    alt="Crop Preview" 
+                                    style={{ 
+                                        transform: `translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
+                                        touchAction: 'none'
+                                    }}
+                                    className="max-h-[240px] max-w-full object-contain transition-transform duration-75 select-none pointer-events-none"
+                                />
+                            )}
+                        </>
                     )}
                 </div>
 
-                {/* Controls: Rotate & Zoom Slider */}
+                {/* Controls: Rotate, Zoom Slider & Reset */}
                 <div className="space-y-4 pt-1">
                     <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-gray-950 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-2">
@@ -254,9 +300,17 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                             >
                                 <span>↻ Right 90°</span>
                             </button>
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 font-bold text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-400 border border-gray-200 dark:border-gray-800 transition-all shadow-sm active:scale-95"
+                                title="Reset adjustments"
+                            >
+                                Reset
+                            </button>
                         </div>
 
-                        <div className="flex items-center gap-3 flex-1 max-w-[220px]">
+                        <div className="flex items-center gap-3 flex-1 max-w-[200px]">
                             <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Zoom</span>
                             <input 
                                 type="range" 
@@ -274,7 +328,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     </div>
 
                     <p className="text-[11px] text-gray-400 text-center font-medium">
-                        💡 Tip: Drag photo with mouse/touch or pinch to zoom. Use scroll wheel or slider to zoom in/out.
+                        💡 Tip: Pinch-to-zoom on mobile or drag/scroll to pan & zoom.
                     </p>
                 </div>
 
@@ -288,7 +342,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({ file, isOpen
                     </button>
                     <button
                         type="button"
-                        disabled={processing}
+                        disabled={processing || loadingImage}
                         onClick={handleApply}
                         className="px-6 py-2.5 rounded-xl font-black bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 active:scale-95 disabled:opacity-50"
                     >

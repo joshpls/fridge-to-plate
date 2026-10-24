@@ -40,8 +40,9 @@ const AddRecipe = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [editorFile, setEditorFile] = useState<File | null>(null);
+    const [editorFile, setEditorFile] = useState<File | string | null>(null);
     const [editorTarget, setEditorTarget] = useState<'main' | 'additional' | null>(null);
+    const [editingGalleryIndex, setEditingGalleryIndex] = useState<number | null>(null);
     const originalImageUrlRef = useRef<string>('');
     const currentImageUrlRef = useRef<string>('');
     const isSubmittedRef = useRef<boolean>(false);
@@ -301,14 +302,66 @@ const uploadFileToServer = async (file: File) => {
         e.target.value = '';
     };
 
+    const overwriteAdditionalFileInServer = async (file: File, index: number) => {
+        setIsUploading(true);
+        const oldUrl = formData.images[index]?.url;
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+        try {
+            const token = localStorage.getItem('token') || '';
+            const res = await fetch(`${API_BASE}/upload`, { 
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: uploadData 
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                if (oldUrl && oldUrl.startsWith('/uploads/')) {
+                    fetchWithAuth(`${API_BASE}/upload`, { 
+                        method: 'DELETE', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ imageUrl: oldUrl }) 
+                    }).catch(console.error);
+                }
+                setFormData(prev => {
+                    const newImages = [...prev.images];
+                    newImages[index] = { ...newImages[index], url: result.imageUrl };
+                    const isMain = prev.imageUrl === oldUrl;
+                    return {
+                        ...prev,
+                        imageUrl: isMain ? result.imageUrl : prev.imageUrl,
+                        images: newImages
+                    };
+                });
+                if (formData.imageUrl === oldUrl) {
+                    currentImageUrlRef.current = result.imageUrl;
+                }
+                toast.success("Photo updated successfully!");
+            } else {
+                toast.error("Upload failed: " + result.message);
+            }
+        } catch (err) {
+            console.error("Failed to update additional image", err);
+            toast.error("Network Error during upload.");
+        } finally {
+            setIsUploading(false);
+            setEditingGalleryIndex(null);
+        }
+    };
+
     const handleEditorSave = (processedFile: File) => {
         if (editorTarget === 'main') {
             uploadFileToServer(processedFile);
         } else if (editorTarget === 'additional') {
-            uploadAdditionalFileToServer(processedFile);
+            if (editingGalleryIndex !== null) {
+                overwriteAdditionalFileInServer(processedFile, editingGalleryIndex);
+            } else {
+                uploadAdditionalFileToServer(processedFile);
+            }
         }
         setEditorFile(null);
         setEditorTarget(null);
+        setEditingGalleryIndex(null);
     };
 
     const handleRemoveAdditionalImage = (index: number) => {
@@ -551,8 +604,17 @@ const uploadFileToServer = async (file: File) => {
                                 {formData.imageUrl ? (
                                     <>
                                         <img src={getNetworkImageUrl(formData.imageUrl)} alt="Recipe Preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                            <span className="text-white text-xs font-bold uppercase tracking-widest">Replace</span>
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button 
+                                                type="button" 
+                                                onClick={() => {
+                                                    setEditorFile(getNetworkImageUrl(formData.imageUrl));
+                                                    setEditorTarget('main');
+                                                }}
+                                                className="bg-white text-gray-900 text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors shadow-md"
+                                            >
+                                                Edit / Crop
+                                            </button>
                                         </div>
                                     </>
                                 ) : (
