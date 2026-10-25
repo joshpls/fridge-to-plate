@@ -8,7 +8,8 @@
     "test:watch": "vitest",
     "build": "prisma generate && tsc",
     "start": "NODE_ENV=production node dist/index.js",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "audit:uploads": "npx tsx src/scripts/auditUploads.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
