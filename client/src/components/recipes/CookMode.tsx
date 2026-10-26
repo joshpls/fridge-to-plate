@@ -17,18 +17,26 @@ interface CookModeProps {
     onClose: () => void;
     checkedIngredients: Set<string>;
     setCheckedIngredients: React.Dispatch<React.SetStateAction<Set<string>>>;
+    initialStep?: number;
+    onStepChange?: (step: number) => void;
 }
 
-export const CookMode = ({ recipeName, instructions, ingredients, onClose, checkedIngredients, setCheckedIngredients }: CookModeProps) => {
+export const CookMode = ({ recipeName, instructions, ingredients, onClose, checkedIngredients, setCheckedIngredients, initialStep = 0, onStepChange }: CookModeProps) => {
     const { user } = useAuth();
     const prefs = user?.preferences 
         ? (typeof user.preferences === 'string' ? JSON.parse(user.preferences) : user.preferences) 
         : {};
     
-    const [currentStep, setCurrentStep] = useState(0);
+    const [currentStep, setCurrentStep] = useState(initialStep);
     const [view, setView] = useState<'step' | 'ingredients'>('step');
     const [isSpeaking, setIsSpeaking] = useState(false);
     const autoTTS = prefs.autoTTS;
+
+    useEffect(() => {
+        if (onStepChange) {
+            onStepChange(currentStep);
+        }
+    }, [currentStep, onStepChange]);
     
     // Swipe detection states
     const [touchStart, setTouchStart] = useState<number | null>(null);

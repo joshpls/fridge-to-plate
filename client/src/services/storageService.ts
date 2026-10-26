@@ -114,6 +114,35 @@ export const storageService = {
                 .forEach(key => sessionStorage.removeItem(key));
         },
 
+        // Recipe Cook Mode & Interaction Persistence
+        getCheckedIngredients: (slug: string) => {
+            const arr = storageService.cache.get<string[]>(`f2p_checked_${slug}`);
+            return arr ? new Set(arr) : new Set<string>();
+        },
+        setCheckedIngredients: (slug: string, set: Set<string>) => {
+            storageService.cache.set(`f2p_checked_${slug}`, Array.from(set));
+        },
+        clearCheckedIngredients: (slug: string) => {
+            sessionStorage.removeItem(`f2p_checked_${slug}`);
+        },
+
+        getCookModeState: (slug: string) => {
+            return storageService.cache.get<{ isOpen: boolean; step: number }>(`f2p_cookmode_${slug}`) || { isOpen: false, step: 0 };
+        },
+        setCookModeState: (slug: string, state: { isOpen: boolean; step: number }) => {
+            storageService.cache.set(`f2p_cookmode_${slug}`, state);
+        },
+        clearCookModeState: (slug: string) => {
+            sessionStorage.removeItem(`f2p_cookmode_${slug}`);
+        },
+
+        getScrollPosition: (slug: string) => {
+            return storageService.cache.get<number>(`f2p_scroll_${slug}`) || 0;
+        },
+        setScrollPosition: (slug: string, y: number) => {
+            storageService.cache.set(`f2p_scroll_${slug}`, y);
+        },
+
         // Discovery Scroll & Pagination Restoration
         getDiscoveryState: () => storageService.cache.get<{ recipes: any[]; page: number; hasMore: boolean; scrollY: number }>(KEYS.DISCOVERY_STATE),
         setDiscoveryState: (state: { recipes: any[]; page: number; hasMore: boolean; scrollY: number }) => storageService.cache.set(KEYS.DISCOVERY_STATE, state),

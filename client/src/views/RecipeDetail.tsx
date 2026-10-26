@@ -27,7 +27,9 @@ const RecipeDetail = () => {
     const [recipe, setRecipe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-    const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+    const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(() => {
+        return slug ? storageService.cache.getCheckedIngredients(slug) : new Set();
+    });
     
     // Auth & User Context
     const { user, isAdmin, isAuthenticated } = useAuth();
@@ -58,9 +60,47 @@ const RecipeDetail = () => {
     const [swapTarget, setSwapTarget] = useState<any>(null);
     const [swapOptions, setSwapOptions] = useState<any[]>([]);
 
-    const [isCookModeOpen, setIsCookModeOpen] = useState(false);
+    const initialCookModeState = slug ? storageService.cache.getCookModeState(slug) : { isOpen: false, step: 0 };
+    const [isCookModeOpen, setIsCookModeOpen] = useState(initialCookModeState.isOpen);
+    const [cookModeStep, setCookModeStep] = useState(initialCookModeState.step);
     const [activeBannerImage, setActiveBannerImage] = useState<string>('');
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+    // Persist checked ingredients
+    useEffect(() => {
+        if (slug) {
+            storageService.cache.setCheckedIngredients(slug, checkedIngredients);
+        }
+    }, [checkedIngredients, slug]);
+
+    // Persist Cook Mode state
+    useEffect(() => {
+        if (slug) {
+            storageService.cache.setCookModeState(slug, { isOpen: isCookModeOpen, step: cookModeStep });
+        }
+    }, [isCookModeOpen, cookModeStep, slug]);
+
+    // Scroll position persistence & restoration
+    useEffect(() => {
+        const handleScroll = () => {
+            if (slug && !loading) {
+                storageService.cache.setScrollPosition(slug, window.scrollY);
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [slug, loading]);
+
+    useEffect(() => {
+        if (!loading && slug) {
+            const savedScroll = storageService.cache.getScrollPosition(slug);
+            if (savedScroll > 0) {
+                setTimeout(() => {
+                    window.scrollTo({ top: savedScroll, behavior: 'instant' as ScrollBehavior });
+                }, 50);
+            }
+        }
+    }, [loading, slug]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -1070,6 +1110,8 @@ const RecipeDetail = () => {
                     onClose={() => setIsCookModeOpen(false)}
                     checkedIngredients={checkedIngredients}
                     setCheckedIngredients={setCheckedIngredients}
+                    initialStep={cookModeStep}
+                    onStepChange={setCookModeStep}
                 />
             )}
             {swapModalOpen && swapTarget && (
