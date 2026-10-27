@@ -45,6 +45,7 @@ const AddRecipe = () => {
     const [editingGalleryIndex, setEditingGalleryIndex] = useState<number | null>(null);
     const originalImageUrlRef = useRef<string>('');
     const currentImageUrlRef = useRef<string>('');
+    const uncommittedUploadsRef = useRef<Set<string>>(new Set());
     const isSubmittedRef = useRef<boolean>(false);
     
     const sensors = useSensors(
@@ -241,6 +242,7 @@ const uploadFileToServer = async (file: File) => {
         const result = await res.json();
         
         if (result.status === 'success') {
+            uncommittedUploadsRef.current.add(result.imageUrl);
             setFormData(prev => {
                 const oldMainUrl = prev.imageUrl;
                 let newImages = [...prev.images];
@@ -291,6 +293,7 @@ const uploadFileToServer = async (file: File) => {
             });
             const result = await res.json();
             if (result.status === 'success') {
+                uncommittedUploadsRef.current.add(result.imageUrl);
                 setFormData(prev => ({
                     ...prev,
                     images: [...prev.images, { url: result.imageUrl, isMain: false, order: prev.images.length }]
@@ -330,6 +333,7 @@ const uploadFileToServer = async (file: File) => {
             });
             const result = await res.json();
             if (result.status === 'success') {
+                uncommittedUploadsRef.current.add(result.imageUrl);
                 if (oldUrl && oldUrl.startsWith('/uploads/')) {
                     fetchWithAuth(`${API_BASE}/upload`, { 
                         method: 'DELETE', 
@@ -436,13 +440,11 @@ const uploadFileToServer = async (file: File) => {
 
     useEffect(() => {
         return () => {
-            if (!isSubmittedRef.current && currentImageUrlRef.current && currentImageUrlRef.current !== originalImageUrlRef.current) {
-                fetch(`${API_BASE}/upload`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` },
-                    body: JSON.stringify({ imageUrl: currentImageUrlRef.current }),
-                    keepalive: true 
-                }).catch(() => {});
+            if (!isSubmittedRef.current && uncommittedUploadsRef.current.size > 0) {
+                uncommittedUploadsRef.current.forEach(url => {
+                    const blob = new Blob([JSON.stringify({ imageUrl: url })], { type: 'application/json' });
+                    navigator.sendBeacon(`${API_BASE}/upload`, blob);
+                });
             }
         };
     }, []);
@@ -537,6 +539,7 @@ const uploadFileToServer = async (file: File) => {
         e.preventDefault();
         setSaving(true);
         isSubmittedRef.current = true;
+        uncommittedUploadsRef.current.clear();
 
         try {
             const finalIngredients = dehydrateIngredients(formData.ingredients);
@@ -603,9 +606,30 @@ const uploadFileToServer = async (file: File) => {
                         {isEditMode ? 'Tweak your culinary masterpiece.' : 'Create a new culinary masterpiece.'}
                     </p>
                 </div>
-                <button type="submit" disabled={saving} className="w-full sm:w-auto bg-gray-900 dark:bg-orange-500 text-white px-8 py-3 sm:py-3.5 rounded-xl font-black hover:bg-orange-600 dark:hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 dark:shadow-none active:scale-95 disabled:opacity-50">
-                    {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
-                </button>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <button 
+                        type="button" 
+                        onClick={async () => {
+                            for (const url of uncommittedUploadsRef.current) {
+                                try {
+                                    await fetch(`${API_BASE}/upload`, {
+                                        method: 'DELETE',
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` },
+                                        body: JSON.stringify({ imageUrl: url })
+                                    });
+                                } catch (e) {}
+                            }
+                            uncommittedUploadsRef.current.clear();
+                            navigate(-1);
+                        }} 
+                        className="w-full sm:w-auto bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-6 py-3 sm:py-3.5 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-95"
+                    >
+                        Cancel
+                    </button>
+                    <button type="submit" disabled={saving} className="w-full sm:w-auto bg-gray-900 dark:bg-orange-500 text-white px-8 py-3 sm:py-3.5 rounded-xl font-black hover:bg-orange-600 dark:hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 dark:shadow-none active:scale-95 disabled:opacity-50">
+                        {saving ? 'Saving...' : (isEditMode ? 'Update Recipe' : 'Save Recipe')}
+                    </button>
+                </div>
             </div>
             
 
