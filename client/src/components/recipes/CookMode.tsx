@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 
 interface CookModeProps {
     recipeName: string;
-    instructions: string[];
+    instructions: Array<string | { text: string; sectionName?: string | null }>;
     ingredients: Array<{
         id: string;
         isHeader?: boolean;
@@ -31,6 +31,10 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
     const [view, setView] = useState<'step' | 'ingredients'>('step');
     const [isSpeaking, setIsSpeaking] = useState(false);
     const autoTTS = prefs.autoTTS;
+
+    const currentItem = instructions[currentStep];
+    const stepText = typeof currentItem === 'string' ? currentItem : currentItem?.text || '';
+    const sectionName = typeof currentItem === 'object' ? currentItem?.sectionName : null;
 
     useEffect(() => {
         if (onStepChange) {
@@ -69,14 +73,14 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
     }, [currentStep, view]);
 
     useEffect(() => {
-        if (autoTTS && instructions[currentStep]) {
+        if (autoTTS && stepText) {
             const timer = setTimeout(() => {
-                handleToggleSpeech(instructions[currentStep])
+                handleToggleSpeech(stepText)
             }, 500);
             
             return () => clearTimeout(timer);
         }
-    }, [currentStep, autoTTS, instructions]);
+    }, [currentStep, autoTTS, stepText]);
 
     const handleToggleSpeech = (text: string) => {
         speakText(text, {
@@ -174,6 +178,11 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                 <div className="w-full max-w-2xl">
                     {view === 'step' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                            {sectionName && (
+                                <div className="mb-4 inline-flex items-center gap-1.5 bg-orange-100 dark:bg-orange-500/20 text-orange-800 dark:text-orange-400 font-black uppercase tracking-widest px-3.5 py-1.5 rounded-xl text-xs sm:text-sm">
+                                    🏷️ {sectionName}
+                                </div>
+                            )}
                             <div className="flex items-center gap-4 mb-6">
                                 <span className="h-10 w-10 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-orange-200 dark:shadow-none">
                                     {currentStep + 1}
@@ -183,7 +192,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                                 </span>
                             </div>
                             <p className="text-2xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 leading-tight sm:leading-tight">
-                                {instructions[currentStep]}
+                                {stepText}
                             </p>
                         </div>
                     ) : (
@@ -250,7 +259,7 @@ export const CookMode = ({ recipeName, instructions, ingredients, onClose, check
                         </button>
 
                         <button 
-                            onClick={() => handleToggleSpeech(instructions[currentStep])}
+                            onClick={() => handleToggleSpeech(stepText)}
                             className={`flex-1 flex flex-col justify-center items-center rounded-2xl font-black active:scale-95 transition-all border-2 z-20 ${
                                 isSpeaking 
                                 ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-900/50' 

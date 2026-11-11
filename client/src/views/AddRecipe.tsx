@@ -8,10 +8,12 @@ import { fetchWithAuth } from '../utils/apiClient';
 import { SortableIngredientRow } from '../components/recipes/SortableIngredientRow';
 import { SortableSectionHeader } from '../components/recipes/SortableSectionHeader';
 import { rehydrateIngredients, dehydrateIngredients } from '../utils/recipeUtils';
+import { rehydrateInstructions, dehydrateInstructions, type InstructionItem } from '../utils/instructionUtils';
 import { initialRecipe, Visibility, type RecipeFormData, type TaxonomyData } from '../models/Recipe';
 import { AddNutrition } from '../components/recipes/AddNutrition';
 import { RecipeImporter } from '../components/recipes/RecipeImporter';
 import { ImageEditorModal } from '../components/recipes/ImageEditorModal';
+import { SortableInstructionRow } from '../components/recipes/SortableInstructionRow';
 
 import {
   DndContext,
@@ -36,6 +38,9 @@ const AddRecipe = () => {
     const { user, canAddIngredients } = useAuth();
     const userId = user?.id;
     const [formData, setFormData] = useState<RecipeFormData>(initialRecipe);
+    const [instructionItems, setInstructionItems] = useState<InstructionItem[]>([
+        { id: Math.random().toString(36).substring(7), isHeader: false, text: '' }
+    ]);
     const [taxonomy, setTaxonomy] = useState<TaxonomyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -71,6 +76,7 @@ const AddRecipe = () => {
                         currentImageUrlRef.current = r.imageUrl || '';
 
                         const uiIngredients = rehydrateIngredients(r.ingredients, true);
+                        setInstructionItems(rehydrateInstructions(r.instructions || ''));
 
                         const rawImages = r.images || [];
                         const cleanedImages = rawImages
@@ -187,6 +193,45 @@ const AddRecipe = () => {
                 const oldIndex = prev.ingredients.findIndex((item) => item.id === active.id);
                 const newIndex = prev.ingredients.findIndex((item) => item.id === over.id);
                 return { ...prev, ingredients: arrayMove(prev.ingredients, oldIndex, newIndex) };
+            });
+        }
+    };
+
+    const handleInstructionTextChange = (index: number, text: string) => {
+        setInstructionItems(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], text };
+            return next;
+        });
+    };
+
+    const handleInstructionHeaderChange = (index: number, text: string) => {
+        setInstructionItems(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], text };
+            return next;
+        });
+    };
+
+    const addInstructionRow = () => setInstructionItems(prev => [
+        ...prev,
+        { id: Math.random().toString(36).substring(7), isHeader: false, text: '' }
+    ]);
+
+    const addInstructionSectionHeader = () => setInstructionItems(prev => [
+        ...prev,
+        { id: `header-${Math.random().toString(36).substring(7)}`, isHeader: true, text: '' }
+    ]);
+
+    const removeInstructionRow = (index: number) => setInstructionItems(prev => prev.filter((_, i) => i !== index));
+
+    const handleInstructionDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setInstructionItems((prev) => {
+                const oldIndex = prev.findIndex((item) => item.id === active.id);
+                const newIndex = prev.findIndex((item) => item.id === over.id);
+                return arrayMove(prev, oldIndex, newIndex);
             });
         }
     };
@@ -533,6 +578,9 @@ const uploadFileToServer = async (file: File) => {
                 ingredients: rehydrateIngredients(parsedData.ingredients, true)
             }));
         }
+        if (parsedData.instructions) {
+            setInstructionItems(rehydrateInstructions(parsedData.instructions));
+        }
     };
 
     const handleSubmit = async (e: SubmitEvent) => {
@@ -543,9 +591,11 @@ const uploadFileToServer = async (file: File) => {
 
         try {
             const finalIngredients = dehydrateIngredients(formData.ingredients);
+            const finalInstructions = dehydrateInstructions(instructionItems);
 
             const cleanedData = {
                 ...formData,
+                instructions: finalInstructions,
                 nutrition: cleanNutritionData(formData.nutrition),
                 ingredients: finalIngredients
             };
@@ -893,23 +943,59 @@ const uploadFileToServer = async (file: File) => {
                     <h2 className="text-lg sm:text-xl font-black text-gray-800 dark:text-gray-200 border-b-2 border-gray-200 dark:border-gray-400 pb-2">5. Directions</h2>
 
                     <div>
-                        <div className="flex justify-between items-end mb-2">
+                        <div className="flex justify-between items-end mb-4">
                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-200">
-                                Instructions * <span className="text-gray-400 font-normal block sm:inline">(Separate steps with a new line)</span>
+                                Instructions * <span className="text-gray-400 font-normal block sm:inline">(Add steps and optional section headers)</span>
                             </label>
                             <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-500/20 hidden sm:block">
                                 💡 Type <kbd className="font-mono font-bold">[[recipe:id]]</kbd> to link a recipe (e.g. [[recipe:garlic-sauce]])
                             </div>
                         </div>
-                        <textarea
-                            required
-                            name="instructions"
-                            value={formData.instructions}
-                            onChange={handleChange}
-                            rows={8}
-                            className="w-full p-4 sm:p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-400 focus:border-orange-500 outline-none resize-y leading-relaxed text-sm sm:text-base"
-                            placeholder="1. Preheat the oven...&#10;2. Make the sauce using [[recipe:my-sauce-slug]]...&#10;3. Mix the dry ingredients..."
-                        />
+
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleInstructionDragEnd}>
+                            <SortableContext items={instructionItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-3">
+                                    {(() => {
+                                        let stepCount = 1;
+                                        return instructionItems.map((item, index) => {
+                                            if (item.isHeader) {
+                                                stepCount = 1;
+                                                return (
+                                                    <SortableSectionHeader
+                                                        key={item.id}
+                                                        id={item.id}
+                                                        title={item.text}
+                                                        onChange={(val: string) => handleInstructionHeaderChange(index, val)}
+                                                        onRemove={() => removeInstructionRow(index)}
+                                                    />
+                                                );
+                                            }
+                                            const currentStep = stepCount++;
+                                            return (
+                                                <SortableInstructionRow
+                                                    key={item.id}
+                                                    id={item.id}
+                                                    item={item}
+                                                    index={index}
+                                                    stepNumber={currentStep}
+                                                    onChange={(text: string) => handleInstructionTextChange(index, text)}
+                                                    onRemove={() => removeInstructionRow(index)}
+                                                />
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                            <button type="button" onClick={addInstructionRow} className="w-full sm:w-auto bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-bold hover:border-orange-400 hover:text-orange-600 transition-all shadow-sm">
+                                + Add Step
+                            </button>
+                            <button type="button" onClick={addInstructionSectionHeader} className="w-full sm:w-auto bg-orange-50 dark:bg-orange-500/10 border-2 border-orange-200 dark:border-orange-500/30 text-orange-700 dark:text-orange-400 px-6 py-3 rounded-xl font-bold hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-all shadow-sm">
+                                🏷️ Add Section Header
+                            </button>
+                        </div>
                     </div>
 
                     <div>

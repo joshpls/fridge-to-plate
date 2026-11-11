@@ -19,6 +19,7 @@ import { pantryService } from '../services/pantryService';
 import { storageService } from '../services/storageService';
 import { refreshPantryCount } from '../utils/events';
 import { formatDecimalToQuantity, rehydrateIngredients } from '../utils/recipeUtils';
+import { parseStructuredInstructions } from '../utils/instructionUtils';
 
 const RecipeDetail = () => {
     const { confirm } = useConfirm();
@@ -367,8 +368,6 @@ const RecipeDetail = () => {
     if (loading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold text-xl print:hidden">Prepping your kitchen...</div>;
     if (!recipe) return <div className="p-20 text-center text-red-500 font-bold">Recipe not found.</div>;
 
-    const steps = recipe.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
-
     // Process ingredients and then hydrate UI headers
     const effectiveIngredients = recipe?.ingredients?.map((ing: any) => {
         const activeSwap = activeSwaps[ing.id];
@@ -491,43 +490,43 @@ const RecipeDetail = () => {
     };
 
     const prepareCookModeData = () => {
-        let expandedSteps: string[] = [];
+        let expandedSteps: Array<{ text: string; sectionName: string | null }> = [];
         let expandedIngredients = [...formattedIngredients];
 
-        steps.forEach((step: string) => {
-            const matches = [...step.matchAll(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/g)];
-            
-            if (matches.length > 0 && recipe.linkedRecipes) {
-                // Keep the parent step but replace the raw tag with the linked recipe name
-                let finalStepName = step;
-                matches.forEach(m => {
-                    const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
-                    if (linked) finalStepName = finalStepName.replace(m[0], `(Included: ${linked.name})`);
-                });
-                expandedSteps.push(finalStepName);
+        const instructionSections = parseStructuredInstructions(recipe.instructions || '');
 
-                // Inject the linked recipe's ingredients and instructions immediately after
-                matches.forEach(m => {
-                    const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
-                    if (linked) {
-                        // Inject Ingredients
-                        expandedIngredients.push({ id: `header-${linked.id}`, isHeader: true, name: `For the ${linked.name}` });
-                        
-                        const linkedIngs = rehydrateIngredients(linked.ingredients, false).map((item: any) => {
-                            if (item.isHeader) return { id: item.id, isHeader: true, name: item.name };
-                            const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
-                            return { id: `linked-${item.id}`, isHeader: false, name: item.name, modifier: item.modifier, displayAmount: `${amount} ${unit}`.trim() };
-                        });
-                        expandedIngredients.push(...linkedIngs);
+        instructionSections.forEach(sec => {
+            sec.steps.forEach((step: string) => {
+                const matches = [...step.matchAll(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/g)];
+                
+                if (matches.length > 0 && recipe.linkedRecipes) {
+                    let finalStepName = step;
+                    matches.forEach(m => {
+                        const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
+                        if (linked) finalStepName = finalStepName.replace(m[0], `(Included: ${linked.name})`);
+                    });
+                    expandedSteps.push({ text: finalStepName, sectionName: sec.sectionName });
 
-                        // Inject Sub-Steps
-                        const linkedSteps = linked.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
-                        linkedSteps.forEach((ls: string) => expandedSteps.push(`[${linked.name}] ${ls}`));
-                    }
-                });
-            } else {
-                expandedSteps.push(step);
-            }
+                    matches.forEach(m => {
+                        const linked = recipe.linkedRecipes.find((r: any) => r.slug === m[1]);
+                        if (linked) {
+                            expandedIngredients.push({ id: `header-${linked.id}`, isHeader: true, name: `For the ${linked.name}` });
+                            
+                            const linkedIngs = rehydrateIngredients(linked.ingredients, false).map((item: any) => {
+                                if (item.isHeader) return { id: item.id, isHeader: true, name: item.name };
+                                const { amount, unit } = formatIngredientAmount(item.amount, item.unit?.name || '');
+                                return { id: `linked-${item.id}`, isHeader: false, name: item.name, modifier: item.modifier, displayAmount: `${amount} ${unit}`.trim() };
+                            });
+                            expandedIngredients.push(...linkedIngs);
+
+                            const linkedSteps = linked.instructions?.split('\n').filter((s: string) => s.trim() !== '') || [];
+                            linkedSteps.forEach((ls: string) => expandedSteps.push({ text: `[${linked.name}] ${ls}`, sectionName: sec.sectionName }));
+                        }
+                    });
+                } else {
+                    expandedSteps.push({ text: step, sectionName: sec.sectionName });
+                }
+            });
         });
 
         return { expandedSteps, expandedIngredients };
@@ -961,45 +960,66 @@ const RecipeDetail = () => {
                 <main className="lg:col-span-2 space-y-12 print:space-y-4">
                     <section>
                         <h2 className="text-2xl font-black mb-6 print:text-xl print:mb-2">Instructions</h2>
-                        <div className="space-y-4 print:space-y-1.5">
-                            {steps.map((step: string, index: number) => (
-                                <div key={index}
-                                    onClick={() => setCompletedSteps(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])}
-                                    className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:p-0 print:border-0 print:gap-2 print:items-start ${completedSteps.includes(index)
-                                        ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60 print:opacity-100 print:bg-transparent'
-                                        : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:bg-transparent print:border-0 print:shadow-none'
-                                        }`}
-                                >
-                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-auto print:h-auto print:border-0 print:rounded-none ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-transparent' : 'border-gray-300 group-hover:border-orange-400 print:border-0'
-                                        }`}>
-                                        {completedSteps.includes(index) ? (
-                                            <>
-                                                <span className="text-white text-sm font-bold print:hidden">✓</span>
-                                                <span className="hidden print:inline text-sm font-bold text-black">{index + 1}.</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-xs font-bold text-gray-400 print:text-black print:text-sm">{index + 1}.</span>
-                                        )}
-                                    </div>
-                                    <p className={`text-base sm:text-lg leading-relaxed print:text-sm print:leading-snug print:text-black ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400 print:no-underline' : 'text-gray-800 dark:text-white font-medium'}`}>
-                                        {step.split(/(\[\[recipe:[a-zA-Z0-9-]+\]\])/g).map((part, i) => {
-                                            const match = part.match(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/);
-                                            if (match) {
-                                                const linked = recipe.linkedRecipes?.find((r: any) => r.slug === match[1]);
-                                                if (linked) {
+                        <div className="space-y-6 print:space-y-1.5">
+                            {(() => {
+                                const instructionSections = parseStructuredInstructions(recipe.instructions || '');
+                                let globalStepIndex = 0;
+
+                                return instructionSections.map((sec, secIdx) => {
+                                    return (
+                                        <div key={secIdx} className="space-y-4">
+                                            {sec.sectionName && (
+                                                <div className="bg-orange-50 dark:bg-orange-500/10 border-2 border-orange-200 dark:border-orange-500/30 text-orange-800 dark:text-orange-400 font-black uppercase tracking-widest px-5 py-3 rounded-2xl text-sm sm:text-base">
+                                                    🏷️ {sec.sectionName}
+                                                </div>
+                                            )}
+                                            <div className="space-y-4 print:space-y-1.5">
+                                                {sec.steps.map((step: string) => {
+                                                    const index = globalStepIndex++;
                                                     return (
-                                                        <span key={i} onClick={(e) => { e.stopPropagation(); navigate(`/recipe/${linked.slug}`); }} className="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-lg font-black text-sm hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-colors mx-1 border border-orange-200 dark:border-orange-500/20 shadow-sm cursor-pointer">
-                                                            🔗 {linked.name}
-                                                        </span>
+                                                        <div key={index}
+                                                            onClick={() => setCompletedSteps(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])}
+                                                            className={`group p-4 sm:p-6 rounded-3xl border-2 transition-all cursor-pointer flex gap-4 sm:gap-5 print:p-0 print:border-0 print:gap-2 print:items-start ${completedSteps.includes(index)
+                                                                ? 'bg-gray-50 dark:bg-gray-800 border-transparent opacity-60 print:opacity-100 print:bg-transparent'
+                                                                : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800/50 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100/50 print:bg-transparent print:border-0 print:shadow-none'
+                                                                }`}
+                                                        >
+                                                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors print:w-auto print:h-auto print:border-0 print:rounded-none ${completedSteps.includes(index) ? 'bg-green-500 border-green-500 print:bg-transparent' : 'border-gray-300 group-hover:border-orange-400 print:border-0'
+                                                                }`}>
+                                                                {completedSteps.includes(index) ? (
+                                                                    <>
+                                                                        <span className="text-white text-sm font-bold print:hidden">✓</span>
+                                                                        <span className="hidden print:inline text-sm font-bold text-black">{index + 1}.</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-xs font-bold text-gray-400 print:text-black print:text-sm">{index + 1}.</span>
+                                                                )}
+                                                            </div>
+                                                            <p className={`text-base sm:text-lg leading-relaxed print:text-sm print:leading-snug print:text-black ${completedSteps.includes(index) ? 'line-through text-gray-500 dark:text-gray-400 print:no-underline' : 'text-gray-800 dark:text-white font-medium'}`}>
+                                                                {step.split(/(\[\[recipe:[a-zA-Z0-9-]+\]\])/g).map((part, i) => {
+                                                                    const match = part.match(/\[\[recipe:([a-zA-Z0-9-]+)\]\]/);
+                                                                    if (match) {
+                                                                        const linked = recipe.linkedRecipes?.find((r: any) => r.slug === match[1]);
+                                                                        if (linked) {
+                                                                            return (
+                                                                                <span key={i} onClick={(e) => { e.stopPropagation(); navigate(`/recipe/${linked.slug}`); }} className="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-lg font-black text-sm hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-colors mx-1 border border-orange-200 dark:border-orange-500/20 shadow-sm cursor-pointer">
+                                                                                    🔗 {linked.name}
+                                                                                </span>
+                                                                            );
+                                                                        }
+                                                                        return <span key={i} className="text-gray-400 italic">[{match[1]} - missing]</span>;
+                                                                    }
+                                                                    return <span key={i}>{part}</span>;
+                                                                })}
+                                                            </p>
+                                                        </div>
                                                     );
-                                                }
-                                                return <span key={i} className="text-gray-400 italic">[{match[1]} - missing]</span>;
-                                            }
-                                            return <span key={i}>{part}</span>;
-                                        })}
-                                    </p>
-                                </div>
-                            ))}
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </section>
 
