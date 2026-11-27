@@ -90,7 +90,7 @@ export interface RecipeFormData {
     instructions: string;
     notes: string;
     tagIds: string[];
-    ingredients: { id: string; ingredientId: string; name?: string, sectionName: string; amount: number | ''; unitId: string, modifierId?: string; isHeader?: boolean}[];
+    ingredients: { id: string; ingredientId: string; name?: string, sectionName: string; amount: number | ''; unitId: string, modifierId?: string; isHeader?: boolean; isOptional?: boolean}[];
     nutrition: Nutrition;
     sourceName?: string;
     sourceUrl?: string;

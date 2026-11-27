@@ -102,6 +102,7 @@ export const createRecipe = async (userId: string, activeHouseholdId: string, da
                 amount: typeof ing.amount === 'string' ? parseFloat(ing.amount) : ing.amount,
                 order: index,
                 sectionName: ing.sectionName,
+                isOptional: !!ing.isOptional,
                 ingredient: { connect: { id: ing.ingredientId } },
                 unit: { connect: { id: ing.unitId } },
                 ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})
@@ -158,6 +159,7 @@ export const updateRecipe = async (recipeId: string, userId: string, data: any, 
                 amount: Number(ing.amount),
                 order: index,
                 sectionName: ing.sectionName,
+                isOptional: !!ing.isOptional,
                 ingredient: { connect: { id: ing.ingredientId } },
                 unit: { connect: { id: ing.unitId } },
                 ...(ing.modifierId ? { modifier: { connect: { id: ing.modifierId } } } : {})

@@ -459,7 +459,8 @@ const RecipeDetail = () => {
             isHeader: false,
             name: item.name,
             modifier: item.modifier,
-            displayAmount: `${amount} ${unit}`.trim()
+            displayAmount: `${amount} ${unit}`.trim(),
+            isOptional: item.isOptional
         };
     });
 
@@ -901,6 +902,9 @@ const RecipeDetail = () => {
                                                     {item.name}
                                                     {item.modifier && (
                                                         <span className="text-gray-500 dark:text-gray-400 font-medium">, {item.modifier.toLowerCase()}</span>
+                                                    )}
+                                                    {item.isOptional && (
+                                                        <span className="ml-2 text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">Optional</span>
                                                     )}
                                                 </p>
                                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
