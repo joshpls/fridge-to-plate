@@ -72,17 +72,19 @@ export const mapRecipeToDto = (
       modifierId: ri.modifierId,
       modifier: ri.modifier ? ri.modifier.name : null,
       inPantry,
-      isSubstituted
+      isSubstituted,
+      isOptional: !!ri.isOptional
     };
   }) || [];
 
   // Calculate Missing Ingredients
   const missingIngredients = ingredients.filter((i: any) => {
-      if (i.inPantry) return false;
-      if (allowSubstitutions && i.isSubstituted) return false;
-      if (!showStaples && i.isStaple) return false;
-      return true;
-  });
+    if (i.isOptional) return false; // Optional ingredients never count as missing blockers
+    if (i.inPantry) return false;
+    if (allowSubstitutions && i.isSubstituted) return false;
+    if (!showStaples && i.isStaple) return false;
+    return true;
+});
 
   const totalIngredients = ingredients.length;
   

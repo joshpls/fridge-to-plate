@@ -141,59 +141,68 @@ export const SortableIngredientRow = ({
         </div>
 
         {/* Mobile Delete Button - Hidden on desktop */}
-        <button 
-            type="button" 
-            onClick={() => removeIngredientRow(index)} 
-            className="sm:hidden p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0 ml-1"
-        >
-            <X size={20} />
-        </button>
+        
       </div>
 
       {/* Bottom Row / Right Block */}
-      <div className="flex items-center gap-2 w-full sm:w-auto pl-2 sm:pl-0">
-        <div className="flex flex-1 sm:flex-none items-center gap-2">
-            <QuantityInput
-                value={ingredient.amount}
-                onChange={(val) => handleIngredientChange(index, 'amount', val)}
-                placeholder="Qty"
-                className={`${inputBaseClass} text-center sm:w-20 md:w-24 shrink min-w-[60px] ${isAmountMissing ? errorClass : defaultClass}`}
-            />
-
-            <select
-                required
-                title={selectedUnit ? selectedUnit.name : 'Select a unit'}
-                value={ingredient.unitId}
-                onChange={(e) => handleIngredientChange(index, 'unitId', e.target.value)}
-                className={`${inputBaseClass} cursor-pointer sm:w-32 md:w-[150px] shrink min-w-[80px] ${isUnitMissing ? errorClass : defaultClass}`}
-            >
-                <option value="" disabled>Unit</option>
-                {taxonomy.units.map((u: any) => (
-                    <option key={u.id} value={u.id} title={u.name}>
-                        {u.abbreviation} {u.name && u.name !== u.abbreviation ? `- ${u.name}` : ''}
-                    </option>
-                ))}
-            </select>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full pl-0 sm:pl-0">
+        <div className="grid grid-cols-12 gap-2 w-full">
+            <div className="col-span-4">
+                <QuantityInput
+                    value={ingredient.amount}
+                    onChange={(val) => handleIngredientChange(index, "amount", val)}
+                    placeholder="Qty"
+                    className={`${inputBaseClass} text-center w-full px-1 ${isAmountMissing ? errorClass : defaultClass}`}
+                />
+            </div>
+            <div className="col-span-8">
+                <select
+                    required
+                    title={selectedUnit ? selectedUnit.name : "Select a unit"}
+                    value={ingredient.unitId}
+                    onChange={(e) => handleIngredientChange(index, "unitId", e.target.value)}
+                    className={`${inputBaseClass} cursor-pointer w-full truncate ${isUnitMissing ? errorClass : defaultClass}`}
+                >
+                    <option value="" disabled>Unit</option>
+                    {taxonomy.units.map((u: any) => (
+                        <option key={u.id} value={u.id} title={u.name}>
+                            {u.abbreviation} {u.name && u.name !== u.abbreviation ? `- ${u.name}` : ""}
+                        </option>
+                    ))}
+                </select>
+            </div>
         </div>
 
-        <select
-            value={ingredient.modifierId || ''}
-            onChange={(e) => handleIngredientChange(index, 'modifierId', e.target.value)}
-            className={`${inputBaseClass} cursor-pointer flex-1 sm:w-32 md:w-32 min-w-[90px] ${defaultClass}`}
-        >
-            <option value="">(None)</option>
-            {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </select>
+        <div className="flex items-center gap-2 w-full">
+            <select
+                value={ingredient.modifierId || ""}
+                onChange={(e) => handleIngredientChange(index, "modifierId", e.target.value)}
+                className={`${inputBaseClass} cursor-pointer flex-1 min-w-0 truncate ${defaultClass}`}
+            >
+                <option value="">(None)</option>
+                {taxonomy.modifiers?.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
 
-        {/* Desktop Delete Button - Hidden on mobile */}
-        <button 
-            type="button" 
-            onClick={() => removeIngredientRow(index)} 
-            className="hidden sm:block p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0" 
-            title="Remove Ingredient"
-        >
-            ✕
-        </button>
+            <label className="flex items-center justify-center gap-1 px-2.5 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer text-[11px] font-bold text-gray-600 dark:text-gray-300 select-none shrink-0">
+                <input
+                    type="checkbox"
+                    checked={!!ingredient.isOptional}
+                    onChange={(e) => handleIngredientChange(index, "isOptional", e.target.checked)}
+                    className="w-3.5 h-3.5 rounded text-orange-500 accent-orange-500 cursor-pointer"
+                />
+                Optional
+            </label>
+
+            {/* Mobile Delete Button */}
+            <button 
+                type="button" 
+                onClick={() => removeIngredientRow(index)} 
+                className="sm:hidden p-3 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl font-bold text-xs shrink-0 flex items-center justify-center"
+                title="Remove"
+            >
+                ✕
+            </button>
+        </div>
       </div>
     </div>
   );

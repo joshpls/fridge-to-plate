@@ -27,13 +27,14 @@ export const rehydrateIngredients = (dbIngredients: any[], fallbackForEdit = fal
             // amount: formatDecimalToQuantity(ing.amount),
             amount: ing.amount,
             unitId: ing.unit?.id || ing.unitId || '',
-            modifierId: ing.modifierId || ''
+            modifierId: ing.modifierId || '',
+            isOptional: !!ing.isOptional
         });
     });
 
     // Fallback for brand new recipes in the Editor
     if (fallbackForEdit && uiList.length === 0) {
-        uiList.push({ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '' });
+        uiList.push({ id: Math.random().toString(36).substring(7), ingredientId: '', amount: '', unitId: '', modifierId: '', isOptional: false });
     }
 
     return uiList;
